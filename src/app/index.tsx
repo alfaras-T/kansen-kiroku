@@ -24,11 +24,13 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { OTHER_STADIUM, STADIUMS } from '@/constants/stadiums';
 import {
+  DEFAULT_PHOTO_OFFSET,
   OUTPUT_RATIOS,
   OVERLAY_STYLES,
   OverlayPosition,
   OverlayStyleKey,
   OutputRatio,
+  PhotoOffset,
   POSITIONS,
 } from '@/constants/overlayStyles';
 import { TEAMS, TeamCode } from '@/constants/teams';
@@ -55,6 +57,7 @@ export default function CreateScreen() {
   const overlayRef = useRef<View>(null);
 
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [photoOffset, setPhotoOffset] = useState<PhotoOffset>(DEFAULT_PHOTO_OFFSET);
   const [ratio, setRatio] = useState<OutputRatio>('original');
   const [position, setPosition] = useState<OverlayPosition>('br');
   const [styleKey, setStyleKey] = useState<OverlayStyleKey>('amber');
@@ -89,6 +92,7 @@ export default function CreateScreen() {
     });
     if (!result.canceled && result.assets?.[0]?.uri) {
       setPhotoUri(result.assets[0].uri);
+      setPhotoOffset(DEFAULT_PHOTO_OFFSET);
     }
   }
 
@@ -211,27 +215,6 @@ export default function CreateScreen() {
           </ThemedText>
         </View>
 
-        <View style={styles.previewWrap}>
-          <OverlayCard
-            ref={overlayRef}
-            photoUri={photoUri}
-            ratio={ratio}
-            position={position}
-            styleKey={styleKey}
-            visitorCode={visitorCode}
-            homeCode={homeCode}
-            visitorScore={visitorScore || '0'}
-            homeScore={homeScore || '0'}
-            dateLabel={formatDateJP(date)}
-            stadium={stadiumName}
-            isDraw={isDraw}
-            isExtra={isExtra}
-            extraInning={extraInning}
-            seatMemo={seatMemo}
-            winHighlight={winHighlight}
-          />
-        </View>
-
         <Pressable
           onPress={pickPhoto}
           style={[styles.photoBtn, { borderColor: colors.border, backgroundColor: colors.backgroundElement }]}>
@@ -241,7 +224,12 @@ export default function CreateScreen() {
           </Text>
         </Pressable>
         {photoUri && (
-          <Pressable onPress={() => setPhotoUri(null)} style={styles.clearPhoto}>
+          <Pressable
+            onPress={() => {
+              setPhotoUri(null);
+              setPhotoOffset(DEFAULT_PHOTO_OFFSET);
+            }}
+            style={styles.clearPhoto}>
             <ThemedText type="small" themeColor="danger">
               写真をクリア（背景のみで作成）
             </ThemedText>
@@ -437,6 +425,48 @@ export default function CreateScreen() {
             {savedFlash ? '保存しました ✓' : '観戦記録として保存（画像は保存しません）'}
           </Text>
         </Pressable>
+
+        <View style={[styles.card, styles.previewCard]}>
+          <View style={styles.previewHeaderRow}>
+            <ThemedText type="smallBold" style={styles.sectionTitle}>
+              プレビュー
+            </ThemedText>
+            {photoUri && (photoOffset.x !== 0 || photoOffset.y !== 0) && (
+              <Pressable onPress={() => setPhotoOffset(DEFAULT_PHOTO_OFFSET)}>
+                <ThemedText type="small" themeColor="accent">
+                  位置をリセット
+                </ThemedText>
+              </Pressable>
+            )}
+          </View>
+          <View style={styles.previewWrap}>
+            <OverlayCard
+              ref={overlayRef}
+              photoUri={photoUri}
+              ratio={ratio}
+              position={position}
+              styleKey={styleKey}
+              visitorCode={visitorCode}
+              homeCode={homeCode}
+              visitorScore={visitorScore || '0'}
+              homeScore={homeScore || '0'}
+              dateLabel={formatDateJP(date)}
+              stadium={stadiumName}
+              isDraw={isDraw}
+              isExtra={isExtra}
+              extraInning={extraInning}
+              seatMemo={seatMemo}
+              winHighlight={winHighlight}
+              photoOffset={photoOffset}
+              onPhotoOffsetChange={setPhotoOffset}
+            />
+          </View>
+          {photoUri && (
+            <ThemedText type="small" themeColor="textSecondary" style={styles.dragHint}>
+              写真をドラッグすると位置を調整できます
+            </ThemedText>
+          )}
+        </View>
       </ScrollView>
     </ThemedView>
   );
@@ -454,6 +484,13 @@ const styles = StyleSheet.create({
   eyebrow: { letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 },
   title: { fontSize: 30, lineHeight: 36, marginBottom: 6 },
   previewWrap: { marginBottom: Spacing.three },
+  previewCard: { marginBottom: 0 },
+  previewHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  dragHint: { textAlign: 'center', marginTop: 4 },
   photoBtn: {
     flexDirection: 'row',
     alignItems: 'center',

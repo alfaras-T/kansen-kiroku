@@ -1,6 +1,14 @@
 export type OverlayStyleKey = 'amber' | 'mono' | 'green';
 export type OverlayPosition = 'br' | 'bl' | 'tr' | 'tl';
-export type OutputRatio = 'original' | 'square' | 'story';
+export type OutputRatio = 'original' | 'square' | 'portrait' | 'story';
+
+export interface PhotoOffset {
+  x: number;
+  y: number;
+}
+
+export const DEFAULT_PHOTO_OFFSET: PhotoOffset = { x: 0, y: 0 };
+export const PHOTO_PAN_SCALE = 1.4;
 
 export interface OverlayPalette {
   label: string;
@@ -45,6 +53,7 @@ export const OVERLAY_STYLES: Record<OverlayStyleKey, OverlayPalette> = {
 export const OUTPUT_RATIOS: { key: OutputRatio; label: string; aspect: number | null }[] = [
   { key: 'original', label: '元の写真のまま', aspect: null },
   { key: 'square', label: 'スクエア（1:1）', aspect: 1 },
+  { key: 'portrait', label: 'ポートレート（4:5）', aspect: 4 / 5 },
   { key: 'story', label: 'ストーリー（9:16）', aspect: 9 / 16 },
 ];
 

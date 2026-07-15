@@ -1,13 +1,16 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { forwardRef } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { forwardRef, useRef, useState } from 'react';
+import { Image, PanResponder, StyleSheet, Text, View } from 'react-native';
 
 import {
+  DEFAULT_PHOTO_OFFSET,
   OUTPUT_RATIOS,
   OVERLAY_STYLES,
   OutputRatio,
   OverlayPosition,
   OverlayStyleKey,
+  PHOTO_PAN_SCALE,
+  PhotoOffset,
 } from '@/constants/overlayStyles';
 import { TeamCode } from '@/constants/teams';
 
@@ -27,6 +30,14 @@ export interface OverlayCardProps {
   extraInning: string;
   seatMemo: string;
   winHighlight: boolean;
+  /** 写真の表示位置オフセット（-1〜1、0が中央）。ドラッグで変更される。 */
+  photoOffset?: PhotoOffset;
+  /** ドラッグ操作で位置が変わるたびに呼ばれる */
+  onPhotoOffsetChange?: (offset: PhotoOffset) => void;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
 }
 
 function buildCaption(props: OverlayCardProps): string {
@@ -49,11 +60,51 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
     isDraw,
     winHighlight,
     seatMemo,
+    photoOffset = DEFAULT_PHOTO_OFFSET,
+    onPhotoOffsetChange,
   } = props;
 
   const palette = OVERLAY_STYLES[styleKey];
   const ratioConfig = OUTPUT_RATIOS.find((r) => r.key === ratio) ?? OUTPUT_RATIOS[0];
   const aspectStyle = ratioConfig.aspect ? { aspectRatio: ratioConfig.aspect } : { aspectRatio: 1 };
+
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const maxShiftX = (containerSize.width * (PHOTO_PAN_SCALE - 1)) / 2;
+  const maxShiftY = (containerSize.height * (PHOTO_PAN_SCALE - 1)) / 2;
+
+  // PanResponderは初回のみ生成されるため、内部で参照する値はrefで常に最新化する
+  const photoUriRef = useRef(photoUri);
+  photoUriRef.current = photoUri;
+  const onOffsetChangeRef = useRef(onPhotoOffsetChange);
+  onOffsetChangeRef.current = onPhotoOffsetChange;
+  const offsetRef = useRef(photoOffset);
+  offsetRef.current = photoOffset;
+  const maxShiftRef = useRef({ x: maxShiftX, y: maxShiftY });
+  maxShiftRef.current = { x: maxShiftX, y: maxShiftY };
+  const dragStartOffset = useRef<PhotoOffset>(photoOffset);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => !!photoUriRef.current && !!onOffsetChangeRef.current,
+      onMoveShouldSetPanResponder: (_evt, gesture) =>
+        !!photoUriRef.current &&
+        !!onOffsetChangeRef.current &&
+        (Math.abs(gesture.dx) > 2 || Math.abs(gesture.dy) > 2),
+      onPanResponderGrant: () => {
+        dragStartOffset.current = offsetRef.current;
+      },
+      onPanResponderMove: (_evt, gesture) => {
+        const onOffsetChange = onOffsetChangeRef.current;
+        if (!onOffsetChange) return;
+        const { x: mx, y: my } = maxShiftRef.current;
+        const nextX =
+          mx > 0 ? clamp(dragStartOffset.current.x + gesture.dx / mx, -1, 1) : dragStartOffset.current.x;
+        const nextY =
+          my > 0 ? clamp(dragStartOffset.current.y + gesture.dy / my, -1, 1) : dragStartOffset.current.y;
+        onOffsetChange({ x: nextX, y: nextY });
+      },
+    })
+  ).current;
 
   const isRight = position === 'br' || position === 'tr';
   const isBottom = position === 'br' || position === 'bl';
@@ -78,9 +129,28 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
     <View
       ref={ref}
       collapsable={false}
+      onLayout={(e) => {
+        const { width, height } = e.nativeEvent.layout;
+        setContainerSize({ width, height });
+      }}
       style={[styles.card, aspectStyle, { backgroundColor: palette.gradientFrom }]}>
       {photoUri ? (
-        <Image source={{ uri: photoUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        <View style={StyleSheet.absoluteFill} {...panResponder.panHandlers}>
+          <Image
+            source={{ uri: photoUri }}
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                transform: [
+                  { translateX: photoOffset.x * maxShiftX },
+                  { translateY: photoOffset.y * maxShiftY },
+                  { scale: PHOTO_PAN_SCALE },
+                ],
+              },
+            ]}
+            resizeMode="cover"
+          />
+        </View>
       ) : (
         <LinearGradient
           colors={[palette.gradientFrom, palette.gradientTo]}
