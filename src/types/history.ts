@@ -1,16 +1,14 @@
-import { TeamCode } from '@/constants/teams';
-
 export interface HistoryEntry {
   id: string;
   createdAt: number;
   date: string; // ISO date (YYYY-MM-DD)
   stadium: string;
-  visitorCode: TeamCode;
-  homeCode: TeamCode;
+  visitorCode: string;
+  homeCode: string;
   visitorScore: string;
   homeScore: string;
   isDraw: boolean;
   isExtra: boolean;
   extraInning: string;
-  seatMemo: string;
+  memo: string;
 }

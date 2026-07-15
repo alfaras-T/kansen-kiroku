@@ -12,7 +12,12 @@ export async function loadHistory(): Promise<HistoryEntry[]> {
     const raw = await AsyncStorage.getItem(HISTORY_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    // 旧フィールド名（seatMemo）で保存された過去データとの互換性を保つ
+    return parsed.map((e: HistoryEntry & { seatMemo?: string }) => ({
+      ...e,
+      memo: e.memo ?? e.seatMemo ?? '',
+    }));
   } catch (e) {
     console.warn('観戦記録の読み込みに失敗しました', e);
     return [];

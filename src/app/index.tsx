@@ -37,12 +37,15 @@ import {
   PhotoOffset,
   POSITIONS,
 } from '@/constants/overlayStyles';
-import { TEAMS, TeamCode } from '@/constants/teams';
+import { OTHER_TEAM, TEAMS } from '@/constants/teams';
 import { BottomTabInset, Colors, MaxContentWidth, Spacing } from '@/constants/theme';
 import { addHistoryEntry } from '@/storage/history';
 import { HistoryEntry } from '@/types/history';
 
-const TEAM_OPTIONS = TEAMS.map((t) => ({ label: `${t.nickname}（${t.code}）`, value: t.code }));
+const TEAM_OPTIONS = [
+  ...TEAMS.map((t) => ({ label: `${t.nickname}（${t.code}）`, value: t.code })),
+  { label: 'その他（自由入力）', value: OTHER_TEAM },
+];
 const STADIUM_OPTIONS = [
   ...STADIUMS.map((s) => ({ label: s, value: s })),
   { label: 'その他（直接入力）', value: OTHER_STADIUM },
@@ -61,6 +64,7 @@ export default function CreateScreen() {
   const overlayRef = useRef<View>(null);
 
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [photoAspectRatio, setPhotoAspectRatio] = useState<number | null>(null);
   const [photoOffset, setPhotoOffset] = useState<PhotoOffset>(DEFAULT_PHOTO_OFFSET);
   const [photoScale, setPhotoScale] = useState(DEFAULT_PHOTO_SCALE);
   const [ratio, setRatio] = useState<OutputRatio>('original');
@@ -72,19 +76,23 @@ export default function CreateScreen() {
   const [date, setDate] = useState(todayISO());
   const [stadium, setStadium] = useState<string>(STADIUMS[0]);
   const [stadiumOther, setStadiumOther] = useState('');
-  const [visitorCode, setVisitorCode] = useState<TeamCode>('T');
-  const [homeCode, setHomeCode] = useState<TeamCode>('G');
+  const [visitorCode, setVisitorCode] = useState<string>('T');
+  const [homeCode, setHomeCode] = useState<string>('G');
+  const [visitorTeamOther, setVisitorTeamOther] = useState('');
+  const [homeTeamOther, setHomeTeamOther] = useState('');
   const [visitorScore, setVisitorScore] = useState('3');
   const [homeScore, setHomeScore] = useState('1');
   const [isDraw, setIsDraw] = useState(false);
   const [isExtra, setIsExtra] = useState(false);
   const [extraInning, setExtraInning] = useState('12');
-  const [seatMemo, setSeatMemo] = useState('');
+  const [memo, setMemo] = useState('');
 
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
 
   const stadiumName = stadium === OTHER_STADIUM ? stadiumOther.trim() : stadium;
+  const visitorTeamName = visitorCode === OTHER_TEAM ? visitorTeamOther.trim() : visitorCode;
+  const homeTeamName = homeCode === OTHER_TEAM ? homeTeamOther.trim() : homeCode;
 
   async function pickPhoto() {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -97,7 +105,9 @@ export default function CreateScreen() {
       quality: 1,
     });
     if (!result.canceled && result.assets?.[0]?.uri) {
-      setPhotoUri(result.assets[0].uri);
+      const asset = result.assets[0];
+      setPhotoUri(asset.uri);
+      setPhotoAspectRatio(asset.width && asset.height ? asset.width / asset.height : null);
       setPhotoOffset(DEFAULT_PHOTO_OFFSET);
       setPhotoScale(DEFAULT_PHOTO_SCALE);
     }
@@ -189,14 +199,14 @@ export default function CreateScreen() {
       createdAt: Date.now(),
       date,
       stadium: stadiumName,
-      visitorCode,
-      homeCode,
+      visitorCode: visitorTeamName,
+      homeCode: homeTeamName,
       visitorScore: visitorScore || '0',
       homeScore: homeScore || '0',
       isDraw,
       isExtra,
       extraInning,
-      seatMemo: seatMemo.trim(),
+      memo: memo.trim(),
     };
     await addHistoryEntry(entry);
     setSavedFlash(true);
@@ -231,15 +241,6 @@ export default function CreateScreen() {
               trackColor={{ true: colors.accent, false: colors.border }}
             />
           </View>
-          {recordOnly && (
-            <Pressable
-              onPress={handleSaveRecord}
-              style={[styles.recordBtn, { borderColor: colors.border, marginTop: Spacing.two }]}>
-              <Text style={{ color: colors.textSecondary, fontSize: 13.5 }}>
-                {savedFlash ? '保存しました ✓' : 'この記録を保存する'}
-              </Text>
-            </Pressable>
-          )}
         </View>
 
         <View style={styles.card}>
@@ -274,7 +275,7 @@ export default function CreateScreen() {
                   title="先攻チームを選択"
                   options={TEAM_OPTIONS}
                   value={visitorCode}
-                  onChange={(v) => setVisitorCode(v as TeamCode)}
+                  onChange={setVisitorCode}
                 />
               </View>
               <TextInput
@@ -287,6 +288,18 @@ export default function CreateScreen() {
                 ]}
               />
             </View>
+            {visitorCode === OTHER_TEAM && (
+              <TextInput
+                value={visitorTeamOther}
+                onChangeText={setVisitorTeamOther}
+                placeholder="チーム名を入力"
+                placeholderTextColor={colors.textSecondary}
+                style={[
+                  styles.textInput,
+                  { marginTop: 8, borderColor: colors.border, backgroundColor: colors.backgroundElement, color: colors.text },
+                ]}
+              />
+            )}
           </LabeledField>
 
           <LabeledField label="後攻（ホーム）">
@@ -296,7 +309,7 @@ export default function CreateScreen() {
                   title="後攻チームを選択"
                   options={TEAM_OPTIONS}
                   value={homeCode}
-                  onChange={(v) => setHomeCode(v as TeamCode)}
+                  onChange={setHomeCode}
                 />
               </View>
               <TextInput
@@ -309,16 +322,25 @@ export default function CreateScreen() {
                 ]}
               />
             </View>
+            {homeCode === OTHER_TEAM && (
+              <TextInput
+                value={homeTeamOther}
+                onChangeText={setHomeTeamOther}
+                placeholder="チーム名を入力"
+                placeholderTextColor={colors.textSecondary}
+                style={[
+                  styles.textInput,
+                  { marginTop: 8, borderColor: colors.border, backgroundColor: colors.backgroundElement, color: colors.text },
+                ]}
+              />
+            )}
           </LabeledField>
 
           <View style={styles.switchRow}>
             <ThemedText type="default">引き分け</ThemedText>
             <Switch
               value={isDraw}
-              onValueChange={(v) => {
-                setIsDraw(v);
-                if (v) setIsExtra(false);
-              }}
+              onValueChange={setIsDraw}
               trackColor={{ true: colors.accent, false: colors.border }}
             />
           </View>
@@ -326,10 +348,7 @@ export default function CreateScreen() {
             <ThemedText type="default">延長</ThemedText>
             <Switch
               value={isExtra}
-              onValueChange={(v) => {
-                setIsExtra(v);
-                if (v) setIsDraw(false);
-              }}
+              onValueChange={setIsExtra}
               trackColor={{ true: colors.accent, false: colors.border }}
             />
           </View>
@@ -347,11 +366,11 @@ export default function CreateScreen() {
             </LabeledField>
           )}
 
-          <LabeledField label="座席メモ（任意）">
+          <LabeledField label="自由メモ（任意）">
             <TextInput
-              value={seatMemo}
-              onChangeText={setSeatMemo}
-              placeholder="例：3塁側内野"
+              value={memo}
+              onChangeText={setMemo}
+              placeholder="例：3塁側内野、記念日など"
               placeholderTextColor={colors.textSecondary}
               style={[
                 styles.textInput,
@@ -361,7 +380,17 @@ export default function CreateScreen() {
           </LabeledField>
         </View>
 
-        <View style={styles.card}>
+        {recordOnly && (
+          <Pressable onPress={handleSaveRecord} style={[styles.recordBtn, { borderColor: colors.border }]}>
+            <Text style={{ color: colors.textSecondary, fontSize: 13.5 }}>
+              {savedFlash ? '保存しました ✓' : 'この記録を保存する'}
+            </Text>
+          </Pressable>
+        )}
+
+        <View
+          style={[styles.card, recordOnly && styles.disabledSection]}
+          pointerEvents={recordOnly ? 'none' : 'auto'}>
           <ThemedText type="smallBold" style={styles.sectionTitle}>
             表示デザイン
           </ThemedText>
@@ -412,6 +441,7 @@ export default function CreateScreen() {
             <Pressable
               onPress={() => {
                 setPhotoUri(null);
+                setPhotoAspectRatio(null);
                 setPhotoOffset(DEFAULT_PHOTO_OFFSET);
                 setPhotoScale(DEFAULT_PHOTO_SCALE);
               }}
@@ -485,11 +515,12 @@ export default function CreateScreen() {
             <OverlayCard
               ref={overlayRef}
               photoUri={photoUri}
+              photoAspectRatio={photoAspectRatio}
               ratio={ratio}
               position={position}
               styleKey={styleKey}
-              visitorCode={visitorCode}
-              homeCode={homeCode}
+              visitorCode={visitorTeamName}
+              homeCode={homeTeamName}
               visitorScore={visitorScore || '0'}
               homeScore={homeScore || '0'}
               dateLabel={formatDateJP(date)}
@@ -497,17 +528,18 @@ export default function CreateScreen() {
               isDraw={isDraw}
               isExtra={isExtra}
               extraInning={extraInning}
-              seatMemo={seatMemo}
+              memo={memo}
               winHighlight={winHighlight}
               photoOffset={photoOffset}
               onPhotoOffsetChange={setPhotoOffset}
               photoScale={photoScale}
+              onPhotoScaleChange={setPhotoScale}
             />
           </View>
           {photoUri && (
             <>
               <ThemedText type="small" themeColor="textSecondary" style={styles.dragHint}>
-                写真をドラッグすると位置を調整できます
+                写真をドラッグで位置調整、2本指のピンチで拡大縮小できます
               </ThemedText>
               <View style={styles.zoomRow}>
                 <Ionicons name="remove-circle-outline" size={18} color={colors.textSecondary} />

@@ -111,8 +111,8 @@ export default function HistoryScreen() {
                 <Text style={[styles.rowScore, { color: colors.text }]}>
                   {item.visitorCode} {item.visitorScore}–{item.homeScore} {item.homeCode}
                 </Text>
-                {!!item.seatMemo && (
-                  <Text style={[styles.rowMemo, { color: colors.textSecondary }]}>{item.seatMemo}</Text>
+                {!!item.memo && (
+                  <Text style={[styles.rowMemo, { color: colors.textSecondary }]}>{item.memo}</Text>
                 )}
               </View>
               <Pressable onPress={() => handleDelete(item.id)} hitSlop={10} style={styles.delBtn}>

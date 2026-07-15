@@ -23,6 +23,9 @@ export const TEAMS: TeamOption[] = [
   { code: 'E', nickname: 'イーグルス' },
 ];
 
+/** チーム一覧にない場合に選ぶ、自由入力用のセンチネル値 */
+export const OTHER_TEAM = '__other__';
+
 export function teamLabel(code: string): string {
   const t = TEAMS.find((x) => x.code === code);
   return t ? `${t.nickname}（${t.code}）` : code;
