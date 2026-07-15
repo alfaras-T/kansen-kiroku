@@ -56,6 +56,10 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
+// ピンチ操作の感度倍率。1だと指の距離変化にそのまま比例、大きいほど
+// 少しの指の動きで大きくズームする。
+const PINCH_SENSITIVITY = 3.5;
+
 function touchDistance(touches: { pageX: number; pageY: number }[]): number {
   const [a, b] = touches;
   const dx = b.pageX - a.pageX;
@@ -127,8 +131,10 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
         } else if (pinchStartDistance.current > 0) {
           const onScaleChange = onScaleChangeRef.current;
           if (onScaleChange) {
-            const scaleRatio = dist / pinchStartDistance.current;
-            onScaleChange(clamp(pinchStartScale.current * scaleRatio, MIN_PHOTO_SCALE, MAX_PHOTO_SCALE));
+            const rawRatio = dist / pinchStartDistance.current;
+            // 指の距離変化からのズレを感度倍率で増幅し、少しの動きでも大きくズームさせる
+            const amplifiedRatio = 1 + (rawRatio - 1) * PINCH_SENSITIVITY;
+            onScaleChange(clamp(pinchStartScale.current * amplifiedRatio, MIN_PHOTO_SCALE, MAX_PHOTO_SCALE));
           }
         }
       } else {
