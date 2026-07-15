@@ -1,0 +1,63 @@
+{
+  "expo": {
+    "name": "観戦きろく",
+    "slug": "kansen-kiroku",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "kansenkiroku",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0B1220",
+    "ios": {
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.example.kansenkiroku",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "観戦写真を選んでスコアを重ねるために使用します。",
+        "NSPhotoLibraryAddUsageDescription": "作成した画像を写真アプリに保存するために使用します。"
+      }
+    },
+    "android": {
+      "package": "com.example.kansenkiroku",
+      "adaptiveIcon": {
+        "backgroundColor": "#0B1220",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0B1220",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 76
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "観戦写真を選んでスコアを重ねるために使用します。"
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "作成した画像を写真アプリに保存するために使用します。",
+          "savePhotosPermission": "作成した画像を写真アプリに保存するために使用します。",
+          "isAccessMediaLocationEnabled": false
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

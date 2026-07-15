@@ -1,0 +1,158 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useCallback, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+
+import { formatDateJP } from '@/components/form/date-field';
+import { SelectModal } from '@/components/form/select-modal';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { TEAMS } from '@/constants/teams';
+import { BottomTabInset, Colors, MaxContentWidth, Spacing } from '@/constants/theme';
+import { computeRecord, deleteHistoryEntry, loadHistory, loadMyTeam, saveMyTeam } from '@/storage/history';
+import { HistoryEntry } from '@/types/history';
+
+const MY_TEAM_OPTIONS = [
+  { label: '指定しない', value: '' },
+  ...TEAMS.map((t) => ({ label: `${t.nickname}（${t.code}）`, value: t.code })),
+];
+
+export default function HistoryScreen() {
+  const colors = Colors.dark;
+  const [entries, setEntries] = useState<HistoryEntry[]>([]);
+  const [myTeam, setMyTeam] = useState('');
+  const [loaded, setLoaded] = useState(false);
+
+  const refresh = useCallback(async () => {
+    const [h, mt] = await Promise.all([loadHistory(), loadMyTeam()]);
+    setEntries(h);
+    setMyTeam(mt);
+    setLoaded(true);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh])
+  );
+
+  async function handleMyTeamChange(v: string) {
+    setMyTeam(v);
+    await saveMyTeam(v);
+  }
+
+  async function handleDelete(id: string) {
+    const next = await deleteHistoryEntry(id);
+    setEntries(next);
+  }
+
+  const record = computeRecord(entries, myTeam);
+  const sorted = [...entries].sort((a, b) => b.createdAt - a.createdAt);
+
+  return (
+    <ThemedView style={styles.screen}>
+      <View style={styles.header}>
+        <ThemedText type="title" style={styles.title}>
+          観戦履歴
+        </ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          記録はこの端末にのみ保存されています。
+        </ThemedText>
+      </View>
+
+      <View style={styles.myTeamRow}>
+        <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: 6 }}>
+          マイチーム
+        </ThemedText>
+        <SelectModal
+          title="マイチームを選択"
+          options={MY_TEAM_OPTIONS}
+          value={myTeam}
+          onChange={handleMyTeamChange}
+        />
+      </View>
+
+      <View style={styles.statsRow}>
+        <View style={[styles.statBox, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
+          <Text style={[styles.statNum, { color: colors.accent }]}>{entries.length}</Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>観戦試合</Text>
+        </View>
+        <View style={[styles.statBox, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
+          <Text style={[styles.statNum, { color: colors.accent }]}>
+            {record ? `${record.win}勝${record.lose}敗${record.draw}分` : '–'}
+          </Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>マイチーム成績</Text>
+        </View>
+      </View>
+
+      <FlatList
+        data={sorted}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={[styles.list, { paddingBottom: BottomTabInset + Spacing.six }]}
+        ListEmptyComponent={
+          loaded ? (
+            <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
+              まだ記録がありません。「記録する」タブから試合を保存してみましょう。
+            </ThemedText>
+          ) : null
+        }
+        renderItem={({ item }) => {
+          let resultTag = '';
+          if (item.isDraw) resultTag = ' ・引分';
+          else if (item.isExtra) resultTag = ` ・延長${item.extraInning}回`;
+
+          return (
+            <View style={[styles.row, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.rowMeta, { color: colors.textSecondary }]}>
+                  {formatDateJP(item.date)} {item.stadium}
+                  {resultTag}
+                </Text>
+                <Text style={[styles.rowScore, { color: colors.text }]}>
+                  {item.visitorCode} {item.visitorScore}–{item.homeScore} {item.homeCode}
+                </Text>
+                {!!item.seatMemo && (
+                  <Text style={[styles.rowMemo, { color: colors.textSecondary }]}>{item.seatMemo}</Text>
+                )}
+              </View>
+              <Pressable onPress={() => handleDelete(item.id)} hitSlop={10} style={styles.delBtn}>
+                <Ionicons name="trash-outline" size={18} color={colors.danger} />
+              </Pressable>
+            </View>
+          );
+        }}
+      />
+    </ThemedView>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, maxWidth: MaxContentWidth, width: '100%', alignSelf: 'center' },
+  header: { padding: Spacing.four, paddingBottom: Spacing.three },
+  title: { fontSize: 26, lineHeight: 32, marginBottom: 4 },
+  myTeamRow: { paddingHorizontal: Spacing.four, marginBottom: Spacing.three },
+  statsRow: { flexDirection: 'row', gap: 12, paddingHorizontal: Spacing.four, marginBottom: Spacing.three },
+  statBox: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  statNum: { fontSize: 20, fontWeight: '700' },
+  statLabel: { fontSize: 10.5, letterSpacing: 0.5, textTransform: 'uppercase', marginTop: 2 },
+  list: { paddingHorizontal: Spacing.four, gap: 8 },
+  empty: { textAlign: 'center', marginTop: 40, lineHeight: 20 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+  },
+  rowMeta: { fontSize: 11.5, marginBottom: 4 },
+  rowScore: { fontSize: 15, fontWeight: '600' },
+  rowMemo: { fontSize: 11.5, marginTop: 3 },
+  delBtn: { padding: 6 },
+});
