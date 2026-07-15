@@ -24,9 +24,9 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="観戦きろく" />
-        <link rel="manifest" href="/manifest.json" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="manifest" href="/kansen-kiroku/manifest.json" />
+        <link rel="apple-touch-icon" href="/kansen-kiroku/apple-touch-icon.png" />
+        <link rel="icon" href="/kansen-kiroku/favicon.ico" />
 
         {/* Android/Chromeでスクロールバウンス等を無効化し、ネイティブアプリに近い挙動にする */}
         <ScrollViewStyleReset />
@@ -37,7 +37,7 @@ export default function Root({ children }: { children: React.ReactNode }) {
             __html: `
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function () {
-                  navigator.serviceWorker.register('/sw.js').catch(function () {});
+                  navigator.serviceWorker.register('/kansen-kiroku/sw.js').catch(function () {});
                 });
               }
             `,
