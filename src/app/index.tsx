@@ -19,12 +19,16 @@ import { DateField, formatDateJP } from '@/components/form/date-field';
 import { LabeledField } from '@/components/form/labeled-field';
 import { SegmentedControl } from '@/components/form/segmented-control';
 import { SelectModal } from '@/components/form/select-modal';
+import { Slider } from '@/components/form/slider';
 import { OverlayCard } from '@/components/overlay-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { OTHER_STADIUM, STADIUMS } from '@/constants/stadiums';
 import {
   DEFAULT_PHOTO_OFFSET,
+  DEFAULT_PHOTO_SCALE,
+  MAX_PHOTO_SCALE,
+  MIN_PHOTO_SCALE,
   OUTPUT_RATIOS,
   OVERLAY_STYLES,
   OverlayPosition,
@@ -58,10 +62,12 @@ export default function CreateScreen() {
 
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [photoOffset, setPhotoOffset] = useState<PhotoOffset>(DEFAULT_PHOTO_OFFSET);
+  const [photoScale, setPhotoScale] = useState(DEFAULT_PHOTO_SCALE);
   const [ratio, setRatio] = useState<OutputRatio>('original');
   const [position, setPosition] = useState<OverlayPosition>('br');
   const [styleKey, setStyleKey] = useState<OverlayStyleKey>('amber');
   const [winHighlight, setWinHighlight] = useState(false);
+  const [recordOnly, setRecordOnly] = useState(false);
 
   const [date, setDate] = useState(todayISO());
   const [stadium, setStadium] = useState<string>(STADIUMS[0]);
@@ -93,6 +99,7 @@ export default function CreateScreen() {
     if (!result.canceled && result.assets?.[0]?.uri) {
       setPhotoUri(result.assets[0].uri);
       setPhotoOffset(DEFAULT_PHOTO_OFFSET);
+      setPhotoScale(DEFAULT_PHOTO_SCALE);
     }
   }
 
@@ -215,37 +222,24 @@ export default function CreateScreen() {
           </ThemedText>
         </View>
 
-        <Pressable
-          onPress={pickPhoto}
-          style={[styles.photoBtn, { borderColor: colors.border, backgroundColor: colors.backgroundElement }]}>
-          <Ionicons name="image" size={17} color={colors.accent} />
-          <Text style={{ color: colors.text, fontSize: 14 }}>
-            {photoUri ? '写真を変更' : '写真を選ぶ'}
-          </Text>
-        </Pressable>
-        {photoUri && (
-          <Pressable
-            onPress={() => {
-              setPhotoUri(null);
-              setPhotoOffset(DEFAULT_PHOTO_OFFSET);
-            }}
-            style={styles.clearPhoto}>
-            <ThemedText type="small" themeColor="danger">
-              写真をクリア（背景のみで作成）
-            </ThemedText>
-          </Pressable>
-        )}
-
         <View style={styles.card}>
-          <ThemedText type="smallBold" style={styles.sectionTitle}>
-            出力サイズ
-          </ThemedText>
-          <SegmentedControl
-            options={OUTPUT_RATIOS.map((r) => ({ value: r.key, label: r.label }))}
-            value={ratio}
-            onChange={setRatio}
-            wrap
-          />
+          <View style={styles.switchRow}>
+            <ThemedText type="default">観戦記録のみ保存（写真なし）</ThemedText>
+            <Switch
+              value={recordOnly}
+              onValueChange={setRecordOnly}
+              trackColor={{ true: colors.accent, false: colors.border }}
+            />
+          </View>
+          {recordOnly && (
+            <Pressable
+              onPress={handleSaveRecord}
+              style={[styles.recordBtn, { borderColor: colors.border, marginTop: Spacing.two }]}>
+              <Text style={{ color: colors.textSecondary, fontSize: 13.5 }}>
+                {savedFlash ? '保存しました ✓' : 'この記録を保存する'}
+              </Text>
+            </Pressable>
+          )}
         </View>
 
         <View style={styles.card}>
@@ -403,7 +397,47 @@ export default function CreateScreen() {
           </View>
         </View>
 
-        <View style={styles.actionsRow}>
+        <View
+          style={recordOnly ? styles.disabledSection : undefined}
+          pointerEvents={recordOnly ? 'none' : 'auto'}>
+          <Pressable
+            onPress={pickPhoto}
+            style={[styles.photoBtn, { borderColor: colors.border, backgroundColor: colors.backgroundElement }]}>
+            <Ionicons name="image" size={17} color={colors.accent} />
+            <Text style={{ color: colors.text, fontSize: 14 }}>
+              {photoUri ? '写真を変更' : '写真を選ぶ'}
+            </Text>
+          </Pressable>
+          {photoUri && (
+            <Pressable
+              onPress={() => {
+                setPhotoUri(null);
+                setPhotoOffset(DEFAULT_PHOTO_OFFSET);
+                setPhotoScale(DEFAULT_PHOTO_SCALE);
+              }}
+              style={styles.clearPhoto}>
+              <ThemedText type="small" themeColor="danger">
+                写真をクリア（背景のみで作成）
+              </ThemedText>
+            </Pressable>
+          )}
+
+          <View style={styles.card}>
+            <ThemedText type="smallBold" style={styles.sectionTitle}>
+              出力サイズ
+            </ThemedText>
+            <SegmentedControl
+              options={OUTPUT_RATIOS.map((r) => ({ value: r.key, label: r.label }))}
+              value={ratio}
+              onChange={setRatio}
+              wrap
+            />
+          </View>
+        </View>
+
+        <View
+          style={[styles.actionsRow, recordOnly && styles.disabledSection]}
+          pointerEvents={recordOnly ? 'none' : 'auto'}>
           <Pressable
             disabled={saving}
             onPress={handleSaveToLibrary}
@@ -420,19 +454,27 @@ export default function CreateScreen() {
           </Pressable>
         </View>
 
-        <Pressable onPress={handleSaveRecord} style={[styles.recordBtn, { borderColor: colors.border }]}>
-          <Text style={{ color: colors.textSecondary, fontSize: 13.5 }}>
-            {savedFlash ? '保存しました ✓' : '観戦記録として保存（画像は保存しません）'}
-          </Text>
-        </Pressable>
+        {!recordOnly && (
+          <Pressable onPress={handleSaveRecord} style={[styles.recordBtn, { borderColor: colors.border }]}>
+            <Text style={{ color: colors.textSecondary, fontSize: 13.5 }}>
+              {savedFlash ? '保存しました ✓' : '観戦記録として保存（画像は保存しません）'}
+            </Text>
+          </Pressable>
+        )}
 
-        <View style={[styles.card, styles.previewCard]}>
+        <View
+          style={[styles.card, styles.previewCard, recordOnly && styles.disabledSection]}
+          pointerEvents={recordOnly ? 'none' : 'auto'}>
           <View style={styles.previewHeaderRow}>
             <ThemedText type="smallBold" style={styles.sectionTitle}>
               プレビュー
             </ThemedText>
-            {photoUri && (photoOffset.x !== 0 || photoOffset.y !== 0) && (
-              <Pressable onPress={() => setPhotoOffset(DEFAULT_PHOTO_OFFSET)}>
+            {photoUri && (photoOffset.x !== 0 || photoOffset.y !== 0 || photoScale !== DEFAULT_PHOTO_SCALE) && (
+              <Pressable
+                onPress={() => {
+                  setPhotoOffset(DEFAULT_PHOTO_OFFSET);
+                  setPhotoScale(DEFAULT_PHOTO_SCALE);
+                }}>
                 <ThemedText type="small" themeColor="accent">
                   位置をリセット
                 </ThemedText>
@@ -459,12 +501,28 @@ export default function CreateScreen() {
               winHighlight={winHighlight}
               photoOffset={photoOffset}
               onPhotoOffsetChange={setPhotoOffset}
+              photoScale={photoScale}
             />
           </View>
           {photoUri && (
-            <ThemedText type="small" themeColor="textSecondary" style={styles.dragHint}>
-              写真をドラッグすると位置を調整できます
-            </ThemedText>
+            <>
+              <ThemedText type="small" themeColor="textSecondary" style={styles.dragHint}>
+                写真をドラッグすると位置を調整できます
+              </ThemedText>
+              <View style={styles.zoomRow}>
+                <Ionicons name="remove-circle-outline" size={18} color={colors.textSecondary} />
+                <View style={styles.zoomSlider}>
+                  <Slider
+                    value={(photoScale - MIN_PHOTO_SCALE) / (MAX_PHOTO_SCALE - MIN_PHOTO_SCALE)}
+                    onChange={(v) => setPhotoScale(MIN_PHOTO_SCALE + v * (MAX_PHOTO_SCALE - MIN_PHOTO_SCALE))}
+                    trackColor={colors.border}
+                    fillColor={colors.accent}
+                    knobColor={colors.accent}
+                  />
+                </View>
+                <Ionicons name="add-circle-outline" size={18} color={colors.textSecondary} />
+              </View>
+            </>
           )}
         </View>
       </ScrollView>
@@ -491,6 +549,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   dragHint: { textAlign: 'center', marginTop: 4 },
+  disabledSection: { opacity: 0.35 },
+  zoomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 10,
+    paddingHorizontal: 4,
+  },
+  zoomSlider: { flex: 1 },
   photoBtn: {
     flexDirection: 'row',
     alignItems: 'center',

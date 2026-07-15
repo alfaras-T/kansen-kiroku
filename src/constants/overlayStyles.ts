@@ -8,7 +8,9 @@ export interface PhotoOffset {
 }
 
 export const DEFAULT_PHOTO_OFFSET: PhotoOffset = { x: 0, y: 0 };
-export const PHOTO_PAN_SCALE = 1.4;
+export const MIN_PHOTO_SCALE = 1.0;
+export const MAX_PHOTO_SCALE = 3.0;
+export const DEFAULT_PHOTO_SCALE = 1.4;
 
 export interface OverlayPalette {
   label: string;

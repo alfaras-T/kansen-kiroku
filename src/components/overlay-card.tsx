@@ -4,14 +4,15 @@ import { Image, PanResponder, StyleSheet, Text, View } from 'react-native';
 
 import {
   DEFAULT_PHOTO_OFFSET,
+  DEFAULT_PHOTO_SCALE,
   OUTPUT_RATIOS,
   OVERLAY_STYLES,
   OutputRatio,
   OverlayPosition,
   OverlayStyleKey,
-  PHOTO_PAN_SCALE,
   PhotoOffset,
 } from '@/constants/overlayStyles';
+import { useLatestRef } from '@/hooks/use-latest-ref';
 import { TeamCode } from '@/constants/teams';
 
 export interface OverlayCardProps {
@@ -34,6 +35,8 @@ export interface OverlayCardProps {
   photoOffset?: PhotoOffset;
   /** ドラッグ操作で位置が変わるたびに呼ばれる */
   onPhotoOffsetChange?: (offset: PhotoOffset) => void;
+  /** 写真の拡大率（1.0が最小）。スライダーで変更される。 */
+  photoScale?: number;
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -62,6 +65,7 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
     seatMemo,
     photoOffset = DEFAULT_PHOTO_OFFSET,
     onPhotoOffsetChange,
+    photoScale = DEFAULT_PHOTO_SCALE,
   } = props;
 
   const palette = OVERLAY_STYLES[styleKey];
@@ -69,18 +73,14 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
   const aspectStyle = ratioConfig.aspect ? { aspectRatio: ratioConfig.aspect } : { aspectRatio: 1 };
 
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
-  const maxShiftX = (containerSize.width * (PHOTO_PAN_SCALE - 1)) / 2;
-  const maxShiftY = (containerSize.height * (PHOTO_PAN_SCALE - 1)) / 2;
+  const maxShiftX = (containerSize.width * (photoScale - 1)) / 2;
+  const maxShiftY = (containerSize.height * (photoScale - 1)) / 2;
 
   // PanResponderは初回のみ生成されるため、内部で参照する値はrefで常に最新化する
-  const photoUriRef = useRef(photoUri);
-  photoUriRef.current = photoUri;
-  const onOffsetChangeRef = useRef(onPhotoOffsetChange);
-  onOffsetChangeRef.current = onPhotoOffsetChange;
-  const offsetRef = useRef(photoOffset);
-  offsetRef.current = photoOffset;
-  const maxShiftRef = useRef({ x: maxShiftX, y: maxShiftY });
-  maxShiftRef.current = { x: maxShiftX, y: maxShiftY };
+  const photoUriRef = useLatestRef(photoUri);
+  const onOffsetChangeRef = useLatestRef(onPhotoOffsetChange);
+  const offsetRef = useLatestRef(photoOffset);
+  const maxShiftRef = useLatestRef({ x: maxShiftX, y: maxShiftY });
   const dragStartOffset = useRef<PhotoOffset>(photoOffset);
 
   const panResponder = useRef(
@@ -144,7 +144,7 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
                 transform: [
                   { translateX: photoOffset.x * maxShiftX },
                   { translateY: photoOffset.y * maxShiftY },
-                  { scale: PHOTO_PAN_SCALE },
+                  { scale: photoScale },
                 ],
               },
             ]}
