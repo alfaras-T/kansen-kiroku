@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>観戦きろく 診断ページ</title>
+<style>
+  body { font-family: -apple-system, sans-serif; background: #0B1220; color: #ECE9E1; padding: 20px; line-height: 1.7; }
+  h1 { font-size: 18px; color: #FFB627; }
+  .item { margin-bottom: 14px; padding: 12px; background: #121C30; border-radius: 8px; font-size: 14px; word-break: break-all; }
+  .ok { color: #4CFF7A; font-weight: bold; }
+  .ng { color: #ff6b6b; font-weight: bold; }
+</style>
+</head>
+<body>
+<h1>観戦きろく 診断ページ</h1>
+<div id="results"></div>
+
+<script>
+const results = document.getElementById('results');
+
+function add(label, status, detail) {
+  const div = document.createElement('div');
+  div.className = 'item';
+  div.innerHTML = '<span class="' + (status ? 'ok' : 'ng') + '">' + (status ? '✓ OK' : '✕ NG') + '</span> ' + label + (detail ? '<br><small>' + detail + '</small>' : '');
+  results.appendChild(div);
+}
+
+// グローバルなJSエラーを捕捉
+window.addEventListener('error', function (e) {
+  add('JSエラー検出', false, (e.message || '') + ' @ ' + (e.filename || '') + ':' + (e.lineno || ''));
+});
+
+(async function () {
+  // 1. index.htmlの取得
+  let entrySrc = null;
+  try {
+    const res = await fetch('/kansen-kiroku/', { cache: 'no-store' });
+    add('トップページHTMLの取得 (HTTP ' + res.status + ')', res.ok);
+    if (res.ok) {
+      const html = await res.text();
+      const m = html.match(/src="([^"]*entry[^"]*\.js)"/);
+      entrySrc = m ? m[1] : null;
+      add('HTML内のJSファイル参照', !!entrySrc, entrySrc || 'entryスクリプトが見つかりません');
+    }
+  } catch (e) {
+    add('トップページHTMLの取得', false, String(e));
+  }
+
+  // 2. JSバンドルの取得
+  if (entrySrc) {
+    try {
+      const res2 = await fetch(entrySrc, { cache: 'no-store' });
+      add('JSバンドルの取得 (HTTP ' + res2.status + ')', res2.ok, entrySrc);
+
+      // 3. 実行テスト
+      if (res2.ok) {
+        add('JSバンドルの実行を開始します(下にエラーが出なければ実行自体は成功)', true);
+        const s = document.createElement('script');
+        s.src = entrySrc;
+        s.defer = true;
+        s.onload = function () { add('JSバンドルのロード完了', true); };
+        s.onerror = function () { add('JSバンドルのロード', false, 'scriptタグでのロードに失敗'); };
+        document.body.appendChild(s);
+      }
+    } catch (e) {
+      add('JSバンドルの取得', false, String(e));
+    }
+  }
+
+  // 4. Service Workerの状態
+  if ('serviceWorker' in navigator) {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    add('Service Worker登録数: ' + regs.length, true, regs.map(r => r.scope).join(', ') || 'なし');
+  }
+})();
+</script>
+</body>
+</html>
