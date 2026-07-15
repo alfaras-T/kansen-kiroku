@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import * as MediaLibrary from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
 import { useRef, useState } from 'react';
 import {
   Alert,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -95,11 +95,22 @@ export default function CreateScreen() {
   async function capture(): Promise<string | null> {
     if (!overlayRef.current) return null;
     try {
-      return await captureRef(overlayRef, { format: 'png', quality: 1 });
+      return await captureRef(overlayRef, {
+        format: 'png',
+        quality: 1,
+        result: Platform.OS === 'web' ? 'data-uri' : 'tmpfile',
+      });
     } catch {
       Alert.alert('エラー', '画像の生成に失敗しました');
       return null;
     }
+  }
+
+  function downloadOnWeb(dataUri: string) {
+    const link = document.createElement('a');
+    link.download = `kansen-kiroku_${date || 'photo'}.png`;
+    link.href = dataUri;
+    link.click();
   }
 
   async function handleSaveToLibrary() {
@@ -107,6 +118,15 @@ export default function CreateScreen() {
     try {
       const uri = await capture();
       if (!uri) return;
+
+      if (Platform.OS === 'web') {
+        // Webではダウンロードとして保存
+        downloadOnWeb(uri);
+        return;
+      }
+
+      // ネイティブのみ: expo-media-libraryを動的に読み込む(Webでは読み込むだけでエラーになるため)
+      const MediaLibrary = await import('expo-media-library');
       const perm = await MediaLibrary.requestPermissionsAsync();
       if (!perm.granted) {
         Alert.alert('権限が必要です', '写真アプリへの保存を許可してください');
@@ -124,6 +144,23 @@ export default function CreateScreen() {
     try {
       const uri = await capture();
       if (!uri) return;
+
+      if (Platform.OS === 'web') {
+        // Web Share API(ファイル共有)が使えれば共有、なければダウンロード
+        try {
+          const blob = await (await fetch(uri)).blob();
+          const file = new File([blob], `kansen-kiroku_${date || 'photo'}.png`, { type: 'image/png' });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: '観戦きろく' });
+            return;
+          }
+        } catch {
+          // 共有キャンセルや未対応の場合はダウンロードにフォールバック
+        }
+        downloadOnWeb(uri);
+        return;
+      }
+
       const available = await Sharing.isAvailableAsync();
       if (!available) {
         Alert.alert('共有できません', 'この端末では共有機能が利用できません');
