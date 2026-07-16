@@ -57,11 +57,7 @@ export default function CreateScreen() {
 
   return (
     <ThemedView style={styles.screen}>
-      <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: BottomTabInset + Spacing.four },
-        ]}>
+      <ScrollView style={[styles.scroll, { flex: 1 }]} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <ThemedText type="small" themeColor="accent" style={styles.eyebrow}>
             KANSEN KIROKU
@@ -196,55 +192,66 @@ export default function CreateScreen() {
             </Text>
           </Pressable>
         )}
-
-        <View
-          style={recordOnly ? styles.disabledSection : undefined}
-          pointerEvents={recordOnly ? 'none' : 'auto'}>
-          <Pressable
-            onPress={pickPhoto}
-            style={[styles.photoBtn, { borderColor: colors.border, backgroundColor: colors.backgroundElement }]}>
-            <Ionicons name="image" size={17} color={colors.accent} />
-            <Text style={{ color: colors.text, fontSize: 14 }}>
-              {photoUri ? '写真を変更' : '写真を選ぶ'}
-            </Text>
-          </Pressable>
-
-          {photoUri && (
-            <Pressable
-              onPress={() => router.push('/adjust')}
-              style={[styles.adjustBtn, { borderColor: colors.accent }]}>
-              <Ionicons name="crop" size={17} color={colors.accent} />
-              <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>写真を調整する</Text>
-            </Pressable>
-          )}
-
-          {photoUri && (
-            <Pressable onPress={clearPhoto} style={styles.clearPhoto}>
-              <ThemedText type="small" themeColor="danger">
-                写真をクリア
-              </ThemedText>
-            </Pressable>
-          )}
-        </View>
       </ScrollView>
+
+      {/* 写真を選ぶ操作は、フォームの長さに関わらず常に画面下部(タブバーの直上)に固定する */}
+      <View
+        style={[
+          styles.bottomSection,
+          { paddingBottom: BottomTabInset + Spacing.three },
+          recordOnly && styles.disabledSection,
+        ]}
+        pointerEvents={recordOnly ? 'none' : 'auto'}>
+        <Pressable
+          onPress={pickPhoto}
+          style={[styles.photoBtn, { borderColor: colors.border, backgroundColor: colors.backgroundElement }]}>
+          <Ionicons name="image" size={17} color={colors.accent} />
+          <Text style={{ color: colors.text, fontSize: 14 }}>{photoUri ? '写真を変更' : '写真を選ぶ'}</Text>
+        </Pressable>
+
+        {photoUri && (
+          <Pressable
+            onPress={() => router.push('/adjust')}
+            style={[styles.adjustBtn, { borderColor: colors.accent }]}>
+            <Ionicons name="crop" size={17} color={colors.accent} />
+            <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>写真を調整する</Text>
+          </Pressable>
+        )}
+
+        {photoUri && (
+          <Pressable onPress={clearPhoto} style={styles.clearPhoto}>
+            <ThemedText type="small" themeColor="danger">
+              写真をクリア
+            </ThemedText>
+          </Pressable>
+        )}
+      </View>
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: Spacing.four,
+  scroll: {
     maxWidth: MaxContentWidth,
     width: '100%',
     alignSelf: 'center',
+  },
+  scrollContent: {
+    padding: Spacing.four,
+    paddingBottom: Spacing.four,
   },
   header: { marginBottom: Spacing.three },
   eyebrow: { letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 },
   title: { fontSize: 26, lineHeight: 32 },
   disabledSection: { opacity: 0.35 },
+  bottomSection: {
+    maxWidth: MaxContentWidth,
+    width: '100%',
+    alignSelf: 'center',
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.two,
+  },
   photoBtn: {
     flexDirection: 'row',
     alignItems: 'center',
