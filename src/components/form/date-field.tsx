@@ -27,6 +27,16 @@ export function formatDateJP(isoStr: string): string {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} (${wd})`;
 }
 
+const WEEKDAY_LABELS_EN = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+
+/** 画像テロップ用の日付表記（例: 2026.07.15 WED）。英語曜日の大文字で写真映えを優先する。 */
+export function formatDateOverlay(isoStr: string): string {
+  const d = parseISODate(isoStr);
+  if (!d) return isoStr;
+  const wd = WEEKDAY_LABELS_EN[d.getDay()];
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${wd}`;
+}
+
 function startOfDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }

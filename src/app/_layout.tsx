@@ -1,5 +1,5 @@
-import { JetBrainsMono_400Regular, JetBrainsMono_500Medium } from '@expo-google-fonts/jetbrains-mono';
-import { Oswald_600SemiBold, Oswald_700Bold } from '@expo-google-fonts/oswald';
+import { BebasNeue_400Regular } from '@expo-google-fonts/bebas-neue';
+import { Montserrat_500Medium, Montserrat_600SemiBold } from '@expo-google-fonts/montserrat';
 import { useFonts } from 'expo-font';
 import { DarkTheme, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -13,10 +13,9 @@ SplashScreen.preventAutoHideAsync();
 
 export default function TabLayout() {
   const [fontsLoaded, fontError] = useFonts({
-    Oswald_600SemiBold,
-    Oswald_700Bold,
-    JetBrainsMono_400Regular,
-    JetBrainsMono_500Medium,
+    BebasNeue_400Regular,
+    Montserrat_500Medium,
+    Montserrat_600SemiBold,
   });
 
   // ネイティブではフォント読み込み完了(または失敗)までスプラッシュを表示。

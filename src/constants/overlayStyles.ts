@@ -15,10 +15,18 @@ export const DEFAULT_PHOTO_SCALE = MIN_PHOTO_SCALE;
 
 export interface OverlayPalette {
   label: string;
+  /** チームコードなど本文の色 */
   body: string;
+  /** 日付・勝者スコアなど差し色 */
   accent: string;
+  /** 敗者スコアなど沈ませる色 */
   dim: string;
+  /** 球場・メモなど小さめテキストの色 */
   caption: string;
+  /** 区切り線の色 */
+  divider: string;
+  /** 写真とテキストの間に敷くグラデーション(スクリム)の濃い側の色 */
+  scrim: string;
   gradientFrom: string;
   gradientTo: string;
 }
@@ -26,28 +34,34 @@ export interface OverlayPalette {
 export const OVERLAY_STYLES: Record<OverlayStyleKey, OverlayPalette> = {
   amber: {
     label: 'ナイター（アンバー）',
-    body: '#ECE9E1',
-    accent: '#FFB627',
-    dim: 'rgba(236,233,225,0.55)',
-    caption: 'rgba(236,233,225,0.8)',
+    body: '#FFFFFF',
+    accent: '#F2B04E',
+    dim: 'rgba(255,255,255,0.38)',
+    caption: 'rgba(255,255,255,0.92)',
+    divider: 'rgba(255,255,255,0.5)',
+    scrim: 'rgba(8,10,18,0.72)',
     gradientFrom: '#0B1220',
     gradientTo: '#1a2740',
   },
   mono: {
     label: 'デイゲーム（モノクロ）',
-    body: '#F2F2F2',
+    body: '#FFFFFF',
     accent: '#FFFFFF',
-    dim: 'rgba(255,255,255,0.5)',
-    caption: 'rgba(255,255,255,0.82)',
+    dim: 'rgba(255,255,255,0.38)',
+    caption: 'rgba(255,255,255,0.88)',
+    divider: 'rgba(255,255,255,0.5)',
+    scrim: 'rgba(10,10,12,0.66)',
     gradientFrom: '#161616',
     gradientTo: '#2b2b2b',
   },
   green: {
     label: 'レトロ（グリーン）',
-    body: '#BFE8CC',
-    accent: '#4CFF7A',
-    dim: 'rgba(191,232,204,0.5)',
-    caption: 'rgba(191,232,204,0.82)',
+    body: '#F4EDDC',
+    accent: '#8FE0B4',
+    dim: 'rgba(244,237,220,0.4)',
+    caption: 'rgba(244,237,220,0.9)',
+    divider: 'rgba(244,237,220,0.45)',
+    scrim: 'rgba(7,19,11,0.72)',
     gradientFrom: '#07130A',
     gradientTo: '#0f2617',
   },

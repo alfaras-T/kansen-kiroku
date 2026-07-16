@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { LayoutChangeEvent, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { formatDateJP } from '@/components/form/date-field';
+import { formatDateOverlay } from '@/components/form/date-field';
 import { OverlayCard } from '@/components/overlay-card';
 import { ThemedText } from '@/components/themed-text';
 import {
@@ -126,7 +126,7 @@ export default function AdjustScreen() {
                   homeCode={homeTeamName}
                   visitorScore={visitorScore || '0'}
                   homeScore={homeScore || '0'}
-                  dateLabel={formatDateJP(date)}
+                  dateLabel={formatDateOverlay(date)}
                   stadium={stadiumName}
                   memo={memo}
                   winHighlight={winHighlight}

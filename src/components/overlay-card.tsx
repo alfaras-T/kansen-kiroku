@@ -211,20 +211,32 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
   const isRight = position === 'br' || position === 'tr';
   const isBottom = position === 'br' || position === 'bl';
 
-  let vColor = palette.accent;
-  let hColor = palette.accent;
+  // 勝敗ハイライト: OFFのときは両スコアとも本文色。
+  // ONのときは勝者側だけ差し色にし、敗者側を沈ませる（同点なら変化なし）。
+  let vColor = palette.body;
+  let hColor = palette.body;
   if (winHighlight) {
     const v = Number(visitorScore);
     const h = Number(homeScore);
-    if (v > h) hColor = palette.dim;
-    else if (h > v) vColor = palette.dim;
+    if (v > h) {
+      vColor = palette.accent;
+      hColor = palette.dim;
+    } else if (h > v) {
+      hColor = palette.accent;
+      vColor = palette.dim;
+    }
   }
 
   const textShadow = {
-    textShadowColor: 'rgba(0,0,0,0.65)',
+    textShadowColor: 'rgba(0,0,0,0.45)',
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    textShadowRadius: 6,
   } as const;
+
+  // 写真とテキストの間に敷くスクリム(グラデーション)。テロップのある側の端から
+  // 透明に抜けていく。テキストの視認性を上げつつ写真の雰囲気を壊さない、
+  // ポスターや映画の字幕帯と同じ手法。
+  const scrimHeightPct = '46%' as const;
 
   return (
     <View
@@ -263,14 +275,25 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
         />
       )}
 
+      {photoUri && (
+        <LinearGradient
+          pointerEvents="none"
+          colors={isBottom ? ['transparent', palette.scrim] : [palette.scrim, 'transparent']}
+          style={[
+            styles.scrim,
+            isBottom ? { bottom: 0, height: scrimHeightPct } : { top: 0, height: scrimHeightPct },
+          ]}
+        />
+      )}
+
       <View
         pointerEvents="none"
         style={[
           styles.overlayBlock,
-          isBottom ? { bottom: 18 } : { top: 18 },
-          isRight ? { right: 18 } : { left: 18 },
+          isBottom ? { bottom: 20 } : { top: 20 },
+          isRight ? { right: 20 } : { left: 20 },
         ]}>
-        <Text style={[styles.dateLine, textShadow, { color: palette.caption }]} numberOfLines={1}>
+        <Text style={[styles.dateLine, textShadow, { color: palette.accent }]} numberOfLines={1}>
           {dateLabel}
         </Text>
 
@@ -278,16 +301,18 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
           <Text style={[styles.code, textShadow, { color: palette.body }]} numberOfLines={1}>
             {visitorCode}
           </Text>
-          <Text style={[styles.score, textShadow, { color: vColor }]}> {visitorScore}</Text>
-          <Text style={[styles.score, textShadow, { color: palette.dim }]}> – </Text>
-          <Text style={[styles.score, textShadow, { color: hColor }]}>{homeScore} </Text>
+          <Text style={[styles.score, textShadow, { color: vColor }]}>{visitorScore}</Text>
+          <Text style={[styles.scoreDash, textShadow, { color: palette.dim }]}>–</Text>
+          <Text style={[styles.score, textShadow, { color: hColor }]}>{homeScore}</Text>
           <Text style={[styles.code, textShadow, { color: palette.body }]} numberOfLines={1}>
             {homeCode}
           </Text>
         </View>
 
+        <View style={[styles.divider, { backgroundColor: palette.divider }]} />
+
         <Text style={[styles.stadiumLine, textShadow, { color: palette.caption }]} numberOfLines={1}>
-          <Text style={styles.pinEmoji}>📍</Text> {stadium}
+          {stadium}
         </Text>
 
         {!!memo && (
@@ -316,44 +341,63 @@ const styles = StyleSheet.create({
   },
   overlayBlock: {
     position: 'absolute',
-    maxWidth: '86%',
+    maxWidth: '88%',
     alignItems: 'center',
+  },
+  scrim: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
   },
   scoreRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
+    marginTop: 3,
   },
   code: {
-    fontFamily: 'Oswald_600SemiBold',
-    fontSize: 20,
-    lineHeight: 22,
+    fontFamily: 'BebasNeue_400Regular',
+    fontSize: 21,
+    lineHeight: 24,
+    letterSpacing: 1.5,
     flexShrink: 1,
-    maxWidth: 110,
+    maxWidth: 120,
   },
   score: {
-    fontFamily: 'Oswald_700Bold',
-    fontSize: 26,
-    lineHeight: 28,
+    fontFamily: 'BebasNeue_400Regular',
+    fontSize: 34,
+    lineHeight: 36,
+    letterSpacing: 1,
+    marginHorizontal: 7,
+  },
+  scoreDash: {
+    fontFamily: 'BebasNeue_400Regular',
+    fontSize: 22,
+    lineHeight: 36,
   },
   dateLine: {
-    fontFamily: 'JetBrainsMono_500Medium',
-    fontSize: 12,
+    fontFamily: 'Montserrat_600SemiBold',
+    fontSize: 10.5,
     lineHeight: 14,
-    marginBottom: 1,
+    letterSpacing: 3.5,
+  },
+  divider: {
+    width: 30,
+    height: StyleSheet.hairlineWidth * 2,
+    marginTop: 5,
+    marginBottom: 7,
   },
   stadiumLine: {
-    fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 12,
-    lineHeight: 14,
-    marginTop: 1,
-  },
-  pinEmoji: {
-    fontSize: 10,
+    lineHeight: 16,
+    fontWeight: '600',
+    letterSpacing: 2.5,
   },
   memo: {
-    fontFamily: 'JetBrainsMono_400Regular',
-    fontSize: 11,
-    lineHeight: 13,
-    marginTop: 1,
+    fontSize: 10.5,
+    lineHeight: 14,
+    fontWeight: '500',
+    letterSpacing: 1,
+    marginTop: 3,
+    opacity: 0.85,
   },
 });
