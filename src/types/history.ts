@@ -7,8 +7,5 @@ export interface HistoryEntry {
   homeCode: string;
   visitorScore: string;
   homeScore: string;
-  isDraw: boolean;
-  isExtra: boolean;
-  extraInning: string;
   memo: string;
 }

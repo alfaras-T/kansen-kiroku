@@ -59,9 +59,6 @@ export default function AdjustScreen() {
     homeScore,
     date,
     stadiumName,
-    isDraw,
-    isExtra,
-    extraInning,
     memo,
     saving,
     handleSaveToLibrary,
@@ -131,9 +128,6 @@ export default function AdjustScreen() {
                   homeScore={homeScore || '0'}
                   dateLabel={formatDateJP(date)}
                   stadium={stadiumName}
-                  isDraw={isDraw}
-                  isExtra={isExtra}
-                  extraInning={extraInning}
                   memo={memo}
                   winHighlight={winHighlight}
                   photoOffset={photoOffset}

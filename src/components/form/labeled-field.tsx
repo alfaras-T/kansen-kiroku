@@ -20,11 +20,11 @@ export function LabeledField({
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginBottom: 16 },
+  wrap: { marginBottom: 0 },
   label: {
     fontSize: 11,
     letterSpacing: 1,
     textTransform: 'uppercase',
-    marginBottom: 6,
+    marginBottom: 5,
   },
 });

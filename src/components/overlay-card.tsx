@@ -38,9 +38,6 @@ export interface OverlayCardProps {
   homeScore: string;
   dateLabel: string;
   stadium: string;
-  isDraw: boolean;
-  isExtra: boolean;
-  extraInning: string;
   memo: string;
   winHighlight: boolean;
   /** 写真の表示位置オフセット（-1〜1、0が中央）。ドラッグで変更される。 */
@@ -76,13 +73,6 @@ function touchDistance(touches: { pageX: number; pageY: number }[]): number {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-function buildDateLine(props: OverlayCardProps): string {
-  let line = props.dateLabel;
-  if (props.isDraw) line += ' ・引き分け';
-  else if (props.isExtra) line += ` ・延長${props.extraInning}回`;
-  return line;
-}
-
 export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCard(props, ref) {
   const {
     photoUri,
@@ -94,10 +84,10 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
     homeCode,
     visitorScore,
     homeScore,
-    isDraw,
     winHighlight,
     memo,
     stadium,
+    dateLabel,
     photoOffset = DEFAULT_PHOTO_OFFSET,
     onPhotoOffsetChange,
     photoScale = DEFAULT_PHOTO_SCALE,
@@ -223,14 +213,13 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
 
   let vColor = palette.accent;
   let hColor = palette.accent;
-  if (winHighlight && !isDraw) {
+  if (winHighlight) {
     const v = Number(visitorScore);
     const h = Number(homeScore);
     if (v > h) hColor = palette.dim;
     else if (h > v) vColor = palette.dim;
   }
 
-  const dateLine = buildDateLine(props);
   const textShadow = {
     textShadowColor: 'rgba(0,0,0,0.65)',
     textShadowOffset: { width: 0, height: 1 },
@@ -279,10 +268,10 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
         style={[
           styles.overlayBlock,
           isBottom ? { bottom: 18 } : { top: 18 },
-          isRight ? { right: 18, alignItems: 'flex-end' } : { left: 18, alignItems: 'flex-start' },
+          isRight ? { right: 18 } : { left: 18 },
         ]}>
         <Text style={[styles.dateLine, textShadow, { color: palette.caption }]} numberOfLines={1}>
-          {dateLine}
+          {dateLabel}
         </Text>
 
         <View style={styles.scoreRow}>
@@ -328,6 +317,7 @@ const styles = StyleSheet.create({
   overlayBlock: {
     position: 'absolute',
     maxWidth: '86%',
+    alignItems: 'center',
   },
   scoreRow: {
     flexDirection: 'row',
@@ -342,8 +332,8 @@ const styles = StyleSheet.create({
   },
   score: {
     fontFamily: 'Oswald_700Bold',
-    fontSize: 32,
-    lineHeight: 34,
+    fontSize: 26,
+    lineHeight: 28,
   },
   dateLine: {
     fontFamily: 'JetBrainsMono_500Medium',

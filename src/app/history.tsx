@@ -97,9 +97,7 @@ export default function HistoryScreen() {
           ) : null
         }
         renderItem={({ item }) => {
-          let resultTag = '';
-          if (item.isDraw) resultTag = ' ・引分';
-          else if (item.isExtra) resultTag = ` ・延長${item.extraInning}回`;
+          const resultTag = item.visitorScore === item.homeScore ? ' ・引分' : '';
 
           return (
             <View style={[styles.row, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>

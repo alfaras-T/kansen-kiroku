@@ -67,12 +67,6 @@ interface CreateFormContextValue {
   setVisitorScore: (v: string) => void;
   homeScore: string;
   setHomeScore: (v: string) => void;
-  isDraw: boolean;
-  setIsDraw: (v: boolean) => void;
-  isExtra: boolean;
-  setIsExtra: (v: boolean) => void;
-  extraInning: string;
-  setExtraInning: (v: string) => void;
   memo: string;
   setMemo: (v: string) => void;
 
@@ -119,9 +113,6 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
   const [homeTeamOther, setHomeTeamOther] = useState('');
   const [visitorScore, setVisitorScore] = useState('3');
   const [homeScore, setHomeScore] = useState('1');
-  const [isDraw, setIsDraw] = useState(false);
-  const [isExtra, setIsExtra] = useState(false);
-  const [extraInning, setExtraInning] = useState('12');
   const [memo, setMemo] = useState('');
 
   const [saving, setSaving] = useState(false);
@@ -268,9 +259,6 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
       homeCode: homeTeamName,
       visitorScore: visitorScore || '0',
       homeScore: homeScore || '0',
-      isDraw,
-      isExtra,
-      extraInning,
       memo: memo.trim(),
     };
     await addHistoryEntry(entry);
@@ -326,12 +314,6 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     setVisitorScore,
     homeScore,
     setHomeScore,
-    isDraw,
-    setIsDraw,
-    isExtra,
-    setIsExtra,
-    extraInning,
-    setExtraInning,
     memo,
     setMemo,
     saving,

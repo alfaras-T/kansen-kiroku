@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DateField } from '@/components/form/date-field';
 import { LabeledField } from '@/components/form/labeled-field';
@@ -9,7 +10,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { OTHER_STADIUM, STADIUMS } from '@/constants/stadiums';
 import { OTHER_TEAM, TEAMS } from '@/constants/teams';
-import { BottomTabInset, Colors, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Colors, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useCreateForm } from '@/contexts/create-form';
 
 const TEAM_OPTIONS = [
@@ -47,12 +48,6 @@ export default function CreateScreen() {
     setVisitorScore,
     homeScore,
     setHomeScore,
-    isDraw,
-    setIsDraw,
-    isExtra,
-    setIsExtra,
-    extraInning,
-    setExtraInning,
     memo,
     setMemo,
     savedFlash,
@@ -63,44 +58,33 @@ export default function CreateScreen() {
 
   return (
     <ThemedView style={styles.screen}>
-      <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: BottomTabInset + Spacing.six },
-        ]}>
-        <View style={styles.header}>
-          <ThemedText type="small" themeColor="accent" style={styles.eyebrow}>
-            KANSEN KIROKU
-          </ThemedText>
-          <ThemedText type="title" style={styles.title}>
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        <View style={styles.headerRow}>
+          <ThemedText type="smallBold" style={styles.title}>
             観戦きろく
           </ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            写真に日付・スコア・球場を重ねて保存・共有できます。
-          </ThemedText>
-        </View>
-
-        <View style={styles.card}>
-          <View style={styles.switchRow}>
-            <ThemedText type="default">観戦記録のみ保存（写真なし）</ThemedText>
+          <View style={styles.recordOnlyRow}>
+            <ThemedText type="small" themeColor="textSecondary">
+              記録のみ（写真なし）
+            </ThemedText>
             <Switch
               value={recordOnly}
               onValueChange={setRecordOnly}
               trackColor={{ true: colors.accent, false: colors.border }}
+              style={styles.smallSwitch}
             />
           </View>
         </View>
 
-        <View style={styles.card}>
-          <ThemedText type="smallBold" style={styles.sectionTitle}>
-            試合情報
-          </ThemedText>
+        <View style={styles.field}>
+          <DateField value={date} onChange={setDate} />
+        </View>
 
-          <LabeledField label="試合日">
-            <DateField value={date} onChange={setDate} />
-          </LabeledField>
-
-          <LabeledField label="先攻（ビジター）">
+        <View style={styles.teamsRow}>
+          <View style={styles.teamCol}>
+            <ThemedText type="small" themeColor="textSecondary" style={styles.miniLabel}>
+              先攻
+            </ThemedText>
             <View style={styles.teamRow}>
               <View style={{ flex: 1 }}>
                 <SelectModal
@@ -124,17 +108,20 @@ export default function CreateScreen() {
               <TextInput
                 value={visitorTeamOther}
                 onChangeText={setVisitorTeamOther}
-                placeholder="チーム名を入力"
+                placeholder="チーム名"
                 placeholderTextColor={colors.textSecondary}
                 style={[
                   styles.textInput,
-                  { marginTop: 8, borderColor: colors.border, backgroundColor: colors.backgroundElement, color: colors.text },
+                  { marginTop: 6, borderColor: colors.border, backgroundColor: colors.backgroundElement, color: colors.text },
                 ]}
               />
             )}
-          </LabeledField>
+          </View>
 
-          <LabeledField label="後攻（ホーム）">
+          <View style={styles.teamCol}>
+            <ThemedText type="small" themeColor="textSecondary" style={styles.miniLabel}>
+              後攻
+            </ThemedText>
             <View style={styles.teamRow}>
               <View style={{ flex: 1 }}>
                 <SelectModal
@@ -158,74 +145,44 @@ export default function CreateScreen() {
               <TextInput
                 value={homeTeamOther}
                 onChangeText={setHomeTeamOther}
-                placeholder="チーム名を入力"
+                placeholder="チーム名"
                 placeholderTextColor={colors.textSecondary}
                 style={[
                   styles.textInput,
-                  { marginTop: 8, borderColor: colors.border, backgroundColor: colors.backgroundElement, color: colors.text },
+                  { marginTop: 6, borderColor: colors.border, backgroundColor: colors.backgroundElement, color: colors.text },
                 ]}
               />
             )}
-          </LabeledField>
-
-          <LabeledField label="📍 球場">
-            <SelectModal title="球場を選択" options={STADIUM_OPTIONS} value={stadium} onChange={setStadium} />
-            {stadium === OTHER_STADIUM && (
-              <TextInput
-                value={stadiumOther}
-                onChangeText={setStadiumOther}
-                placeholder="球場名を入力"
-                placeholderTextColor={colors.textSecondary}
-                style={[
-                  styles.textInput,
-                  { marginTop: 8, borderColor: colors.border, backgroundColor: colors.backgroundElement, color: colors.text },
-                ]}
-              />
-            )}
-          </LabeledField>
-
-          <View style={styles.switchRow}>
-            <ThemedText type="default">引き分け</ThemedText>
-            <Switch
-              value={isDraw}
-              onValueChange={setIsDraw}
-              trackColor={{ true: colors.accent, false: colors.border }}
-            />
           </View>
-          <View style={styles.switchRow}>
-            <ThemedText type="default">延長</ThemedText>
-            <Switch
-              value={isExtra}
-              onValueChange={setIsExtra}
-              trackColor={{ true: colors.accent, false: colors.border }}
-            />
-          </View>
-          {isExtra && (
-            <LabeledField label="最終回">
-              <TextInput
-                value={extraInning}
-                onChangeText={setExtraInning}
-                keyboardType="number-pad"
-                style={[
-                  styles.scoreInput,
-                  { width: 80, borderColor: colors.border, backgroundColor: colors.backgroundElement, color: colors.text },
-                ]}
-              />
-            </LabeledField>
-          )}
+        </View>
 
-          <LabeledField label="自由メモ（任意）">
+        <LabeledField label="📍 球場">
+          <SelectModal title="球場を選択" options={STADIUM_OPTIONS} value={stadium} onChange={setStadium} />
+          {stadium === OTHER_STADIUM && (
             <TextInput
-              value={memo}
-              onChangeText={setMemo}
-              placeholder="例：3塁側内野、記念日など"
+              value={stadiumOther}
+              onChangeText={setStadiumOther}
+              placeholder="球場名を入力"
               placeholderTextColor={colors.textSecondary}
               style={[
                 styles.textInput,
-                { borderColor: colors.border, backgroundColor: colors.backgroundElement, color: colors.text },
+                { marginTop: 6, borderColor: colors.border, backgroundColor: colors.backgroundElement, color: colors.text },
               ]}
             />
-          </LabeledField>
+          )}
+        </LabeledField>
+
+        <View style={styles.field}>
+          <TextInput
+            value={memo}
+            onChangeText={setMemo}
+            placeholder="自由メモ（任意）"
+            placeholderTextColor={colors.textSecondary}
+            style={[
+              styles.textInput,
+              { borderColor: colors.border, backgroundColor: colors.backgroundElement, color: colors.text },
+            ]}
+          />
         </View>
 
         {recordOnly && (
@@ -237,13 +194,13 @@ export default function CreateScreen() {
         )}
 
         <View
-          style={recordOnly ? styles.disabledSection : undefined}
+          style={[styles.photoSection, recordOnly && styles.disabledSection]}
           pointerEvents={recordOnly ? 'none' : 'auto'}>
           <Pressable
             onPress={pickPhoto}
             style={[styles.photoBtn, { borderColor: colors.border, backgroundColor: colors.backgroundElement }]}>
-            <Ionicons name="image" size={17} color={colors.accent} />
-            <Text style={{ color: colors.text, fontSize: 14 }}>
+            <Ionicons name="image" size={16} color={colors.accent} />
+            <Text style={{ color: colors.text, fontSize: 13.5 }}>
               {photoUri ? '写真を変更' : '写真を選ぶ'}
             </Text>
           </Pressable>
@@ -252,8 +209,8 @@ export default function CreateScreen() {
             <Pressable
               onPress={() => router.push('/adjust')}
               style={[styles.adjustBtn, { borderColor: colors.accent }]}>
-              <Ionicons name="crop" size={17} color={colors.accent} />
-              <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>写真を調整する</Text>
+              <Ionicons name="crop" size={16} color={colors.accent} />
+              <Text style={{ color: colors.accent, fontSize: 13.5, fontWeight: '600' }}>写真を調整する</Text>
             </Pressable>
           )}
 
@@ -265,23 +222,41 @@ export default function CreateScreen() {
             </Pressable>
           )}
         </View>
-      </ScrollView>
+      </SafeAreaView>
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  scrollContent: {
-    padding: Spacing.four,
+  safe: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.four,
     maxWidth: MaxContentWidth,
     width: '100%',
     alignSelf: 'center',
+    gap: 10,
   },
-  header: { marginBottom: Spacing.four },
-  eyebrow: { letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 },
-  title: { fontSize: 30, lineHeight: 36, marginBottom: 6 },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  title: { fontSize: 16 },
+  recordOnlyRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  smallSwitch: { transform: [{ scale: 0.8 }] },
   disabledSection: { opacity: 0.35 },
+  field: {},
+  miniLabel: {
+    fontSize: 11,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 5,
+  },
+  teamsRow: { flexDirection: 'row', gap: 10 },
+  teamCol: { flex: 1 },
+  photoSection: {},
   photoBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -289,8 +264,8 @@ const styles = StyleSheet.create({
     gap: 8,
     borderWidth: 1,
     borderRadius: 8,
-    paddingVertical: 12,
-    marginBottom: 8,
+    paddingVertical: 10,
+    marginBottom: 6,
   },
   adjustBtn: {
     flexDirection: 'row',
@@ -299,45 +274,31 @@ const styles = StyleSheet.create({
     gap: 8,
     borderWidth: 1.5,
     borderRadius: 8,
-    paddingVertical: 12,
-    marginBottom: 8,
+    paddingVertical: 10,
+    marginBottom: 6,
   },
-  clearPhoto: { alignSelf: 'center', marginBottom: Spacing.three, padding: 4 },
-  card: {
-    marginBottom: Spacing.four,
-  },
-  sectionTitle: {
-    marginBottom: 12,
-    letterSpacing: 0.5,
-  },
-  teamRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  clearPhoto: { alignSelf: 'center', padding: 2 },
+  teamRow: { flexDirection: 'row', gap: 6, alignItems: 'center' },
   scoreInput: {
-    width: 64,
+    width: 48,
     borderWidth: 1,
     borderRadius: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    fontSize: 15,
+    paddingVertical: 7,
+    paddingHorizontal: 6,
+    fontSize: 14,
     textAlign: 'center',
   },
   textInput: {
     borderWidth: 1,
     borderRadius: 6,
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 12,
     fontSize: 14,
-  },
-  switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
   },
   recordBtn: {
     borderWidth: 1,
     borderRadius: 8,
-    paddingVertical: 12,
+    paddingVertical: 10,
     alignItems: 'center',
-    marginBottom: Spacing.four,
   },
 });

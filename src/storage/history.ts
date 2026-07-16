@@ -70,13 +70,12 @@ export function computeRecord(entries: HistoryEntry[], myTeam: string) {
   let draw = 0;
   entries.forEach((e) => {
     if (e.visitorCode !== myTeam && e.homeCode !== myTeam) return;
-    if (e.isDraw) {
+    const v = Number(e.visitorScore);
+    const h = Number(e.homeScore);
+    if (v === h) {
       draw += 1;
       return;
     }
-    const v = Number(e.visitorScore);
-    const h = Number(e.homeScore);
-    if (v === h) return;
     const winnerCode = v > h ? e.visitorCode : e.homeCode;
     if (winnerCode === myTeam) win += 1;
     else lose += 1;
