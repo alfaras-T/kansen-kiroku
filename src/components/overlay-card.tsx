@@ -59,6 +59,12 @@ function clamp(value: number, min: number, max: number): number {
 // ピンチ操作の感度倍率。1だと指の距離変化にそのまま比例、大きいほど
 // 少しの指の動きで大きくズームする。
 const PINCH_SENSITIVITY = 3.5;
+// ドラッグ操作の感度倍率。1だと指の移動量にそのまま比例、大きいほど
+// 少しの指の移動で大きく位置が動く。
+const PAN_SENSITIVITY = 2.5;
+// ダブルタップと判定する最大間隔(ms)・最大移動量(px)
+const DOUBLE_TAP_MAX_INTERVAL_MS = 300;
+const TAP_MAX_MOVEMENT_PX = 10;
 
 function touchDistance(touches: { pageX: number; pageY: number }[]): number {
   const [a, b] = touches;
@@ -117,6 +123,7 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
   const pinchStartDistance = useRef(0);
   const pinchStartScale = useRef(photoScale);
   const lastTouchCount = useRef(0);
+  const lastTapTime = useRef(0);
 
   const panResponderRef = useRef<ReturnType<typeof PanResponder.create> | null>(null);
   if (panResponderRef.current === null) {
@@ -145,10 +152,11 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
         const onOffsetChange = onOffsetChangeRef.current;
         if (onOffsetChange) {
           const { x: mx, y: my } = maxShiftRef.current;
-          const nextX =
-            mx > 0 ? clamp(dragStartOffset.current.x + gesture.dx / mx, -1, 1) : dragStartOffset.current.x;
-          const nextY =
-            my > 0 ? clamp(dragStartOffset.current.y + gesture.dy / my, -1, 1) : dragStartOffset.current.y;
+          // 指の移動量を感度倍率で増幅してから反映する
+          const ampDx = gesture.dx * PAN_SENSITIVITY;
+          const ampDy = gesture.dy * PAN_SENSITIVITY;
+          const nextX = mx > 0 ? clamp(dragStartOffset.current.x + ampDx / mx, -1, 1) : dragStartOffset.current.x;
+          const nextY = my > 0 ? clamp(dragStartOffset.current.y + ampDy / my, -1, 1) : dragStartOffset.current.y;
           onOffsetChange({ x: nextX, y: nextY });
         }
       }
@@ -169,6 +177,22 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
         }
       },
       onPanResponderMove: handleTouches,
+      onPanResponderRelease: (_evt, gesture) => {
+        // 指をほぼ動かさずに離した = タップ。300ms以内の2回目のタップならダブルタップとして
+        // 「余白のない最小ズーム・中央位置」にリセットする。
+        const wasTap =
+          Math.abs(gesture.dx) < TAP_MAX_MOVEMENT_PX && Math.abs(gesture.dy) < TAP_MAX_MOVEMENT_PX;
+        if (wasTap) {
+          const now = Date.now();
+          if (now - lastTapTime.current < DOUBLE_TAP_MAX_INTERVAL_MS) {
+            onScaleChangeRef.current?.(MIN_PHOTO_SCALE);
+            onOffsetChangeRef.current?.({ x: 0, y: 0 });
+            lastTapTime.current = 0;
+          } else {
+            lastTapTime.current = now;
+          }
+        }
+      },
     });
   }
   const panResponder = panResponderRef.current;

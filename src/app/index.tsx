@@ -74,7 +74,7 @@ export default function CreateScreen() {
   const [recordOnly, setRecordOnly] = useState(false);
 
   const [date, setDate] = useState(todayISO());
-  const [stadium, setStadium] = useState<string>(STADIUMS[0]);
+  const [stadium, setStadium] = useState<string>('東京ドーム');
   const [stadiumOther, setStadiumOther] = useState('');
   const [visitorCode, setVisitorCode] = useState<string>('T');
   const [homeCode, setHomeCode] = useState<string>('G');
@@ -447,7 +447,7 @@ export default function CreateScreen() {
               }}
               style={styles.clearPhoto}>
               <ThemedText type="small" themeColor="danger">
-                写真をクリア（背景のみで作成）
+                写真をクリア
               </ThemedText>
             </Pressable>
           )}
@@ -483,14 +483,6 @@ export default function CreateScreen() {
             <Text style={[styles.secondaryBtnText, { color: colors.text }]}>共有する</Text>
           </Pressable>
         </View>
-
-        {!recordOnly && (
-          <Pressable onPress={handleSaveRecord} style={[styles.recordBtn, { borderColor: colors.border }]}>
-            <Text style={{ color: colors.textSecondary, fontSize: 13.5 }}>
-              {savedFlash ? '保存しました ✓' : '観戦記録として保存（画像は保存しません）'}
-            </Text>
-          </Pressable>
-        )}
 
         <View
           style={[styles.card, styles.previewCard, recordOnly && styles.disabledSection]}
@@ -539,7 +531,7 @@ export default function CreateScreen() {
           {photoUri && (
             <>
               <ThemedText type="small" themeColor="textSecondary" style={styles.dragHint}>
-                写真をドラッグで位置調整、2本指のピンチで拡大縮小できます
+                ドラッグで位置調整、2本指のピンチで拡大縮小、ダブルタップで最小サイズに戻せます
               </ThemedText>
               <View style={styles.zoomRow}>
                 <Ionicons name="remove-circle-outline" size={18} color={colors.textSecondary} />
