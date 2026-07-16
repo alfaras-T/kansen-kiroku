@@ -1,8 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
-import { FlatList, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { formatDateJP } from '@/components/form/date-field';
 import { SelectModal } from '@/components/form/select-modal';
@@ -23,7 +22,6 @@ export default function HistoryScreen() {
   const [entries, setEntries] = useState<HistoryEntry[]>([]);
   const [myTeam, setMyTeam] = useState('');
   const [loaded, setLoaded] = useState(false);
-  const [selectedEntry, setSelectedEntry] = useState<HistoryEntry | null>(null);
 
   const refresh = useCallback(async () => {
     const [h, mt] = await Promise.all([loadHistory(), loadMyTeam()]);
@@ -46,7 +44,6 @@ export default function HistoryScreen() {
   async function handleDelete(id: string) {
     const next = await deleteHistoryEntry(id);
     setEntries(next);
-    setSelectedEntry((cur) => (cur?.id === id ? null : cur));
   }
 
   const record = computeRecord(entries, myTeam);
@@ -103,16 +100,7 @@ export default function HistoryScreen() {
           const resultTag = item.visitorScore === item.homeScore ? ' ・引分' : '';
 
           return (
-            <Pressable
-              onPress={() => setSelectedEntry(item)}
-              style={[styles.row, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
-              {item.photo ? (
-                <Image source={{ uri: item.photo }} style={styles.thumb} />
-              ) : (
-                <View style={[styles.thumb, styles.thumbPlaceholder, { borderColor: colors.border }]}>
-                  <Ionicons name="baseball-outline" size={18} color={colors.textSecondary} />
-                </View>
-              )}
+            <View style={[styles.row, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowMeta, { color: colors.textSecondary }]}>
                   {formatDateJP(item.date)} {item.stadium}
@@ -122,75 +110,16 @@ export default function HistoryScreen() {
                   {item.visitorCode} {item.visitorScore}–{item.homeScore} {item.homeCode}
                 </Text>
                 {!!item.memo && (
-                  <Text style={[styles.rowMemo, { color: colors.textSecondary }]} numberOfLines={1}>
-                    {item.memo}
-                  </Text>
+                  <Text style={[styles.rowMemo, { color: colors.textSecondary }]}>{item.memo}</Text>
                 )}
               </View>
               <Pressable onPress={() => handleDelete(item.id)} hitSlop={10} style={styles.delBtn}>
                 <Ionicons name="trash-outline" size={18} color={colors.danger} />
               </Pressable>
-            </Pressable>
+            </View>
           );
         }}
       />
-
-      <Modal
-        visible={!!selectedEntry}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setSelectedEntry(null)}>
-        <Pressable style={styles.backdrop} onPress={() => setSelectedEntry(null)} />
-        <SafeAreaView edges={['bottom']} style={[styles.sheet, { backgroundColor: colors.backgroundElement }]}>
-          {selectedEntry && (
-            <ScrollView contentContainerStyle={styles.sheetContent}>
-              <View style={styles.sheetHeader}>
-                <ThemedText type="smallBold">観戦記録</ThemedText>
-                <Pressable onPress={() => setSelectedEntry(null)} hitSlop={10}>
-                  <Ionicons name="close" size={22} color={colors.textSecondary} />
-                </Pressable>
-              </View>
-
-              {selectedEntry.photo ? (
-                <Image source={{ uri: selectedEntry.photo }} style={styles.detailPhoto} resizeMode="contain" />
-              ) : (
-                <View style={[styles.detailPhotoPlaceholder, { borderColor: colors.border }]}>
-                  <ThemedText type="small" themeColor="textSecondary">
-                    写真は保存されていません
-                  </ThemedText>
-                </View>
-              )}
-
-              <View style={styles.detailInfo}>
-                <ThemedText type="default" style={styles.detailScore}>
-                  {selectedEntry.visitorCode} {selectedEntry.visitorScore} – {selectedEntry.homeScore}{' '}
-                  {selectedEntry.homeCode}
-                  {selectedEntry.visitorScore === selectedEntry.homeScore ? '（引分）' : ''}
-                </ThemedText>
-                <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: 4 }}>
-                  {formatDateJP(selectedEntry.date)} ・ 📍 {selectedEntry.stadium}
-                </ThemedText>
-                {!!selectedEntry.memo && (
-                  <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: 8 }}>
-                    {selectedEntry.memo}
-                  </ThemedText>
-                )}
-              </View>
-
-              <Pressable
-                onPress={() => {
-                  const id = selectedEntry.id;
-                  setSelectedEntry(null);
-                  handleDelete(id);
-                }}
-                style={[styles.deleteRowBtn, { borderColor: colors.border }]}>
-                <Ionicons name="trash-outline" size={16} color={colors.danger} />
-                <Text style={{ color: colors.danger, fontSize: 13.5 }}>この記録を削除する</Text>
-              </Pressable>
-            </ScrollView>
-          )}
-        </SafeAreaView>
-      </Modal>
     </ThemedView>
   );
 }
@@ -215,56 +144,13 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    justifyContent: 'space-between',
     borderWidth: 1,
     borderRadius: 8,
     padding: 12,
   },
-  thumb: { width: 44, height: 44, borderRadius: 6 },
-  thumbPlaceholder: { alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
   rowMeta: { fontSize: 11.5, marginBottom: 4 },
   rowScore: { fontSize: 15, fontWeight: '600' },
   rowMemo: { fontSize: 11.5, marginTop: 3 },
   delBtn: { padding: 6 },
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
-  sheet: {
-    maxHeight: '85%',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-  sheetContent: { padding: Spacing.four },
-  sheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.three,
-  },
-  detailPhoto: {
-    width: '100%',
-    aspectRatio: 1,
-    borderRadius: 10,
-    marginBottom: Spacing.three,
-    backgroundColor: '#000',
-  },
-  detailPhotoPlaceholder: {
-    width: '100%',
-    aspectRatio: 1,
-    borderRadius: 10,
-    marginBottom: Spacing.three,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  detailInfo: { marginBottom: Spacing.four },
-  detailScore: { fontSize: 18, fontWeight: '700' },
-  deleteRowBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingVertical: 12,
-  },
 });

@@ -169,24 +169,6 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  /**
-   * 観戦履歴に保存して残しておくための軽量なコピーを作る。
-   * 保存/共有用の高画質版とは別に、ファイルサイズを抑えたJPEGで撮り直す
-   * （AsyncStorageに何十件も保存しても重くなりすぎないように）。
-   */
-  async function captureForHistory(): Promise<string | null> {
-    if (!overlayRef.current) return null;
-    try {
-      if (Platform.OS === 'web') {
-        return await captureRef(overlayRef, { format: 'jpg', quality: 0.85, result: 'data-uri' });
-      }
-      const base64 = await captureRef(overlayRef, { format: 'jpg', quality: 0.7, result: 'base64' });
-      return `data:image/jpeg;base64,${base64}`;
-    } catch {
-      return null;
-    }
-  }
-
   function downloadOnWeb(dataUri: string) {
     const link = document.createElement('a');
     link.download = `kansen-kiroku_${date || 'photo'}.png`;
@@ -268,7 +250,6 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
   }
 
   async function handleSaveRecord() {
-    const photo = photoUri ? await captureForHistory() : null;
     const entry: HistoryEntry = {
       id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
       createdAt: Date.now(),
@@ -279,7 +260,6 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
       visitorScore: visitorScore || '0',
       homeScore: homeScore || '0',
       memo: memo.trim(),
-      photo: photo ?? undefined,
     };
     await addHistoryEntry(entry);
     setSavedFlash(true);

@@ -8,6 +8,4 @@ export interface HistoryEntry {
   visitorScore: string;
   homeScore: string;
   memo: string;
-  /** 生成した画像（data URI）。写真なしの記録の場合は undefined。 */
-  photo?: string;
 }
