@@ -76,11 +76,11 @@ function touchDistance(touches: { pageX: number; pageY: number }[]): number {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-function buildCaption(props: OverlayCardProps): string {
-  let caption = `${props.dateLabel}  ${props.stadium}`.trim();
-  if (props.isDraw) caption += ' ・引き分け';
-  else if (props.isExtra) caption += ` ・延長${props.extraInning}回`;
-  return caption;
+function buildDateLine(props: OverlayCardProps): string {
+  let line = props.dateLabel;
+  if (props.isDraw) line += ' ・引き分け';
+  else if (props.isExtra) line += ` ・延長${props.extraInning}回`;
+  return line;
 }
 
 export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCard(props, ref) {
@@ -97,6 +97,7 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
     isDraw,
     winHighlight,
     memo,
+    stadium,
     photoOffset = DEFAULT_PHOTO_OFFSET,
     onPhotoOffsetChange,
     photoScale = DEFAULT_PHOTO_SCALE,
@@ -229,7 +230,7 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
     else if (h > v) vColor = palette.dim;
   }
 
-  const caption = buildCaption(props);
+  const dateLine = buildDateLine(props);
   const textShadow = {
     textShadowColor: 'rgba(0,0,0,0.65)',
     textShadowOffset: { width: 0, height: 1 },
@@ -280,6 +281,10 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
           isBottom ? { bottom: 18 } : { top: 18 },
           isRight ? { right: 18, alignItems: 'flex-end' } : { left: 18, alignItems: 'flex-start' },
         ]}>
+        <Text style={[styles.dateLine, textShadow, { color: palette.caption }]} numberOfLines={1}>
+          {dateLine}
+        </Text>
+
         <View style={styles.scoreRow}>
           <Text style={[styles.code, textShadow, { color: palette.body }]} numberOfLines={1}>
             {visitorCode}
@@ -292,8 +297,8 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
           </Text>
         </View>
 
-        <Text style={[styles.caption, textShadow, { color: palette.caption }]} numberOfLines={1}>
-          {caption}
+        <Text style={[styles.stadiumLine, textShadow, { color: palette.caption }]} numberOfLines={1}>
+          📍 {stadium}
         </Text>
 
         {!!memo && (
@@ -338,7 +343,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Oswald_700Bold',
     fontSize: 32,
   },
-  caption: {
+  dateLine: {
+    fontFamily: 'JetBrainsMono_500Medium',
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  stadiumLine: {
     fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 12,
     marginTop: 6,
