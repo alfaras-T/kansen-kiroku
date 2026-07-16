@@ -1,4 +1,4 @@
-export type OverlayStyleKey = 'amber' | 'mono' | 'green';
+export type OverlayStyleKey = 'classic' | 'minimal' | 'film' | 'night';
 export type OverlayPosition = 'br' | 'bl' | 'tr' | 'tl';
 export type OutputRatio = 'original' | 'square' | 'portrait' | 'story';
 
@@ -32,38 +32,53 @@ export interface OverlayPalette {
 }
 
 export const OVERLAY_STYLES: Record<OverlayStyleKey, OverlayPalette> = {
-  amber: {
-    label: 'ナイター（アンバー）',
+  // 王道。純白 + シャンパンゴールドの差し色。スタジアムの照明に映える
+  classic: {
+    label: 'クラシック',
     body: '#FFFFFF',
-    accent: '#F2B04E',
+    accent: '#E8C177',
     dim: 'rgba(255,255,255,0.38)',
     caption: 'rgba(255,255,255,0.92)',
     divider: 'rgba(255,255,255,0.5)',
-    scrim: 'rgba(8,10,18,0.72)',
-    gradientFrom: '#0B1220',
-    gradientTo: '#1a2740',
+    scrim: 'rgba(10,10,14,0.7)',
+    gradientFrom: '#14120d',
+    gradientTo: '#2a2417',
   },
-  mono: {
-    label: 'デイゲーム（モノクロ）',
+  // 徹底的に引き算したオールホワイト。どんな写真も邪魔しない
+  minimal: {
+    label: 'ミニマル',
     body: '#FFFFFF',
     accent: '#FFFFFF',
-    dim: 'rgba(255,255,255,0.38)',
-    caption: 'rgba(255,255,255,0.88)',
-    divider: 'rgba(255,255,255,0.5)',
-    scrim: 'rgba(10,10,12,0.66)',
+    dim: 'rgba(255,255,255,0.35)',
+    caption: 'rgba(255,255,255,0.85)',
+    divider: 'rgba(255,255,255,0.4)',
+    scrim: 'rgba(0,0,0,0.55)',
     gradientFrom: '#161616',
     gradientTo: '#2b2b2b',
   },
-  green: {
-    label: 'レトロ（グリーン）',
-    body: '#F4EDDC',
-    accent: '#8FE0B4',
-    dim: 'rgba(244,237,220,0.4)',
-    caption: 'rgba(244,237,220,0.9)',
-    divider: 'rgba(244,237,220,0.45)',
-    scrim: 'rgba(7,19,11,0.72)',
-    gradientFrom: '#07130A',
-    gradientTo: '#0f2617',
+  // 写ルンです的な、フィルムカメラの日付焼き込み風。暖色でノスタルジックに
+  film: {
+    label: 'フィルム',
+    body: '#F7EEDF',
+    accent: '#FF9E45',
+    dim: 'rgba(247,238,223,0.4)',
+    caption: 'rgba(247,238,223,0.9)',
+    divider: 'rgba(247,238,223,0.45)',
+    scrim: 'rgba(24,14,6,0.7)',
+    gradientFrom: '#1a120a',
+    gradientTo: '#33210f',
+  },
+  // ナイトゲームの空気。氷のようなブルーで涼しく締める
+  night: {
+    label: 'ナイト',
+    body: '#FFFFFF',
+    accent: '#8FD4FF',
+    dim: 'rgba(255,255,255,0.38)',
+    caption: 'rgba(255,255,255,0.9)',
+    divider: 'rgba(255,255,255,0.48)',
+    scrim: 'rgba(5,11,24,0.74)',
+    gradientFrom: '#060d1c',
+    gradientTo: '#12233f',
   },
 };
 

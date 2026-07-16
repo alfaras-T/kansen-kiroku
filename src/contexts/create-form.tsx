@@ -97,7 +97,7 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
   const [photoScale, setPhotoScale] = useState(DEFAULT_PHOTO_SCALE);
   const [ratio, setRatio] = useState<OutputRatio>('original');
   const [position, setPosition] = useState<OverlayPosition>('br');
-  const [styleKey, setStyleKey] = useState<OverlayStyleKey>('amber');
+  const [styleKey, setStyleKey] = useState<OverlayStyleKey>('classic');
   const [winHighlight, setWinHighlight] = useState(false);
   const [recordOnly, setRecordOnly] = useState(false);
   const [alsoSaveToHistory, setAlsoSaveToHistory] = useState(true);
