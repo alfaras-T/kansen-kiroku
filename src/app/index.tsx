@@ -234,6 +234,8 @@ export default function CreateScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
     padding: Spacing.four,
     maxWidth: MaxContentWidth,
     width: '100%',
