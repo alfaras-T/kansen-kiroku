@@ -1,8 +1,10 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { forwardRef, useRef, useState } from 'react';
 import {
+  GestureResponderEvent,
   Image,
   PanResponder,
+  PanResponderGestureState,
   StyleSheet,
   Text,
   View,
@@ -12,6 +14,7 @@ import {
 import {
   DEFAULT_PHOTO_OFFSET,
   DEFAULT_PHOTO_SCALE,
+  MAX_PHOTO_SCALE,
   MIN_PHOTO_SCALE,
   OVERLAY_STYLES,
   OutputRatio,
@@ -59,9 +62,19 @@ function clamp(value: number, min: number, max: number): number {
 // ドラッグ操作の感度倍率。1だと指の移動量にそのまま比例、大きいほど
 // 少しの指の移動で大きく位置が動く。
 const PAN_SENSITIVITY = 2.5;
+// ピンチ操作の感度倍率。1だと指の距離変化にそのまま比例、大きいほど
+// 少しの指の動きで大きくズームする。
+const PINCH_SENSITIVITY = 3.5;
 // ダブルタップと判定する最大間隔(ms)・最大移動量(px)
 const DOUBLE_TAP_MAX_INTERVAL_MS = 300;
 const TAP_MAX_MOVEMENT_PX = 10;
+
+function touchDistance(touches: { pageX: number; pageY: number }[]): number {
+  const [a, b] = touches;
+  const dx = b.pageX - a.pageX;
+  const dy = b.pageY - a.pageY;
+  return Math.sqrt(dx * dx + dy * dy);
+}
 
 function buildCaption(props: OverlayCardProps): string {
   let caption = `${props.dateLabel}  ${props.stadium}`.trim();
@@ -124,30 +137,66 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
   const onOffsetChangeRef = useLatestRef(onPhotoOffsetChange);
   const onScaleChangeRef = useLatestRef(onPhotoScaleChange);
   const offsetRef = useLatestRef(photoOffset);
+  const scaleRef = useLatestRef(photoScale);
   const maxShiftRef = useLatestRef({ x: maxShiftX, y: maxShiftY });
   const dragStartOffset = useRef<PhotoOffset>(photoOffset);
+  const pinchStartDistance = useRef(0);
+  const pinchStartScale = useRef(photoScale);
+  const lastTouchCount = useRef(0);
   const lastTapTime = useRef(0);
 
   const panResponderRef = useRef<ReturnType<typeof PanResponder.create> | null>(null);
   if (panResponderRef.current === null) {
+    const handleTouches = (evt: GestureResponderEvent, gesture: PanResponderGestureState) => {
+      const touches = evt.nativeEvent.touches;
+
+      if (touches.length >= 2) {
+        const dist = touchDistance(touches);
+        if (lastTouchCount.current < 2) {
+          pinchStartDistance.current = dist;
+          pinchStartScale.current = scaleRef.current;
+        } else if (pinchStartDistance.current > 0) {
+          const onScaleChange = onScaleChangeRef.current;
+          if (onScaleChange) {
+            const rawRatio = dist / pinchStartDistance.current;
+            // 指の距離変化からのズレを感度倍率で増幅し、少しの動きでも大きくズームさせる
+            const amplifiedRatio = 1 + (rawRatio - 1) * PINCH_SENSITIVITY;
+            onScaleChange(clamp(pinchStartScale.current * amplifiedRatio, MIN_PHOTO_SCALE, MAX_PHOTO_SCALE));
+          }
+        }
+      } else {
+        if (lastTouchCount.current >= 2) {
+          // 2本指→1本指に切り替わった直後は基準位置を取り直す
+          dragStartOffset.current = offsetRef.current;
+        }
+        const onOffsetChange = onOffsetChangeRef.current;
+        if (onOffsetChange) {
+          const { x: mx, y: my } = maxShiftRef.current;
+          // 指の移動量を感度倍率で増幅してから反映する
+          const ampDx = gesture.dx * PAN_SENSITIVITY;
+          const ampDy = gesture.dy * PAN_SENSITIVITY;
+          const nextX = mx > 0 ? clamp(dragStartOffset.current.x + ampDx / mx, -1, 1) : 0;
+          const nextY = my > 0 ? clamp(dragStartOffset.current.y + ampDy / my, -1, 1) : 0;
+          onOffsetChange({ x: nextX, y: nextY });
+        }
+      }
+      lastTouchCount.current = touches.length;
+    };
+
     panResponderRef.current = PanResponder.create({
       onStartShouldSetPanResponder: () => !!photoUriRef.current,
-      onMoveShouldSetPanResponder: (_evt, gesture) =>
-        !!photoUriRef.current && (Math.abs(gesture.dx) > 2 || Math.abs(gesture.dy) > 2),
-      onPanResponderGrant: () => {
+      onMoveShouldSetPanResponder: (evt, gesture) =>
+        !!photoUriRef.current &&
+        (evt.nativeEvent.touches.length >= 2 || Math.abs(gesture.dx) > 2 || Math.abs(gesture.dy) > 2),
+      onPanResponderGrant: (evt) => {
         dragStartOffset.current = offsetRef.current;
+        lastTouchCount.current = 0;
+        if (evt.nativeEvent.touches.length >= 2) {
+          pinchStartDistance.current = touchDistance(evt.nativeEvent.touches);
+          pinchStartScale.current = scaleRef.current;
+        }
       },
-      onPanResponderMove: (_evt, gesture) => {
-        const onOffsetChange = onOffsetChangeRef.current;
-        if (!onOffsetChange) return;
-        const { x: mx, y: my } = maxShiftRef.current;
-        // 指の移動量を感度倍率で増幅してから反映する
-        const ampDx = gesture.dx * PAN_SENSITIVITY;
-        const ampDy = gesture.dy * PAN_SENSITIVITY;
-        const nextX = mx > 0 ? clamp(dragStartOffset.current.x + ampDx / mx, -1, 1) : 0;
-        const nextY = my > 0 ? clamp(dragStartOffset.current.y + ampDy / my, -1, 1) : 0;
-        onOffsetChange({ x: nextX, y: nextY });
-      },
+      onPanResponderMove: handleTouches,
       onPanResponderRelease: (_evt, gesture) => {
         // 指をほぼ動かさずに離した = タップ。300ms以内の2回目のタップならダブルタップとして
         // 「最小サイズ・中央位置」にリセットする。

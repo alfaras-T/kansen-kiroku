@@ -54,7 +54,7 @@ export const OVERLAY_STYLES: Record<OverlayStyleKey, OverlayPalette> = {
 };
 
 export const OUTPUT_RATIOS: { key: OutputRatio; label: string; aspect: number | null }[] = [
-  { key: 'original', label: '元の写真のまま', aspect: null },
+  { key: 'original', label: '元のサイズ', aspect: null },
   { key: 'square', label: 'スクエア（1:1）', aspect: 1 },
   { key: 'portrait', label: 'ポートレート（4:5）', aspect: 4 / 5 },
   { key: 'story', label: 'ストーリー（9:16）', aspect: 9 / 16 },

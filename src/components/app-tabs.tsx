@@ -35,6 +35,7 @@ export default function AppTabs() {
         name="adjust"
         options={{
           href: null, // タブバーには表示せず、遷移でのみ開く隠しルート
+          tabBarStyle: { display: 'none' }, // このページでは全画面表示のためタブバー自体を隠す
         }}
       />
     </Tabs>

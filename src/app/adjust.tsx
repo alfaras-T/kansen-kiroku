@@ -5,14 +5,11 @@ import { LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { formatDateJP } from '@/components/form/date-field';
-import { Slider } from '@/components/form/slider';
 import { OverlayCard } from '@/components/overlay-card';
 import { ThemedText } from '@/components/themed-text';
 import {
   DEFAULT_PHOTO_OFFSET,
   DEFAULT_PHOTO_SCALE,
-  MAX_PHOTO_SCALE,
-  MIN_PHOTO_SCALE,
   OUTPUT_RATIOS,
   OVERLAY_STYLES,
   OutputRatio,
@@ -82,23 +79,15 @@ export default function AdjustScreen() {
 
   const isAdjusted = photoOffset.x !== 0 || photoOffset.y !== 0 || photoScale !== DEFAULT_PHOTO_SCALE;
 
-  // 「ストーリー」はインスタのストーリーのように画面(ステージ)いっぱいに表示する（サイドの余白なし）。
-  // それ以外の比率は、指定した縦横比を保ったまま画面に収まる最大サイズにする（object-fit: containと同じ考え方）。
-  let renderWidth: number;
-  let renderHeight: number;
-  if (ratio === 'story') {
-    renderWidth = stageSize.width;
+  // 選んだ比率を保ったまま、画面(ステージ)に収まる最大サイズを計算する（object-fit: containと同じ考え方）
+  const targetAspect = resolveOverlayAspect(ratio, photoAspectRatio);
+  let renderWidth = stageSize.width;
+  let renderHeight = stageSize.width / targetAspect;
+  if (stageSize.width > 0 && stageSize.height > 0 && renderHeight > stageSize.height) {
     renderHeight = stageSize.height;
-  } else {
-    const targetAspect = resolveOverlayAspect(ratio, photoAspectRatio);
-    renderWidth = stageSize.width;
-    renderHeight = stageSize.width / targetAspect;
-    if (stageSize.width > 0 && stageSize.height > 0 && renderHeight > stageSize.height) {
-      renderHeight = stageSize.height;
-      renderWidth = stageSize.height * targetAspect;
-    }
-    renderWidth = Math.min(renderWidth, MaxContentWidth);
+    renderWidth = stageSize.height * targetAspect;
   }
+  renderWidth = Math.min(renderWidth, MaxContentWidth);
 
   return (
     <View style={[styles.screen, { backgroundColor: '#000' }]}>
@@ -124,9 +113,7 @@ export default function AdjustScreen() {
           </View>
         ) : (
           <>
-            <View
-              style={[styles.stage, ratio === 'story' && styles.stageFullBleed]}
-              onLayout={onStageLayout}>
+            <View style={styles.stage} onLayout={onStageLayout}>
               {stageSize.width > 0 && (
                 <OverlayCard
                   ref={overlayRef}
@@ -156,75 +143,61 @@ export default function AdjustScreen() {
 
               <View style={styles.iconColumn}>
                 <View style={styles.iconGroup}>
+                  <Text style={styles.iconLabel} numberOfLines={1} ellipsizeMode="tail">
+                    {OUTPUT_RATIOS.find((r) => r.key === ratio)?.label.split('（')[0]}
+                  </Text>
                   <Pressable
                     onPress={() => setRatio(nextInList(RATIO_ORDER, ratio))}
                     style={styles.iconBtn}>
-                    <Ionicons name="crop-outline" size={20} color="#fff" />
+                    <Ionicons name="crop-outline" size={16} color="#fff" />
                   </Pressable>
-                  <Text style={styles.iconBtnLabel} numberOfLines={1} ellipsizeMode="tail">
-                    {OUTPUT_RATIOS.find((r) => r.key === ratio)?.label.split('（')[0]}
-                  </Text>
                 </View>
 
                 <View style={styles.iconGroup}>
+                  <Text style={styles.iconLabel}>{POSITIONS.find((p) => p.key === position)?.label}</Text>
                   <Pressable
                     onPress={() => setPosition(nextInList(POSITION_ORDER, position))}
                     style={styles.iconBtn}>
-                    <Ionicons name="move-outline" size={20} color="#fff" />
+                    <Ionicons name="move-outline" size={16} color="#fff" />
                   </Pressable>
-                  <Text style={styles.iconBtnLabel}>{POSITIONS.find((p) => p.key === position)?.label}</Text>
                 </View>
 
                 <View style={styles.iconGroup}>
+                  <Text style={styles.iconLabel} numberOfLines={1} ellipsizeMode="tail">
+                    {OVERLAY_STYLES[styleKey].label.split('（')[0]}
+                  </Text>
                   <Pressable
                     onPress={() => setStyleKey(nextInList(STYLE_ORDER, styleKey))}
                     style={styles.iconBtn}>
-                    <Ionicons name="color-palette-outline" size={20} color="#fff" />
+                    <Ionicons name="color-palette-outline" size={16} color="#fff" />
                   </Pressable>
-                  <Text style={styles.iconBtnLabel} numberOfLines={1}>
-                    {OVERLAY_STYLES[styleKey].label.split('（')[0]}
-                  </Text>
                 </View>
 
                 <View style={styles.iconGroup}>
+                  <Text style={styles.iconLabel}>ハイライト</Text>
                   <Pressable onPress={() => setWinHighlight(!winHighlight)} style={styles.iconBtn}>
                     <Ionicons
                       name={winHighlight ? 'flame' : 'flame-outline'}
-                      size={20}
+                      size={16}
                       color={winHighlight ? colors.accent : '#fff'}
                     />
                   </Pressable>
-                  <Text style={styles.iconBtnLabel}>ハイライト</Text>
                 </View>
 
                 {isAdjusted && (
                   <View style={styles.iconGroup}>
+                    <Text style={styles.iconLabel}>リセット</Text>
                     <Pressable
                       onPress={() => {
                         setPhotoOffset(DEFAULT_PHOTO_OFFSET);
                         setPhotoScale(DEFAULT_PHOTO_SCALE);
                       }}
                       style={styles.iconBtn}>
-                      <Ionicons name="refresh-outline" size={20} color="#fff" />
+                      <Ionicons name="refresh-outline" size={16} color="#fff" />
                     </Pressable>
-                    <Text style={styles.iconBtnLabel}>リセット</Text>
                   </View>
                 )}
               </View>
-            </View>
-
-            <View style={styles.zoomRow}>
-              <Ionicons name="remove-circle-outline" size={18} color="rgba(255,255,255,0.7)" />
-              <View style={styles.zoomSlider}>
-                <Slider
-                  value={(photoScale - MIN_PHOTO_SCALE) / (MAX_PHOTO_SCALE - MIN_PHOTO_SCALE)}
-                  onChange={(v) => setPhotoScale(MIN_PHOTO_SCALE + v * (MAX_PHOTO_SCALE - MIN_PHOTO_SCALE))}
-                  trackColor="rgba(255,255,255,0.25)"
-                  fillColor={colors.accent}
-                  knobColor={colors.accent}
-                />
-              </View>
-              <Ionicons name="add-circle-outline" size={18} color="rgba(255,255,255,0.7)" />
             </View>
 
             <View style={styles.bottomBar}>
@@ -288,41 +261,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 8,
   },
-  stageFullBleed: {
-    paddingHorizontal: 0,
-  },
   iconColumn: {
     position: 'absolute',
-    top: 10,
+    top: 8,
     right: 6,
-    gap: 16,
-    alignItems: 'center',
+    gap: 8,
+    alignItems: 'flex-end',
   },
-  iconGroup: { alignItems: 'center' },
+  iconGroup: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   iconBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: 'rgba(0,0,0,0.4)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconBtnLabel: {
-    marginTop: 4,
+  iconLabel: {
     color: '#fff',
-    fontSize: 9.5,
-    width: 64,
-    textAlign: 'center',
+    fontSize: 10.5,
+    maxWidth: 74,
+    textAlign: 'right',
+    textShadowColor: 'rgba(0,0,0,0.7)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
-  zoomRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 20,
-    paddingTop: 22,
-    paddingBottom: 6,
-  },
-  zoomSlider: { flex: 1 },
   bottomBar: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 4 },
   primaryBtn: {
     flex: 1,
