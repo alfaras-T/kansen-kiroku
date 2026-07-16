@@ -287,7 +287,7 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
         </View>
 
         <Text style={[styles.stadiumLine, textShadow, { color: palette.caption }]} numberOfLines={1}>
-          📍 {stadium}
+          <Text style={styles.pinEmoji}>📍</Text> {stadium}
         </Text>
 
         {!!memo && (
@@ -346,6 +346,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 14,
     marginTop: 1,
+  },
+  pinEmoji: {
+    fontSize: 10,
   },
   memo: {
     fontFamily: 'JetBrainsMono_400Regular',
