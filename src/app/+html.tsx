@@ -79,13 +79,23 @@ export default function Root({ children }: { children: React.ReactNode }) {
           }}
         />
 
-        {/* Service Workerを登録してオフラインキャッシュ・インストール可否に対応 */}
+        {/*
+          Service Workerを登録してオフラインキャッシュ・インストール可否に対応。
+          sw.js自体がCDN/ブラウザにキャッシュされて更新が遅れることがあるため、
+          バージョン付きクエリで取得し、登録後は明示的にupdate()も呼んで
+          最新のsw.jsを確実に取りに行くようにする。
+        */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function () {
-                  navigator.serviceWorker.register('/kansen-kiroku/sw.js').catch(function () {});
+                  navigator.serviceWorker
+                    .register('/kansen-kiroku/sw.js?v=2')
+                    .then(function (reg) {
+                      reg.update().catch(function () {});
+                    })
+                    .catch(function () {});
                 });
               }
             `,

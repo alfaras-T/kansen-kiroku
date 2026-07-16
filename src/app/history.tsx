@@ -88,7 +88,12 @@ export default function HistoryScreen() {
       <FlatList
         data={sorted}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={[styles.list, { paddingBottom: BottomTabInset + Spacing.six }]}
+        style={styles.flatList}
+        contentContainerStyle={[
+          styles.list,
+          { paddingBottom: BottomTabInset + Spacing.six },
+          sorted.length === 0 && styles.listEmptyContainer,
+        ]}
         ListEmptyComponent={
           loaded ? (
             <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
@@ -140,7 +145,9 @@ const styles = StyleSheet.create({
   statNum: { fontSize: 20, fontWeight: '700' },
   statLabel: { fontSize: 10.5, letterSpacing: 0.5, textTransform: 'uppercase', marginTop: 2 },
   list: { paddingHorizontal: Spacing.four, gap: 8 },
-  empty: { textAlign: 'center', marginTop: 40, lineHeight: 20 },
+  flatList: { flex: 1 },
+  listEmptyContainer: { flexGrow: 1, justifyContent: 'center' },
+  empty: { textAlign: 'center', lineHeight: 20 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
