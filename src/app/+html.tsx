@@ -33,32 +33,48 @@ export default function Root({ children }: { children: React.ReactNode }) {
 
         {/*
           ホーム画面に追加したPWA(standalone)モードで、コンテンツが画面より短い場合に
-          html/bodyの背景色(デフォルト白)が下部にはみ出して見えてしまう問題への対策。
-          高さを確実に画面いっぱいにし、背景色をアプリのテーマ色に合わせる。
+          高さがずれてタブバーごと画面下部に固定されない問題への対策。
+          100%/100vh/100dvhだけでは環境によって実際の表示領域と合わないことがあるため、
+          JavaScriptで実際に見えている高さを測定し、CSS変数(--app-height)として
+          反映する（モバイルWebの定番の対策方法）。
         */}
         <style
           dangerouslySetInnerHTML={{
             __html: `
               html, body, #root {
                 height: 100%;
-                min-height: 100%;
                 background-color: #0B1220;
                 margin: 0;
                 padding: 0;
               }
-              /* 100dvh(動的ビューポート高さ)が使える環境ではそちらを優先する。
-                 ホーム画面に追加したPWA(standalone)モードでは、100%/100vhだけだと
-                 実際に見えている画面の高さと合わず、下部に余白ができてしまうことがある。 */
               html {
-                height: 100dvh;
-                min-height: 100dvh;
-                height: -webkit-fill-available;
+                height: var(--app-height, 100%);
               }
               body {
+                height: var(--app-height, 100%);
                 overscroll-behavior: none;
-                height: 100dvh;
-                min-height: -webkit-fill-available;
               }
+              #root {
+                height: var(--app-height, 100%);
+              }
+            `,
+          }}
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function () {
+                function setAppHeight() {
+                  var h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+                  document.documentElement.style.setProperty('--app-height', h + 'px');
+                }
+                setAppHeight();
+                window.addEventListener('resize', setAppHeight);
+                window.addEventListener('orientationchange', setAppHeight);
+                if (window.visualViewport) {
+                  window.visualViewport.addEventListener('resize', setAppHeight);
+                }
+              })();
             `,
           }}
         />
