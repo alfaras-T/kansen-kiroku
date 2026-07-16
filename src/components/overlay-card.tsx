@@ -336,26 +336,31 @@ const styles = StyleSheet.create({
   code: {
     fontFamily: 'Oswald_600SemiBold',
     fontSize: 20,
+    lineHeight: 22,
     flexShrink: 1,
     maxWidth: 110,
   },
   score: {
     fontFamily: 'Oswald_700Bold',
     fontSize: 32,
+    lineHeight: 34,
   },
   dateLine: {
     fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 12,
-    marginBottom: 4,
+    lineHeight: 14,
+    marginBottom: 1,
   },
   stadiumLine: {
     fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 12,
-    marginTop: 6,
+    lineHeight: 14,
+    marginTop: 1,
   },
   memo: {
     fontFamily: 'JetBrainsMono_400Regular',
     fontSize: 11,
-    marginTop: 3,
+    lineHeight: 13,
+    marginTop: 1,
   },
 });
