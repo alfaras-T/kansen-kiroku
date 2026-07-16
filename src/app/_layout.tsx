@@ -7,6 +7,7 @@ import { Platform } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import AppTabs from '@/components/app-tabs';
+import { CreateFormProvider } from '@/contexts/create-form';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -26,7 +27,9 @@ export default function TabLayout() {
   return (
     <ThemeProvider value={DarkTheme}>
       <AnimatedSplashOverlay />
-      <AppTabs />
+      <CreateFormProvider>
+        <AppTabs />
+      </CreateFormProvider>
     </ThemeProvider>
   );
 }

@@ -1,46 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import * as Sharing from 'expo-sharing';
-import { useRef, useState } from 'react';
-import {
-  Alert,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
-import { captureRef } from 'react-native-view-shot';
+import { useRouter } from 'expo-router';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 
-import { DateField, formatDateJP } from '@/components/form/date-field';
+import { DateField } from '@/components/form/date-field';
 import { LabeledField } from '@/components/form/labeled-field';
 import { SegmentedControl } from '@/components/form/segmented-control';
 import { SelectModal } from '@/components/form/select-modal';
-import { Slider } from '@/components/form/slider';
-import { OverlayCard } from '@/components/overlay-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { OTHER_STADIUM, STADIUMS } from '@/constants/stadiums';
-import {
-  DEFAULT_PHOTO_OFFSET,
-  DEFAULT_PHOTO_SCALE,
-  MAX_PHOTO_SCALE,
-  MIN_PHOTO_SCALE,
-  OUTPUT_RATIOS,
-  OVERLAY_STYLES,
-  OverlayPosition,
-  OverlayStyleKey,
-  OutputRatio,
-  PhotoOffset,
-  POSITIONS,
-} from '@/constants/overlayStyles';
+import { OUTPUT_RATIOS } from '@/constants/overlayStyles';
 import { OTHER_TEAM, TEAMS } from '@/constants/teams';
 import { BottomTabInset, Colors, MaxContentWidth, Spacing } from '@/constants/theme';
-import { addHistoryEntry } from '@/storage/history';
-import { HistoryEntry } from '@/types/history';
+import { useCreateForm } from '@/contexts/create-form';
 
 const TEAM_OPTIONS = [
   ...TEAMS.map((t) => ({ label: `${t.nickname}（${t.code}）`, value: t.code })),
@@ -51,167 +23,47 @@ const STADIUM_OPTIONS = [
   { label: 'その他（直接入力）', value: OTHER_STADIUM },
 ];
 
-function todayISO(): string {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
 export default function CreateScreen() {
   const colors = Colors.dark;
-  const overlayRef = useRef<View>(null);
-
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
-  const [photoAspectRatio, setPhotoAspectRatio] = useState<number | null>(null);
-  const [photoOffset, setPhotoOffset] = useState<PhotoOffset>(DEFAULT_PHOTO_OFFSET);
-  const [photoScale, setPhotoScale] = useState(DEFAULT_PHOTO_SCALE);
-  const [ratio, setRatio] = useState<OutputRatio>('original');
-  const [position, setPosition] = useState<OverlayPosition>('br');
-  const [styleKey, setStyleKey] = useState<OverlayStyleKey>('amber');
-  const [winHighlight, setWinHighlight] = useState(false);
-  const [recordOnly, setRecordOnly] = useState(false);
-
-  const [date, setDate] = useState(todayISO());
-  const [stadium, setStadium] = useState<string>('東京ドーム');
-  const [stadiumOther, setStadiumOther] = useState('');
-  const [visitorCode, setVisitorCode] = useState<string>('T');
-  const [homeCode, setHomeCode] = useState<string>('G');
-  const [visitorTeamOther, setVisitorTeamOther] = useState('');
-  const [homeTeamOther, setHomeTeamOther] = useState('');
-  const [visitorScore, setVisitorScore] = useState('3');
-  const [homeScore, setHomeScore] = useState('1');
-  const [isDraw, setIsDraw] = useState(false);
-  const [isExtra, setIsExtra] = useState(false);
-  const [extraInning, setExtraInning] = useState('12');
-  const [memo, setMemo] = useState('');
-
-  const [saving, setSaving] = useState(false);
-  const [savedFlash, setSavedFlash] = useState(false);
-
-  const stadiumName = stadium === OTHER_STADIUM ? stadiumOther.trim() : stadium;
-  const visitorTeamName = visitorCode === OTHER_TEAM ? visitorTeamOther.trim() : visitorCode;
-  const homeTeamName = homeCode === OTHER_TEAM ? homeTeamOther.trim() : homeCode;
-
-  async function pickPhoto() {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) {
-      Alert.alert('権限が必要です', '写真ライブラリへのアクセスを許可してください');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 1,
-    });
-    if (!result.canceled && result.assets?.[0]?.uri) {
-      const asset = result.assets[0];
-      setPhotoUri(asset.uri);
-      setPhotoAspectRatio(asset.width && asset.height ? asset.width / asset.height : null);
-      setPhotoOffset(DEFAULT_PHOTO_OFFSET);
-      setPhotoScale(DEFAULT_PHOTO_SCALE);
-    }
-  }
-
-  async function capture(): Promise<string | null> {
-    if (!overlayRef.current) return null;
-    try {
-      return await captureRef(overlayRef, {
-        format: 'png',
-        quality: 1,
-        result: Platform.OS === 'web' ? 'data-uri' : 'tmpfile',
-      });
-    } catch {
-      Alert.alert('エラー', '画像の生成に失敗しました');
-      return null;
-    }
-  }
-
-  function downloadOnWeb(dataUri: string) {
-    const link = document.createElement('a');
-    link.download = `kansen-kiroku_${date || 'photo'}.png`;
-    link.href = dataUri;
-    link.click();
-  }
-
-  async function handleSaveToLibrary() {
-    setSaving(true);
-    try {
-      const uri = await capture();
-      if (!uri) return;
-
-      if (Platform.OS === 'web') {
-        // Webではダウンロードとして保存
-        downloadOnWeb(uri);
-        return;
-      }
-
-      // ネイティブのみ: expo-media-libraryを動的に読み込む(Webでは読み込むだけでエラーになるため)
-      const MediaLibrary = await import('expo-media-library');
-      const perm = await MediaLibrary.requestPermissionsAsync();
-      if (!perm.granted) {
-        Alert.alert('権限が必要です', '写真アプリへの保存を許可してください');
-        return;
-      }
-      await MediaLibrary.saveToLibraryAsync(uri);
-      Alert.alert('保存しました', '写真アプリに画像を保存しました');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleShare() {
-    setSaving(true);
-    try {
-      const uri = await capture();
-      if (!uri) return;
-
-      if (Platform.OS === 'web') {
-        // Web Share API(ファイル共有)が使えれば共有、なければダウンロード
-        try {
-          const blob = await (await fetch(uri)).blob();
-          const file = new File([blob], `kansen-kiroku_${date || 'photo'}.png`, { type: 'image/png' });
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({ files: [file], title: '観戦きろく' });
-            return;
-          }
-        } catch {
-          // 共有キャンセルや未対応の場合はダウンロードにフォールバック
-        }
-        downloadOnWeb(uri);
-        return;
-      }
-
-      const available = await Sharing.isAvailableAsync();
-      if (!available) {
-        Alert.alert('共有できません', 'この端末では共有機能が利用できません');
-        return;
-      }
-      await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: '観戦きろくを共有' });
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleSaveRecord() {
-    const entry: HistoryEntry = {
-      id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
-      createdAt: Date.now(),
-      date,
-      stadium: stadiumName,
-      visitorCode: visitorTeamName,
-      homeCode: homeTeamName,
-      visitorScore: visitorScore || '0',
-      homeScore: homeScore || '0',
-      isDraw,
-      isExtra,
-      extraInning,
-      memo: memo.trim(),
-    };
-    await addHistoryEntry(entry);
-    setSavedFlash(true);
-    setTimeout(() => setSavedFlash(false), 1600);
-  }
+  const router = useRouter();
+  const form = useCreateForm();
+  const {
+    photoUri,
+    ratio,
+    setRatio,
+    recordOnly,
+    setRecordOnly,
+    date,
+    setDate,
+    stadium,
+    setStadium,
+    stadiumOther,
+    setStadiumOther,
+    visitorCode,
+    setVisitorCode,
+    homeCode,
+    setHomeCode,
+    visitorTeamOther,
+    setVisitorTeamOther,
+    homeTeamOther,
+    setHomeTeamOther,
+    visitorScore,
+    setVisitorScore,
+    homeScore,
+    setHomeScore,
+    isDraw,
+    setIsDraw,
+    isExtra,
+    setIsExtra,
+    extraInning,
+    setExtraInning,
+    memo,
+    setMemo,
+    savedFlash,
+    pickPhoto,
+    clearPhoto,
+    handleSaveRecord,
+  } = form;
 
   return (
     <ThemedView style={styles.screen}>
@@ -389,44 +241,6 @@ export default function CreateScreen() {
         )}
 
         <View
-          style={[styles.card, recordOnly && styles.disabledSection]}
-          pointerEvents={recordOnly ? 'none' : 'auto'}>
-          <ThemedText type="smallBold" style={styles.sectionTitle}>
-            表示デザイン
-          </ThemedText>
-
-          <LabeledField label="表示位置">
-            <SegmentedControl
-              options={POSITIONS.map((p) => ({ value: p.key, label: p.label }))}
-              value={position}
-              onChange={setPosition}
-              wrap
-            />
-          </LabeledField>
-
-          <LabeledField label="スタイル">
-            <SegmentedControl
-              options={Object.entries(OVERLAY_STYLES).map(([key, v]) => ({
-                value: key as OverlayStyleKey,
-                label: v.label,
-              }))}
-              value={styleKey}
-              onChange={setStyleKey}
-              wrap
-            />
-          </LabeledField>
-
-          <View style={styles.switchRow}>
-            <ThemedText type="default">勝敗ハイライト</ThemedText>
-            <Switch
-              value={winHighlight}
-              onValueChange={setWinHighlight}
-              trackColor={{ true: colors.accent, false: colors.border }}
-            />
-          </View>
-        </View>
-
-        <View
           style={recordOnly ? styles.disabledSection : undefined}
           pointerEvents={recordOnly ? 'none' : 'auto'}>
           <Pressable
@@ -437,15 +251,18 @@ export default function CreateScreen() {
               {photoUri ? '写真を変更' : '写真を選ぶ'}
             </Text>
           </Pressable>
+
           {photoUri && (
             <Pressable
-              onPress={() => {
-                setPhotoUri(null);
-                setPhotoAspectRatio(null);
-                setPhotoOffset(DEFAULT_PHOTO_OFFSET);
-                setPhotoScale(DEFAULT_PHOTO_SCALE);
-              }}
-              style={styles.clearPhoto}>
+              onPress={() => router.push('/adjust')}
+              style={[styles.adjustBtn, { borderColor: colors.accent }]}>
+              <Ionicons name="crop" size={17} color={colors.accent} />
+              <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>写真を調整する</Text>
+            </Pressable>
+          )}
+
+          {photoUri && (
+            <Pressable onPress={clearPhoto} style={styles.clearPhoto}>
               <ThemedText type="small" themeColor="danger">
                 写真をクリア
               </ThemedText>
@@ -464,91 +281,6 @@ export default function CreateScreen() {
             />
           </View>
         </View>
-
-        <View
-          style={[styles.actionsRow, recordOnly && styles.disabledSection]}
-          pointerEvents={recordOnly ? 'none' : 'auto'}>
-          <Pressable
-            disabled={saving}
-            onPress={handleSaveToLibrary}
-            style={[styles.primaryBtn, { backgroundColor: colors.accent, opacity: saving ? 0.6 : 1 }]}>
-            <Ionicons name="download" size={17} color="#12100a" />
-            <Text style={styles.primaryBtnText}>写真アプリに保存</Text>
-          </Pressable>
-          <Pressable
-            disabled={saving}
-            onPress={handleShare}
-            style={[styles.secondaryBtn, { borderColor: colors.border, opacity: saving ? 0.6 : 1 }]}>
-            <Ionicons name="share-outline" size={17} color={colors.text} />
-            <Text style={[styles.secondaryBtnText, { color: colors.text }]}>共有する</Text>
-          </Pressable>
-        </View>
-
-        <View
-          style={[styles.card, styles.previewCard, recordOnly && styles.disabledSection]}
-          pointerEvents={recordOnly ? 'none' : 'auto'}>
-          <View style={styles.previewHeaderRow}>
-            <ThemedText type="smallBold" style={styles.sectionTitle}>
-              プレビュー
-            </ThemedText>
-            {photoUri && (photoOffset.x !== 0 || photoOffset.y !== 0 || photoScale !== DEFAULT_PHOTO_SCALE) && (
-              <Pressable
-                onPress={() => {
-                  setPhotoOffset(DEFAULT_PHOTO_OFFSET);
-                  setPhotoScale(DEFAULT_PHOTO_SCALE);
-                }}>
-                <ThemedText type="small" themeColor="accent">
-                  位置をリセット
-                </ThemedText>
-              </Pressable>
-            )}
-          </View>
-          <View style={styles.previewWrap}>
-            <OverlayCard
-              ref={overlayRef}
-              photoUri={photoUri}
-              photoAspectRatio={photoAspectRatio}
-              ratio={ratio}
-              position={position}
-              styleKey={styleKey}
-              visitorCode={visitorTeamName}
-              homeCode={homeTeamName}
-              visitorScore={visitorScore || '0'}
-              homeScore={homeScore || '0'}
-              dateLabel={formatDateJP(date)}
-              stadium={stadiumName}
-              isDraw={isDraw}
-              isExtra={isExtra}
-              extraInning={extraInning}
-              memo={memo}
-              winHighlight={winHighlight}
-              photoOffset={photoOffset}
-              onPhotoOffsetChange={setPhotoOffset}
-              photoScale={photoScale}
-              onPhotoScaleChange={setPhotoScale}
-            />
-          </View>
-          {photoUri && (
-            <>
-              <ThemedText type="small" themeColor="textSecondary" style={styles.dragHint}>
-                ドラッグで位置調整、2本指のピンチで拡大縮小、ダブルタップで最小サイズに戻せます
-              </ThemedText>
-              <View style={styles.zoomRow}>
-                <Ionicons name="remove-circle-outline" size={18} color={colors.textSecondary} />
-                <View style={styles.zoomSlider}>
-                  <Slider
-                    value={(photoScale - MIN_PHOTO_SCALE) / (MAX_PHOTO_SCALE - MIN_PHOTO_SCALE)}
-                    onChange={(v) => setPhotoScale(MIN_PHOTO_SCALE + v * (MAX_PHOTO_SCALE - MIN_PHOTO_SCALE))}
-                    trackColor={colors.border}
-                    fillColor={colors.accent}
-                    knobColor={colors.accent}
-                  />
-                </View>
-                <Ionicons name="add-circle-outline" size={18} color={colors.textSecondary} />
-              </View>
-            </>
-          )}
-        </View>
       </ScrollView>
     </ThemedView>
   );
@@ -565,29 +297,23 @@ const styles = StyleSheet.create({
   header: { marginBottom: Spacing.four },
   eyebrow: { letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 },
   title: { fontSize: 30, lineHeight: 36, marginBottom: 6 },
-  previewWrap: { marginBottom: Spacing.three },
-  previewCard: { marginBottom: 0 },
-  previewHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  dragHint: { textAlign: 'center', marginTop: 4 },
   disabledSection: { opacity: 0.35 },
-  zoomRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginTop: 10,
-    paddingHorizontal: 4,
-  },
-  zoomSlider: { flex: 1 },
   photoBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
     borderWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 12,
+    marginBottom: 8,
+  },
+  adjustBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderWidth: 1.5,
     borderRadius: 8,
     paddingVertical: 12,
     marginBottom: 8,
@@ -623,32 +349,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 8,
   },
-  actionsRow: { flexDirection: 'row', gap: 10, marginBottom: 10 },
-  primaryBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    borderRadius: 8,
-    paddingVertical: 14,
-  },
-  primaryBtnText: { color: '#12100a', fontWeight: '700', fontSize: 14.5 },
-  secondaryBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    borderRadius: 8,
-    paddingVertical: 14,
-    borderWidth: 1,
-  },
-  secondaryBtnText: { fontWeight: '600', fontSize: 14.5 },
   recordBtn: {
     borderWidth: 1,
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
+    marginBottom: Spacing.four,
   },
 });

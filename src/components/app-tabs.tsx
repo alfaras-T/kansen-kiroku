@@ -31,6 +31,12 @@ export default function AppTabs() {
           tabBarIcon: ({ color, size }) => <Ionicons name="stats-chart" color={color} size={size} />,
         }}
       />
+      <Tabs.Screen
+        name="adjust"
+        options={{
+          href: null, // タブバーには表示せず、遷移でのみ開く隠しルート
+        }}
+      />
     </Tabs>
   );
 }
