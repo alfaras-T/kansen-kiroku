@@ -177,6 +177,26 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     link.click();
   }
 
+  /**
+   * Web専用: 可能ならWeb Share API(ファイル共有)を使う。ブラウザやOSの制約上、
+   * JavaScriptから直接「写真ライブラリ」に書き込むことはできないため、
+   * 共有シートの「画像を保存」を経由するのが最も確実にライブラリへ届く方法。
+   * 共有が使えない/キャンセルされた場合はダウンロードにフォールバックする。
+   */
+  async function shareOrDownloadOnWeb(uri: string): Promise<void> {
+    try {
+      const blob = await (await fetch(uri)).blob();
+      const file = new File([blob], `kansen-kiroku_${date || 'photo'}.png`, { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: '観戦きろく' });
+        return;
+      }
+    } catch {
+      // 共有キャンセルや未対応の場合はダウンロードにフォールバック
+    }
+    downloadOnWeb(uri);
+  }
+
   async function handleSaveToLibrary() {
     setSaving(true);
     try {
@@ -184,8 +204,9 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
       if (!uri) return;
 
       if (Platform.OS === 'web') {
-        // Webではダウンロードとして保存
-        downloadOnWeb(uri);
+        // Webにはアプリの「写真ライブラリ」に直接書き込むAPIが無いため、共有シート経由で
+        // 「画像を保存」を選べるようにする(使えない場合はダウンロードにフォールバック)
+        await shareOrDownloadOnWeb(uri);
         return;
       }
 
@@ -210,18 +231,7 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
       if (!uri) return;
 
       if (Platform.OS === 'web') {
-        // Web Share API(ファイル共有)が使えれば共有、なければダウンロード
-        try {
-          const blob = await (await fetch(uri)).blob();
-          const file = new File([blob], `kansen-kiroku_${date || 'photo'}.png`, { type: 'image/png' });
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({ files: [file], title: '観戦きろく' });
-            return;
-          }
-        } catch {
-          // 共有キャンセルや未対応の場合はダウンロードにフォールバック
-        }
-        downloadOnWeb(uri);
+        await shareOrDownloadOnWeb(uri);
         return;
       }
 

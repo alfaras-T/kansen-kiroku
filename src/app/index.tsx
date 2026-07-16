@@ -4,12 +4,10 @@ import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from
 
 import { DateField } from '@/components/form/date-field';
 import { LabeledField } from '@/components/form/labeled-field';
-import { SegmentedControl } from '@/components/form/segmented-control';
 import { SelectModal } from '@/components/form/select-modal';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { OTHER_STADIUM, STADIUMS } from '@/constants/stadiums';
-import { OUTPUT_RATIOS } from '@/constants/overlayStyles';
 import { OTHER_TEAM, TEAMS } from '@/constants/teams';
 import { BottomTabInset, Colors, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useCreateForm } from '@/contexts/create-form';
@@ -29,8 +27,6 @@ export default function CreateScreen() {
   const form = useCreateForm();
   const {
     photoUri,
-    ratio,
-    setRatio,
     recordOnly,
     setRecordOnly,
     date,
@@ -268,18 +264,6 @@ export default function CreateScreen() {
               </ThemedText>
             </Pressable>
           )}
-
-          <View style={styles.card}>
-            <ThemedText type="smallBold" style={styles.sectionTitle}>
-              出力サイズ
-            </ThemedText>
-            <SegmentedControl
-              options={OUTPUT_RATIOS.map((r) => ({ value: r.key, label: r.label }))}
-              value={ratio}
-              onChange={setRatio}
-              wrap
-            />
-          </View>
         </View>
       </ScrollView>
     </ThemedView>

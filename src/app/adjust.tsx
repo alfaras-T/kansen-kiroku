@@ -13,7 +13,9 @@ import {
   DEFAULT_PHOTO_SCALE,
   MAX_PHOTO_SCALE,
   MIN_PHOTO_SCALE,
+  OUTPUT_RATIOS,
   OVERLAY_STYLES,
+  OutputRatio,
   OverlayPosition,
   OverlayStyleKey,
   POSITIONS,
@@ -24,6 +26,7 @@ import { useCreateForm } from '@/contexts/create-form';
 
 const POSITION_ORDER: OverlayPosition[] = ['br', 'bl', 'tr', 'tl'];
 const STYLE_ORDER: OverlayStyleKey[] = ['amber', 'mono', 'green'];
+const RATIO_ORDER: OutputRatio[] = OUTPUT_RATIOS.map((r) => r.key);
 
 function nextInList<T>(list: T[], current: T): T {
   const idx = list.indexOf(current);
@@ -43,6 +46,7 @@ export default function AdjustScreen() {
     photoScale,
     setPhotoScale,
     ratio,
+    setRatio,
     position,
     setPosition,
     styleKey,
@@ -141,6 +145,17 @@ export default function AdjustScreen() {
               )}
 
               <View style={styles.iconColumn}>
+                <View style={styles.iconGroup}>
+                  <Pressable
+                    onPress={() => setRatio(nextInList(RATIO_ORDER, ratio))}
+                    style={styles.iconBtn}>
+                    <Ionicons name="crop-outline" size={20} color="#fff" />
+                  </Pressable>
+                  <Text style={styles.iconBtnLabel} numberOfLines={1} ellipsizeMode="tail">
+                    {OUTPUT_RATIOS.find((r) => r.key === ratio)?.label.split('（')[0]}
+                  </Text>
+                </View>
+
                 <View style={styles.iconGroup}>
                   <Pressable
                     onPress={() => setPosition(nextInList(POSITION_ORDER, position))}
