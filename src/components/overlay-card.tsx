@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Text,
   View,
+  ViewStyle,
 } from 'react-native';
 
 import {
@@ -226,7 +227,9 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
       }}
       style={[styles.card, aspectStyle, { backgroundColor: palette.gradientFrom }]}>
       {photoUri ? (
-        <View style={StyleSheet.absoluteFill} {...panResponder.panHandlers}>
+        <View
+          style={[StyleSheet.absoluteFill, styles.photoTouchArea]}
+          {...panResponder.panHandlers}>
           <Image
             source={{ uri: photoUri }}
             style={[
@@ -289,6 +292,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderRadius: 8,
   },
+  photoTouchArea: {
+    // Web: ブラウザ標準のスクロール/ピンチズームがこのエリアの操作を奪わないようにする。
+    // touchActionはreact-native-webがCSSのtouch-actionに変換する（ネイティブでは無視される）。
+    touchAction: 'none',
+  } as ViewStyle,
   overlayBlock: {
     position: 'absolute',
     maxWidth: '86%',
