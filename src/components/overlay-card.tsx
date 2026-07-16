@@ -225,7 +225,7 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
         const { width, height } = e.nativeEvent.layout;
         setContainerSize({ width, height });
       }}
-      style={[styles.card, aspectStyle, { backgroundColor: palette.gradientFrom }]}>
+      style={[styles.card, styles.photoTouchArea, aspectStyle, { backgroundColor: palette.gradientFrom }]}>
       {photoUri ? (
         <View
           style={[StyleSheet.absoluteFill, styles.photoTouchArea]}
@@ -253,6 +253,7 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
       )}
 
       <View
+        pointerEvents="none"
         style={[
           styles.overlayBlock,
           isBottom ? { bottom: 18 } : { top: 18 },
