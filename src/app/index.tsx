@@ -100,22 +100,6 @@ export default function CreateScreen() {
             <DateField value={date} onChange={setDate} />
           </LabeledField>
 
-          <LabeledField label="球場">
-            <SelectModal title="球場を選択" options={STADIUM_OPTIONS} value={stadium} onChange={setStadium} />
-            {stadium === OTHER_STADIUM && (
-              <TextInput
-                value={stadiumOther}
-                onChangeText={setStadiumOther}
-                placeholder="球場名を入力"
-                placeholderTextColor={colors.textSecondary}
-                style={[
-                  styles.textInput,
-                  { marginTop: 8, borderColor: colors.border, backgroundColor: colors.backgroundElement, color: colors.text },
-                ]}
-              />
-            )}
-          </LabeledField>
-
           <LabeledField label="先攻（ビジター）">
             <View style={styles.teamRow}>
               <View style={{ flex: 1 }}>
@@ -175,6 +159,22 @@ export default function CreateScreen() {
                 value={homeTeamOther}
                 onChangeText={setHomeTeamOther}
                 placeholder="チーム名を入力"
+                placeholderTextColor={colors.textSecondary}
+                style={[
+                  styles.textInput,
+                  { marginTop: 8, borderColor: colors.border, backgroundColor: colors.backgroundElement, color: colors.text },
+                ]}
+              />
+            )}
+          </LabeledField>
+
+          <LabeledField label="📍 球場">
+            <SelectModal title="球場を選択" options={STADIUM_OPTIONS} value={stadium} onChange={setStadium} />
+            {stadium === OTHER_STADIUM && (
+              <TextInput
+                value={stadiumOther}
+                onChangeText={setStadiumOther}
+                placeholder="球場名を入力"
                 placeholderTextColor={colors.textSecondary}
                 style={[
                   styles.textInput,
