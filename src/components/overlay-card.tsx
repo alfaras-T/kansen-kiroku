@@ -254,15 +254,16 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
             style={[
               styles.photoImage,
               {
-                width: containW || '100%',
-                height: containH || '100%',
-                left: containerSize.width > 0 ? (containerSize.width - containW) / 2 : 0,
-                top: containerSize.height > 0 ? (containerSize.height - containH) / 2 : 0,
-                transform: [
-                  { translateX: photoOffset.x * maxShiftX },
-                  { translateY: photoOffset.y * maxShiftY },
-                  { scale: totalScale },
-                ],
+                width: effectiveWidth || '100%',
+                height: effectiveHeight || '100%',
+                left:
+                  containerSize.width > 0
+                    ? (containerSize.width - effectiveWidth) / 2 + photoOffset.x * maxShiftX
+                    : 0,
+                top:
+                  containerSize.height > 0
+                    ? (containerSize.height - effectiveHeight) / 2 + photoOffset.y * maxShiftY
+                    : 0,
               },
             ]}
             resizeMode="cover"

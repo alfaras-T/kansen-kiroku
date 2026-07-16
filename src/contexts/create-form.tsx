@@ -156,15 +156,19 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
   }
 
   async function capture(): Promise<string | null> {
-    if (!overlayRef.current) return null;
+    if (!overlayRef.current) {
+      Alert.alert('少し待ってから再度お試しください', 'プレビューの準備がまだ完了していません');
+      return null;
+    }
     try {
       return await captureRef(overlayRef, {
         format: 'png',
         quality: 1,
         result: Platform.OS === 'web' ? 'data-uri' : 'tmpfile',
       });
-    } catch {
-      Alert.alert('エラー', '画像の生成に失敗しました');
+    } catch (e) {
+      console.warn('画像の生成に失敗しました', e);
+      Alert.alert('エラー', '画像の生成に失敗しました。もう一度お試しください');
       return null;
     }
   }
@@ -180,20 +184,36 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
    * Web専用: 可能ならWeb Share API(ファイル共有)を使う。ブラウザやOSの制約上、
    * JavaScriptから直接「写真ライブラリ」に書き込むことはできないため、
    * 共有シートの「画像を保存」を経由するのが最も確実にライブラリへ届く方法。
-   * 共有が使えない/キャンセルされた場合はダウンロードにフォールバックする。
+   * 共有自体が使えない環境でのみダウンロードにフォールバックする。
+   * ユーザーが共有シートを自分でキャンセルした場合は、勝手にダウンロードを
+   * 始めたりせずそのまま終える。
+   * @returns 実際に共有/ダウンロードが完了したか（キャンセル時はfalse）
    */
-  async function shareOrDownloadOnWeb(uri: string): Promise<void> {
+  async function shareOrDownloadOnWeb(uri: string): Promise<boolean> {
+    let file: File | null = null;
     try {
       const blob = await (await fetch(uri)).blob();
-      const file = new File([blob], `kansen-kiroku_${date || 'photo'}.png`, { type: 'image/png' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: '観戦きろく' });
-        return;
-      }
-    } catch {
-      // 共有キャンセルや未対応の場合はダウンロードにフォールバック
+      file = new File([blob], `kansen-kiroku_${date || 'photo'}.png`, { type: 'image/png' });
+    } catch (e) {
+      console.warn('画像データの取得に失敗しました', e);
     }
+
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: '観戦きろく' });
+        return true;
+      } catch (e) {
+        // ユーザーによる意図的なキャンセル(AbortError)なら何もせず終える。
+        // それ以外の予期しないエラーの場合のみダウンロードにフォールバックする。
+        const isAbort = e instanceof Error && e.name === 'AbortError';
+        if (isAbort) return false;
+        console.warn('共有に失敗したためダウンロードにフォールバックします', e);
+      }
+    }
+
+    // Web Share API自体が使えない/失敗した場合はダウンロードする
     downloadOnWeb(uri);
+    return true;
   }
 
   async function handleSaveToLibrary() {
@@ -205,8 +225,8 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
       if (Platform.OS === 'web') {
         // Webにはアプリの「写真ライブラリ」に直接書き込むAPIが無いため、共有シート経由で
         // 「画像を保存」を選べるようにする(使えない場合はダウンロードにフォールバック)
-        await shareOrDownloadOnWeb(uri);
-        await maybeSaveRecordAfterExport();
+        const completed = await shareOrDownloadOnWeb(uri);
+        if (completed) await maybeSaveRecordAfterExport();
         return;
       }
 
@@ -220,6 +240,9 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
       await MediaLibrary.saveToLibraryAsync(uri);
       Alert.alert('保存しました', '写真アプリに画像を保存しました');
       await maybeSaveRecordAfterExport();
+    } catch (e) {
+      console.warn('保存に失敗しました', e);
+      Alert.alert('保存に失敗しました', 'もう一度お試しください');
     } finally {
       setSaving(false);
     }
@@ -232,8 +255,8 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
       if (!uri) return;
 
       if (Platform.OS === 'web') {
-        await shareOrDownloadOnWeb(uri);
-        await maybeSaveRecordAfterExport();
+        const completed = await shareOrDownloadOnWeb(uri);
+        if (completed) await maybeSaveRecordAfterExport();
         return;
       }
 
@@ -244,6 +267,9 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
       }
       await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: '観戦きろくを共有' });
       await maybeSaveRecordAfterExport();
+    } catch (e) {
+      console.warn('共有に失敗しました', e);
+      Alert.alert('共有に失敗しました', 'もう一度お試しください');
     } finally {
       setSaving(false);
     }
