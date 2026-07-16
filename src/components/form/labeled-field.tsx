@@ -20,7 +20,7 @@ export function LabeledField({
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginBottom: 0 },
+  wrap: { marginBottom: 11 },
   label: {
     fontSize: 11,
     letterSpacing: 1,
