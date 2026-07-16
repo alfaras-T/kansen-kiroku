@@ -16,12 +16,12 @@ import {
   DEFAULT_PHOTO_SCALE,
   MAX_PHOTO_SCALE,
   MIN_PHOTO_SCALE,
-  OUTPUT_RATIOS,
   OVERLAY_STYLES,
   OutputRatio,
   OverlayPosition,
   OverlayStyleKey,
   PhotoOffset,
+  resolveOverlayAspect,
 } from '@/constants/overlayStyles';
 import { useLatestRef } from '@/hooks/use-latest-ref';
 
@@ -51,6 +51,8 @@ export interface OverlayCardProps {
   photoScale?: number;
   /** ピンチ操作（2本指）で拡大率が変わるたびに呼ばれる */
   onPhotoScaleChange?: (scale: number) => void;
+  /** 外側から幅/高さ等を指定して当てはめたい場合のスタイル上書き（例: 画面に収める全画面レイアウト） */
+  style?: ViewStyle;
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -99,14 +101,14 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
     onPhotoOffsetChange,
     photoScale = DEFAULT_PHOTO_SCALE,
     onPhotoScaleChange,
+    style: styleOverride,
   } = props;
 
   const palette = OVERLAY_STYLES[styleKey];
-  const ratioConfig = OUTPUT_RATIOS.find((r) => r.key === ratio) ?? OUTPUT_RATIOS[0];
-  // 「元の写真のまま」(aspect: null)の場合は、写真自体の縦横比を使う。
+  // 「元の写真のまま」の場合は写真自体の縦横比を使う。
   // 写真が無い/縦横比が未取得の場合のみ1:1にフォールバックする。
   const aspectStyle = {
-    aspectRatio: ratioConfig.aspect ?? photoAspectRatio ?? 1,
+    aspectRatio: resolveOverlayAspect(ratio, photoAspectRatio),
   };
 
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
@@ -225,7 +227,7 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
         const { width, height } = e.nativeEvent.layout;
         setContainerSize({ width, height });
       }}
-      style={[styles.card, styles.photoTouchArea, aspectStyle, { backgroundColor: palette.gradientFrom }]}>
+      style={[styles.card, styles.photoTouchArea, aspectStyle, { backgroundColor: palette.gradientFrom }, styleOverride]}>
       {photoUri ? (
         <View
           style={[StyleSheet.absoluteFill, styles.photoTouchArea]}

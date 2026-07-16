@@ -1,25 +1,34 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { useState } from 'react';
+import { LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { formatDateJP } from '@/components/form/date-field';
-import { LabeledField } from '@/components/form/labeled-field';
-import { SegmentedControl } from '@/components/form/segmented-control';
 import { Slider } from '@/components/form/slider';
 import { OverlayCard } from '@/components/overlay-card';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import {
   DEFAULT_PHOTO_OFFSET,
   DEFAULT_PHOTO_SCALE,
   MAX_PHOTO_SCALE,
   MIN_PHOTO_SCALE,
   OVERLAY_STYLES,
+  OverlayPosition,
   OverlayStyleKey,
   POSITIONS,
+  resolveOverlayAspect,
 } from '@/constants/overlayStyles';
-import { BottomTabInset, Colors, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Colors, MaxContentWidth } from '@/constants/theme';
 import { useCreateForm } from '@/contexts/create-form';
+
+const POSITION_ORDER: OverlayPosition[] = ['br', 'bl', 'tr', 'tl'];
+const STYLE_ORDER: OverlayStyleKey[] = ['amber', 'mono', 'green'];
+
+function nextInList<T>(list: T[], current: T): T {
+  const idx = list.indexOf(current);
+  return list[(idx + 1) % list.length];
+}
 
 export default function AdjustScreen() {
   const colors = Colors.dark;
@@ -55,26 +64,41 @@ export default function AdjustScreen() {
     handleShare,
   } = form;
 
+  const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
+
   function goBack() {
     if (router.canGoBack()) router.back();
     else router.replace('/');
   }
 
+  function onStageLayout(e: LayoutChangeEvent) {
+    const { width, height } = e.nativeEvent.layout;
+    setStageSize({ width, height });
+  }
+
+  const isAdjusted = photoOffset.x !== 0 || photoOffset.y !== 0 || photoScale !== DEFAULT_PHOTO_SCALE;
+
+  // 画面に収まるよう、指定した縦横比を保ったまま最大サイズを計算する（object-fit: containと同じ考え方）
+  const targetAspect = resolveOverlayAspect(ratio, photoAspectRatio);
+  let renderWidth = stageSize.width;
+  let renderHeight = stageSize.width / targetAspect;
+  if (stageSize.width > 0 && stageSize.height > 0 && renderHeight > stageSize.height) {
+    renderHeight = stageSize.height;
+    renderWidth = stageSize.height * targetAspect;
+  }
+  renderWidth = Math.min(renderWidth, MaxContentWidth);
+
   return (
-    <ThemedView style={styles.screen}>
-      <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: BottomTabInset + Spacing.six },
-        ]}>
-        <View style={styles.header}>
-          <Pressable onPress={goBack} hitSlop={10} style={styles.backBtn}>
-            <Ionicons name="chevron-back" size={20} color={colors.text} />
-            <ThemedText type="default">戻る</ThemedText>
+    <View style={[styles.screen, { backgroundColor: '#000' }]}>
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        <View style={styles.topBar}>
+          <Pressable onPress={goBack} hitSlop={10} style={styles.roundBtn}>
+            <Ionicons name="close" size={22} color="#fff" />
           </Pressable>
-          <ThemedText type="title" style={styles.title}>
+          <ThemedText type="small" style={styles.topTitle}>
             写真を調整
           </ThemedText>
+          <View style={styles.roundBtn} />
         </View>
 
         {!photoUri ? (
@@ -82,32 +106,14 @@ export default function AdjustScreen() {
             <ThemedText type="default" themeColor="textSecondary" style={{ textAlign: 'center' }}>
               まだ写真が選択されていません。
             </ThemedText>
-            <Pressable
-              onPress={goBack}
-              style={[styles.recordBtn, { borderColor: colors.border, marginTop: Spacing.three }]}>
+            <Pressable onPress={goBack} style={[styles.emptyBtn, { borderColor: colors.border }]}>
               <Text style={{ color: colors.textSecondary, fontSize: 13.5 }}>「記録する」タブに戻る</Text>
             </Pressable>
           </View>
         ) : (
           <>
-            <View style={styles.card}>
-              <View style={styles.previewHeaderRow}>
-                <ThemedText type="smallBold" style={styles.sectionTitle}>
-                  プレビュー
-                </ThemedText>
-                {(photoOffset.x !== 0 || photoOffset.y !== 0 || photoScale !== DEFAULT_PHOTO_SCALE) && (
-                  <Pressable
-                    onPress={() => {
-                      setPhotoOffset(DEFAULT_PHOTO_OFFSET);
-                      setPhotoScale(DEFAULT_PHOTO_SCALE);
-                    }}>
-                    <ThemedText type="small" themeColor="accent">
-                      位置をリセット
-                    </ThemedText>
-                  </Pressable>
-                )}
-              </View>
-              <View style={styles.previewWrap}>
+            <View style={styles.stage} onLayout={onStageLayout}>
+              {stageSize.width > 0 && (
                 <OverlayCard
                   ref={overlayRef}
                   photoUri={photoUri}
@@ -130,127 +136,166 @@ export default function AdjustScreen() {
                   onPhotoOffsetChange={setPhotoOffset}
                   photoScale={photoScale}
                   onPhotoScaleChange={setPhotoScale}
+                  style={{ width: renderWidth, height: renderHeight, aspectRatio: undefined }}
                 />
-              </View>
-              <ThemedText type="small" themeColor="textSecondary" style={styles.dragHint}>
-                ドラッグで位置調整、2本指のピンチで拡大縮小、ダブルタップで最小サイズに戻せます
-              </ThemedText>
-              <View style={styles.zoomRow}>
-                <Ionicons name="remove-circle-outline" size={18} color={colors.textSecondary} />
-                <View style={styles.zoomSlider}>
-                  <Slider
-                    value={(photoScale - MIN_PHOTO_SCALE) / (MAX_PHOTO_SCALE - MIN_PHOTO_SCALE)}
-                    onChange={(v) => setPhotoScale(MIN_PHOTO_SCALE + v * (MAX_PHOTO_SCALE - MIN_PHOTO_SCALE))}
-                    trackColor={colors.border}
-                    fillColor={colors.accent}
-                    knobColor={colors.accent}
-                  />
+              )}
+
+              <View style={styles.iconColumn}>
+                <View style={styles.iconGroup}>
+                  <Pressable
+                    onPress={() => setPosition(nextInList(POSITION_ORDER, position))}
+                    style={styles.iconBtn}>
+                    <Ionicons name="move-outline" size={20} color="#fff" />
+                  </Pressable>
+                  <Text style={styles.iconBtnLabel}>{POSITIONS.find((p) => p.key === position)?.label}</Text>
                 </View>
-                <Ionicons name="add-circle-outline" size={18} color={colors.textSecondary} />
+
+                <View style={styles.iconGroup}>
+                  <Pressable
+                    onPress={() => setStyleKey(nextInList(STYLE_ORDER, styleKey))}
+                    style={styles.iconBtn}>
+                    <Ionicons name="color-palette-outline" size={20} color="#fff" />
+                  </Pressable>
+                  <Text style={styles.iconBtnLabel} numberOfLines={1}>
+                    {OVERLAY_STYLES[styleKey].label.split('（')[0]}
+                  </Text>
+                </View>
+
+                <View style={styles.iconGroup}>
+                  <Pressable onPress={() => setWinHighlight(!winHighlight)} style={styles.iconBtn}>
+                    <Ionicons
+                      name={winHighlight ? 'flame' : 'flame-outline'}
+                      size={20}
+                      color={winHighlight ? colors.accent : '#fff'}
+                    />
+                  </Pressable>
+                  <Text style={styles.iconBtnLabel}>ハイライト</Text>
+                </View>
+
+                {isAdjusted && (
+                  <View style={styles.iconGroup}>
+                    <Pressable
+                      onPress={() => {
+                        setPhotoOffset(DEFAULT_PHOTO_OFFSET);
+                        setPhotoScale(DEFAULT_PHOTO_SCALE);
+                      }}
+                      style={styles.iconBtn}>
+                      <Ionicons name="refresh-outline" size={20} color="#fff" />
+                    </Pressable>
+                    <Text style={styles.iconBtnLabel}>リセット</Text>
+                  </View>
+                )}
               </View>
             </View>
 
-            <View style={styles.card}>
-              <ThemedText type="smallBold" style={styles.sectionTitle}>
-                表示デザイン
-              </ThemedText>
-
-              <LabeledField label="表示位置">
-                <SegmentedControl
-                  options={POSITIONS.map((p) => ({ value: p.key, label: p.label }))}
-                  value={position}
-                  onChange={setPosition}
-                  wrap
-                />
-              </LabeledField>
-
-              <LabeledField label="スタイル">
-                <SegmentedControl
-                  options={Object.entries(OVERLAY_STYLES).map(([key, v]) => ({
-                    value: key as OverlayStyleKey,
-                    label: v.label,
-                  }))}
-                  value={styleKey}
-                  onChange={setStyleKey}
-                  wrap
-                />
-              </LabeledField>
-
-              <View style={styles.switchRow}>
-                <ThemedText type="default">勝敗ハイライト</ThemedText>
-                <Switch
-                  value={winHighlight}
-                  onValueChange={setWinHighlight}
-                  trackColor={{ true: colors.accent, false: colors.border }}
+            <View style={styles.zoomRow}>
+              <Ionicons name="remove-circle-outline" size={18} color="rgba(255,255,255,0.7)" />
+              <View style={styles.zoomSlider}>
+                <Slider
+                  value={(photoScale - MIN_PHOTO_SCALE) / (MAX_PHOTO_SCALE - MIN_PHOTO_SCALE)}
+                  onChange={(v) => setPhotoScale(MIN_PHOTO_SCALE + v * (MAX_PHOTO_SCALE - MIN_PHOTO_SCALE))}
+                  trackColor="rgba(255,255,255,0.25)"
+                  fillColor={colors.accent}
+                  knobColor={colors.accent}
                 />
               </View>
+              <Ionicons name="add-circle-outline" size={18} color="rgba(255,255,255,0.7)" />
             </View>
 
-            <View style={styles.actionsRow}>
+            <View style={styles.bottomBar}>
               <Pressable
                 disabled={saving}
                 onPress={handleSaveToLibrary}
                 style={[styles.primaryBtn, { backgroundColor: colors.accent, opacity: saving ? 0.6 : 1 }]}>
                 <Ionicons name="download" size={17} color="#12100a" />
-                <Text style={styles.primaryBtnText}>写真アプリに保存</Text>
+                <Text style={styles.primaryBtnText}>保存</Text>
               </Pressable>
               <Pressable
                 disabled={saving}
                 onPress={handleShare}
-                style={[styles.secondaryBtn, { borderColor: colors.border, opacity: saving ? 0.6 : 1 }]}>
-                <Ionicons name="share-outline" size={17} color={colors.text} />
-                <Text style={[styles.secondaryBtnText, { color: colors.text }]}>共有する</Text>
+                style={[styles.secondaryBtn, { opacity: saving ? 0.6 : 1 }]}>
+                <Ionicons name="share-outline" size={17} color="#fff" />
+                <Text style={styles.secondaryBtnText}>共有</Text>
               </Pressable>
             </View>
           </>
         )}
-      </ScrollView>
-    </ThemedView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  scrollContent: {
-    padding: Spacing.four,
+  safe: {
+    flex: 1,
     maxWidth: MaxContentWidth,
     width: '100%',
     alignSelf: 'center',
   },
-  header: { marginBottom: Spacing.four },
-  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 2, marginBottom: 10, alignSelf: 'flex-start' },
-  title: { fontSize: 26, lineHeight: 32 },
-  emptyState: { alignItems: 'center', paddingVertical: Spacing.six },
-  card: {
-    marginBottom: Spacing.four,
-  },
-  sectionTitle: {
-    marginBottom: 12,
-    letterSpacing: 0.5,
-  },
-  previewWrap: { marginBottom: Spacing.three },
-  previewHeaderRow: {
+  topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
-  dragHint: { textAlign: 'center', marginTop: 4 },
+  roundBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
+  topTitle: { color: '#fff' },
+  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  emptyBtn: {
+    marginTop: 16,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+  },
+  stage: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+  },
+  iconColumn: {
+    position: 'absolute',
+    top: 10,
+    right: 18,
+    gap: 16,
+    alignItems: 'center',
+  },
+  iconGroup: { alignItems: 'center' },
+  iconBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconBtnLabel: {
+    marginTop: 4,
+    color: '#fff',
+    fontSize: 9.5,
+    width: 64,
+    textAlign: 'center',
+  },
   zoomRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginTop: 10,
-    paddingHorizontal: 4,
+    paddingHorizontal: 20,
+    paddingTop: 22,
+    paddingBottom: 6,
   },
   zoomSlider: { flex: 1 },
-  switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-  },
-  actionsRow: { flexDirection: 'row', gap: 10, marginBottom: 10 },
+  bottomBar: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 4 },
   primaryBtn: {
     flex: 1,
     flexDirection: 'row',
@@ -258,7 +303,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     borderRadius: 8,
-    paddingVertical: 14,
+    paddingVertical: 13,
   },
   primaryBtnText: { color: '#12100a', fontWeight: '700', fontSize: 14.5 },
   secondaryBtn: {
@@ -268,14 +313,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     borderRadius: 8,
-    paddingVertical: 14,
+    paddingVertical: 13,
     borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
   },
-  secondaryBtnText: { fontWeight: '600', fontSize: 14.5 },
-  recordBtn: {
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
+  secondaryBtnText: { color: '#fff', fontWeight: '600', fontSize: 14.5 },
 });

@@ -59,6 +59,15 @@ export const OUTPUT_RATIOS: { key: OutputRatio; label: string; aspect: number | 
   { key: 'story', label: 'ストーリー（9:16）', aspect: 9 / 16 },
 ];
 
+/**
+ * 実際に描画に使う縦横比（幅÷高さ）を解決する。
+ * 「元の写真のまま」の場合は写真自体の縦横比、写真が無ければ1:1にフォールバックする。
+ */
+export function resolveOverlayAspect(ratio: OutputRatio, photoAspectRatio?: number | null): number {
+  const cfg = OUTPUT_RATIOS.find((r) => r.key === ratio) ?? OUTPUT_RATIOS[0];
+  return cfg.aspect ?? photoAspectRatio ?? 1;
+}
+
 export const POSITIONS: { key: OverlayPosition; label: string }[] = [
   { key: 'br', label: '右下' },
   { key: 'bl', label: '左下' },
