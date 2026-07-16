@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
+import { LayoutChangeEvent, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { formatDateJP } from '@/components/form/date-field';
@@ -50,6 +50,9 @@ export default function AdjustScreen() {
     setStyleKey,
     winHighlight,
     setWinHighlight,
+    alsoSaveToHistory,
+    setAlsoSaveToHistory,
+    savedFlash,
     visitorTeamName,
     homeTeamName,
     visitorScore,
@@ -200,6 +203,17 @@ export default function AdjustScreen() {
               </View>
             </View>
 
+            <View style={styles.historyRow}>
+              <Text style={styles.historyRowLabel}>
+                観戦履歴にも保存する{savedFlash ? '（保存しました ✓）' : ''}
+              </Text>
+              <Switch
+                value={alsoSaveToHistory}
+                onValueChange={setAlsoSaveToHistory}
+                trackColor={{ true: colors.accent, false: 'rgba(255,255,255,0.25)' }}
+              />
+            </View>
+
             <View style={styles.bottomBar}>
               <Pressable
                 disabled={saving}
@@ -286,6 +300,15 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
+  historyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 4,
+  },
+  historyRowLabel: { color: '#fff', fontSize: 13.5, flexShrink: 1, marginRight: 10 },
   bottomBar: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 4 },
   primaryBtn: {
     flex: 1,

@@ -45,6 +45,9 @@ interface CreateFormContextValue {
   setWinHighlight: (v: boolean) => void;
   recordOnly: boolean;
   setRecordOnly: (v: boolean) => void;
+  /** 画像の保存/共有と同時に観戦履歴にも保存するか（調整画面のチェックボックス） */
+  alsoSaveToHistory: boolean;
+  setAlsoSaveToHistory: (v: boolean) => void;
 
   date: string;
   setDate: (v: string) => void;
@@ -103,6 +106,9 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
   const [styleKey, setStyleKey] = useState<OverlayStyleKey>('amber');
   const [winHighlight, setWinHighlight] = useState(false);
   const [recordOnly, setRecordOnly] = useState(false);
+  const [alsoSaveToHistory, setAlsoSaveToHistory] = useState(true);
+  // 同じ下書き（同じ写真）で保存/共有を複数回押しても、観戦履歴には重複して記録しないようにする
+  const recordSavedForDraft = useRef(false);
 
   const [date, setDate] = useState(todayISO());
   const [stadium, setStadium] = useState<string>('東京ドーム');
@@ -145,6 +151,7 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
       setPhotoUri(asset.uri);
       setPhotoAspectRatio(asset.width && asset.height ? asset.width / asset.height : null);
       resetPhotoAdjustment();
+      recordSavedForDraft.current = false;
       // 写真が決まったら、調整・プレビュー専用ページへ自動的に遷移する
       router.push('/adjust');
     }
@@ -154,6 +161,7 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     setPhotoUri(null);
     setPhotoAspectRatio(null);
     resetPhotoAdjustment();
+    recordSavedForDraft.current = false;
   }
 
   async function capture(): Promise<string | null> {
@@ -207,6 +215,7 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
         // Webにはアプリの「写真ライブラリ」に直接書き込むAPIが無いため、共有シート経由で
         // 「画像を保存」を選べるようにする(使えない場合はダウンロードにフォールバック)
         await shareOrDownloadOnWeb(uri);
+        await maybeSaveRecordAfterExport();
         return;
       }
 
@@ -219,6 +228,7 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
       }
       await MediaLibrary.saveToLibraryAsync(uri);
       Alert.alert('保存しました', '写真アプリに画像を保存しました');
+      await maybeSaveRecordAfterExport();
     } finally {
       setSaving(false);
     }
@@ -232,6 +242,7 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
 
       if (Platform.OS === 'web') {
         await shareOrDownloadOnWeb(uri);
+        await maybeSaveRecordAfterExport();
         return;
       }
 
@@ -241,6 +252,7 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
         return;
       }
       await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: '観戦きろくを共有' });
+      await maybeSaveRecordAfterExport();
     } finally {
       setSaving(false);
     }
@@ -266,6 +278,16 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     setTimeout(() => setSavedFlash(false), 1600);
   }
 
+  /**
+   * 画像の保存/共有が成功した際に呼ぶ。「観戦履歴にも保存する」がONの場合のみ、
+   * 同じ下書き（同じ写真）につき1回だけ観戦履歴に記録する（重複防止）。
+   */
+  async function maybeSaveRecordAfterExport() {
+    if (!alsoSaveToHistory || recordSavedForDraft.current) return;
+    recordSavedForDraft.current = true;
+    await handleSaveRecord();
+  }
+
   const value: CreateFormContextValue = {
     overlayRef,
     photoUri,
@@ -284,6 +306,8 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     setWinHighlight,
     recordOnly,
     setRecordOnly,
+    alsoSaveToHistory,
+    setAlsoSaveToHistory,
     date,
     setDate,
     stadium,
