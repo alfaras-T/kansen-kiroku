@@ -46,8 +46,18 @@ export default function Root({ children }: { children: React.ReactNode }) {
                 margin: 0;
                 padding: 0;
               }
+              /* 100dvh(動的ビューポート高さ)が使える環境ではそちらを優先する。
+                 ホーム画面に追加したPWA(standalone)モードでは、100%/100vhだけだと
+                 実際に見えている画面の高さと合わず、下部に余白ができてしまうことがある。 */
+              html {
+                height: 100dvh;
+                min-height: 100dvh;
+                height: -webkit-fill-available;
+              }
               body {
                 overscroll-behavior: none;
+                height: 100dvh;
+                min-height: -webkit-fill-available;
               }
             `,
           }}
