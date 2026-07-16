@@ -31,6 +31,28 @@ export default function Root({ children }: { children: React.ReactNode }) {
         {/* Android/Chromeでスクロールバウンス等を無効化し、ネイティブアプリに近い挙動にする */}
         <ScrollViewStyleReset />
 
+        {/*
+          ホーム画面に追加したPWA(standalone)モードで、コンテンツが画面より短い場合に
+          html/bodyの背景色(デフォルト白)が下部にはみ出して見えてしまう問題への対策。
+          高さを確実に画面いっぱいにし、背景色をアプリのテーマ色に合わせる。
+        */}
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+              html, body, #root {
+                height: 100%;
+                min-height: 100%;
+                background-color: #0B1220;
+                margin: 0;
+                padding: 0;
+              }
+              body {
+                overscroll-behavior: none;
+              }
+            `,
+          }}
+        />
+
         {/* Service Workerを登録してオフラインキャッシュ・インストール可否に対応 */}
         <script
           dangerouslySetInnerHTML={{

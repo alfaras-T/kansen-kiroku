@@ -80,8 +80,7 @@ interface CreateFormContextValue {
   pickPhoto: () => Promise<void>;
   clearPhoto: () => void;
   resetPhotoAdjustment: () => void;
-  handleSaveToLibrary: () => Promise<void>;
-  handleShare: () => Promise<void>;
+  handleSaveAndShare: () => Promise<void>;
   handleSaveRecord: () => Promise<void>;
 }
 
@@ -216,15 +215,21 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     return true;
   }
 
-  async function handleSaveToLibrary() {
+  /**
+   * 保存と共有をひとつの操作にまとめたもの。
+   * - Web: Web Share API(使えれば「画像を保存」を含む共有シート)、
+   *   使えない場合はダウンロードにフォールバック
+   * - ネイティブ: まず確実に写真アプリのライブラリへ保存し、続けてOSの共有シートも
+   *   開く(他のアプリへすぐ送れるように)。共有シート表示に失敗しても保存自体は
+   *   既に完了しているので、それを無効なエラーとして扱わない。
+   */
+  async function handleSaveAndShare() {
     setSaving(true);
     try {
       const uri = await capture();
       if (!uri) return;
 
       if (Platform.OS === 'web') {
-        // Webにはアプリの「写真ライブラリ」に直接書き込むAPIが無いため、共有シート経由で
-        // 「画像を保存」を選べるようにする(使えない場合はダウンロードにフォールバック)
         const completed = await shareOrDownloadOnWeb(uri);
         if (completed) await maybeSaveRecordAfterExport();
         return;
@@ -238,38 +243,20 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
         return;
       }
       await MediaLibrary.saveToLibraryAsync(uri);
-      Alert.alert('保存しました', '写真アプリに画像を保存しました');
       await maybeSaveRecordAfterExport();
+
+      // 保存は完了済み。続けて共有シートを開く（失敗しても保存自体は成功しているので握りつぶす）
+      try {
+        const available = await Sharing.isAvailableAsync();
+        if (available) {
+          await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: '観戦きろくを共有' });
+        }
+      } catch (e) {
+        console.warn('共有シートの表示に失敗しました（保存は完了済み）', e);
+      }
     } catch (e) {
       console.warn('保存に失敗しました', e);
       Alert.alert('保存に失敗しました', 'もう一度お試しください');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleShare() {
-    setSaving(true);
-    try {
-      const uri = await capture();
-      if (!uri) return;
-
-      if (Platform.OS === 'web') {
-        const completed = await shareOrDownloadOnWeb(uri);
-        if (completed) await maybeSaveRecordAfterExport();
-        return;
-      }
-
-      const available = await Sharing.isAvailableAsync();
-      if (!available) {
-        Alert.alert('共有できません', 'この端末では共有機能が利用できません');
-        return;
-      }
-      await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: '観戦きろくを共有' });
-      await maybeSaveRecordAfterExport();
-    } catch (e) {
-      console.warn('共有に失敗しました', e);
-      Alert.alert('共有に失敗しました', 'もう一度お試しください');
     } finally {
       setSaving(false);
     }
@@ -350,8 +337,7 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     pickPhoto,
     clearPhoto,
     resetPhotoAdjustment,
-    handleSaveToLibrary,
-    handleShare,
+    handleSaveAndShare,
     handleSaveRecord,
   };
 

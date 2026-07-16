@@ -61,8 +61,7 @@ export default function AdjustScreen() {
     stadiumName,
     memo,
     saving,
-    handleSaveToLibrary,
-    handleShare,
+    handleSaveAndShare,
   } = form;
 
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
@@ -211,17 +210,10 @@ export default function AdjustScreen() {
             <View style={styles.bottomBar}>
               <Pressable
                 disabled={saving}
-                onPress={handleSaveToLibrary}
-                style={[styles.primaryBtn, { backgroundColor: colors.accent, opacity: saving ? 0.6 : 1 }]}>
-                <Ionicons name="download" size={17} color="#12100a" />
-                <Text style={styles.primaryBtnText}>保存</Text>
-              </Pressable>
-              <Pressable
-                disabled={saving}
-                onPress={handleShare}
-                style={[styles.secondaryBtn, { opacity: saving ? 0.6 : 1 }]}>
-                <Ionicons name="share-outline" size={17} color="#fff" />
-                <Text style={styles.secondaryBtnText}>共有</Text>
+                onPress={handleSaveAndShare}
+                style={[styles.saveShareBtn, { backgroundColor: colors.accent, opacity: saving ? 0.6 : 1 }]}>
+                <Ionicons name="share-outline" size={19} color="#12100a" />
+                <Text style={styles.saveShareBtnText}>{saving ? '処理中…' : '保存 / 共有'}</Text>
               </Pressable>
             </View>
           </>
@@ -303,27 +295,14 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   historyRowLabel: { color: '#fff', fontSize: 13.5, flexShrink: 1, marginRight: 10 },
-  bottomBar: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 4 },
-  primaryBtn: {
-    flex: 1,
+  bottomBar: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 4 },
+  saveShareBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    borderRadius: 8,
-    paddingVertical: 13,
+    gap: 9,
+    borderRadius: 10,
+    paddingVertical: 15,
   },
-  primaryBtnText: { color: '#12100a', fontWeight: '700', fontSize: 14.5 },
-  secondaryBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    borderRadius: 8,
-    paddingVertical: 13,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
-  },
-  secondaryBtnText: { color: '#fff', fontWeight: '600', fontSize: 14.5 },
+  saveShareBtnText: { color: '#12100a', fontWeight: '700', fontSize: 15.5 },
 });
