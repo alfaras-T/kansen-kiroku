@@ -57,6 +57,10 @@ export default function Root({ children }: { children: React.ReactNode }) {
               #root {
                 height: var(--app-height, 100%);
               }
+              #root > div {
+                height: 100%;
+                min-height: 100%;
+              }
             `,
           }}
         />
