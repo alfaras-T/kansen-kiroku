@@ -1,10 +1,8 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { forwardRef, useRef, useState } from 'react';
 import {
-  GestureResponderEvent,
   Image,
   PanResponder,
-  PanResponderGestureState,
   StyleSheet,
   Text,
   View,
@@ -14,7 +12,6 @@ import {
 import {
   DEFAULT_PHOTO_OFFSET,
   DEFAULT_PHOTO_SCALE,
-  MAX_PHOTO_SCALE,
   MIN_PHOTO_SCALE,
   OVERLAY_STYLES,
   OutputRatio,
@@ -47,9 +44,9 @@ export interface OverlayCardProps {
   photoOffset?: PhotoOffset;
   /** ドラッグ操作で位置が変わるたびに呼ばれる */
   onPhotoOffsetChange?: (offset: PhotoOffset) => void;
-  /** 写真の拡大率（1.0が最小）。スライダーやピンチ操作で変更される。 */
+  /** 写真の拡大率（1.0が最小=フレームにフィットした状態）。スライダーで変更される。 */
   photoScale?: number;
-  /** ピンチ操作（2本指）で拡大率が変わるたびに呼ばれる */
+  /** 拡大率が変わるたびに呼ばれる（ダブルタップでのリセット時など） */
   onPhotoScaleChange?: (scale: number) => void;
   /** 外側から幅/高さ等を指定して当てはめたい場合のスタイル上書き（例: 画面に収める全画面レイアウト） */
   style?: ViewStyle;
@@ -59,22 +56,12 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-// ピンチ操作の感度倍率。1だと指の距離変化にそのまま比例、大きいほど
-// 少しの指の動きで大きくズームする。
-const PINCH_SENSITIVITY = 3.5;
 // ドラッグ操作の感度倍率。1だと指の移動量にそのまま比例、大きいほど
 // 少しの指の移動で大きく位置が動く。
 const PAN_SENSITIVITY = 2.5;
 // ダブルタップと判定する最大間隔(ms)・最大移動量(px)
 const DOUBLE_TAP_MAX_INTERVAL_MS = 300;
 const TAP_MAX_MOVEMENT_PX = 10;
-
-function touchDistance(touches: { pageX: number; pageY: number }[]): number {
-  const [a, b] = touches;
-  const dx = b.pageX - a.pageX;
-  const dy = b.pageY - a.pageY;
-  return Math.sqrt(dx * dx + dy * dy);
-}
 
 function buildCaption(props: OverlayCardProps): string {
   let caption = `${props.dateLabel}  ${props.stadium}`.trim();
@@ -107,82 +94,63 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
   const palette = OVERLAY_STYLES[styleKey];
   // 「元の写真のまま」の場合は写真自体の縦横比を使う。
   // 写真が無い/縦横比が未取得の場合のみ1:1にフォールバックする。
-  const aspectStyle = {
-    aspectRatio: resolveOverlayAspect(ratio, photoAspectRatio),
-  };
+  const frameAspect = resolveOverlayAspect(ratio, photoAspectRatio);
+  const aspectStyle = { aspectRatio: frameAspect };
 
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
-  const maxShiftX = (containerSize.width * (photoScale - 1)) / 2;
-  const maxShiftY = (containerSize.height * (photoScale - 1)) / 2;
+
+  // 写真自体の縦横比とフレームの縦横比が異なる場合、フレームいっぱいに
+  // 覆うには写真をどれだけ拡大する必要があるかを計算する（CSSのbackground-size: coverと同じ考え方）。
+  // photoScale = 1(最小)のときにちょうどこの倍率になり、フレームに余白は出ない。
+  const imgAspect = photoAspectRatio ?? frameAspect;
+  let containW = containerSize.width;
+  let containH = containerSize.width / imgAspect;
+  if (containerSize.width > 0 && containerSize.height > 0 && containH < containerSize.height) {
+    containH = containerSize.height;
+    containW = containerSize.height * imgAspect;
+  }
+  const coverScaleBase =
+    containW > 0 && containH > 0
+      ? Math.max(containerSize.width / containW, containerSize.height / containH)
+      : 1;
+  const totalScale = coverScaleBase * photoScale;
+  const effectiveWidth = containW * totalScale;
+  const effectiveHeight = containH * totalScale;
+  const maxShiftX = Math.max(0, (effectiveWidth - containerSize.width) / 2);
+  const maxShiftY = Math.max(0, (effectiveHeight - containerSize.height) / 2);
 
   // PanResponderは初回のみ生成されるため、内部で参照する値はrefで常に最新化する
   const photoUriRef = useLatestRef(photoUri);
   const onOffsetChangeRef = useLatestRef(onPhotoOffsetChange);
   const onScaleChangeRef = useLatestRef(onPhotoScaleChange);
   const offsetRef = useLatestRef(photoOffset);
-  const scaleRef = useLatestRef(photoScale);
   const maxShiftRef = useLatestRef({ x: maxShiftX, y: maxShiftY });
   const dragStartOffset = useRef<PhotoOffset>(photoOffset);
-  const pinchStartDistance = useRef(0);
-  const pinchStartScale = useRef(photoScale);
-  const lastTouchCount = useRef(0);
   const lastTapTime = useRef(0);
 
   const panResponderRef = useRef<ReturnType<typeof PanResponder.create> | null>(null);
   if (panResponderRef.current === null) {
-    const handleTouches = (evt: GestureResponderEvent, gesture: PanResponderGestureState) => {
-      const touches = evt.nativeEvent.touches;
-
-      if (touches.length >= 2) {
-        const dist = touchDistance(touches);
-        if (lastTouchCount.current < 2) {
-          pinchStartDistance.current = dist;
-          pinchStartScale.current = scaleRef.current;
-        } else if (pinchStartDistance.current > 0) {
-          const onScaleChange = onScaleChangeRef.current;
-          if (onScaleChange) {
-            const rawRatio = dist / pinchStartDistance.current;
-            // 指の距離変化からのズレを感度倍率で増幅し、少しの動きでも大きくズームさせる
-            const amplifiedRatio = 1 + (rawRatio - 1) * PINCH_SENSITIVITY;
-            onScaleChange(clamp(pinchStartScale.current * amplifiedRatio, MIN_PHOTO_SCALE, MAX_PHOTO_SCALE));
-          }
-        }
-      } else {
-        if (lastTouchCount.current >= 2) {
-          // 2本指→1本指に切り替わった直後は基準位置を取り直す
-          dragStartOffset.current = offsetRef.current;
-        }
-        const onOffsetChange = onOffsetChangeRef.current;
-        if (onOffsetChange) {
-          const { x: mx, y: my } = maxShiftRef.current;
-          // 指の移動量を感度倍率で増幅してから反映する
-          const ampDx = gesture.dx * PAN_SENSITIVITY;
-          const ampDy = gesture.dy * PAN_SENSITIVITY;
-          const nextX = mx > 0 ? clamp(dragStartOffset.current.x + ampDx / mx, -1, 1) : dragStartOffset.current.x;
-          const nextY = my > 0 ? clamp(dragStartOffset.current.y + ampDy / my, -1, 1) : dragStartOffset.current.y;
-          onOffsetChange({ x: nextX, y: nextY });
-        }
-      }
-      lastTouchCount.current = touches.length;
-    };
-
     panResponderRef.current = PanResponder.create({
       onStartShouldSetPanResponder: () => !!photoUriRef.current,
-      onMoveShouldSetPanResponder: (evt, gesture) =>
-        !!photoUriRef.current &&
-        (evt.nativeEvent.touches.length >= 2 || Math.abs(gesture.dx) > 2 || Math.abs(gesture.dy) > 2),
-      onPanResponderGrant: (evt) => {
+      onMoveShouldSetPanResponder: (_evt, gesture) =>
+        !!photoUriRef.current && (Math.abs(gesture.dx) > 2 || Math.abs(gesture.dy) > 2),
+      onPanResponderGrant: () => {
         dragStartOffset.current = offsetRef.current;
-        lastTouchCount.current = 0;
-        if (evt.nativeEvent.touches.length >= 2) {
-          pinchStartDistance.current = touchDistance(evt.nativeEvent.touches);
-          pinchStartScale.current = scaleRef.current;
-        }
       },
-      onPanResponderMove: handleTouches,
+      onPanResponderMove: (_evt, gesture) => {
+        const onOffsetChange = onOffsetChangeRef.current;
+        if (!onOffsetChange) return;
+        const { x: mx, y: my } = maxShiftRef.current;
+        // 指の移動量を感度倍率で増幅してから反映する
+        const ampDx = gesture.dx * PAN_SENSITIVITY;
+        const ampDy = gesture.dy * PAN_SENSITIVITY;
+        const nextX = mx > 0 ? clamp(dragStartOffset.current.x + ampDx / mx, -1, 1) : 0;
+        const nextY = my > 0 ? clamp(dragStartOffset.current.y + ampDy / my, -1, 1) : 0;
+        onOffsetChange({ x: nextX, y: nextY });
+      },
       onPanResponderRelease: (_evt, gesture) => {
         // 指をほぼ動かさずに離した = タップ。300ms以内の2回目のタップならダブルタップとして
-        // 「余白のない最小ズーム・中央位置」にリセットする。
+        // 「最小サイズ・中央位置」にリセットする。
         const wasTap =
           Math.abs(gesture.dx) < TAP_MAX_MOVEMENT_PX && Math.abs(gesture.dy) < TAP_MAX_MOVEMENT_PX;
         if (wasTap) {
@@ -229,18 +197,20 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
       }}
       style={[styles.card, styles.photoTouchArea, aspectStyle, { backgroundColor: palette.gradientFrom }, styleOverride]}>
       {photoUri ? (
-        <View
-          style={[StyleSheet.absoluteFill, styles.photoTouchArea]}
-          {...panResponder.panHandlers}>
+        <View style={[StyleSheet.absoluteFill, styles.photoTouchArea]} {...panResponder.panHandlers}>
           <Image
             source={{ uri: photoUri }}
             style={[
-              StyleSheet.absoluteFill,
+              styles.photoImage,
               {
+                width: containW || '100%',
+                height: containH || '100%',
+                left: containerSize.width > 0 ? (containerSize.width - containW) / 2 : 0,
+                top: containerSize.height > 0 ? (containerSize.height - containH) / 2 : 0,
                 transform: [
                   { translateX: photoOffset.x * maxShiftX },
                   { translateY: photoOffset.y * maxShiftY },
-                  { scale: photoScale },
+                  { scale: totalScale },
                 ],
               },
             ]}
@@ -273,9 +243,7 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
           </Text>
         </View>
 
-        <Text
-          style={[styles.caption, textShadow, { color: palette.caption }]}
-          numberOfLines={1}>
+        <Text style={[styles.caption, textShadow, { color: palette.caption }]} numberOfLines={1}>
           {caption}
         </Text>
 
@@ -300,6 +268,9 @@ const styles = StyleSheet.create({
     // touchActionはreact-native-webがCSSのtouch-actionに変換する（ネイティブでは無視される）。
     touchAction: 'none',
   } as ViewStyle,
+  photoImage: {
+    position: 'absolute',
+  },
   overlayBlock: {
     position: 'absolute',
     maxWidth: '86%',

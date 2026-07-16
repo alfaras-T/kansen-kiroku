@@ -82,15 +82,23 @@ export default function AdjustScreen() {
 
   const isAdjusted = photoOffset.x !== 0 || photoOffset.y !== 0 || photoScale !== DEFAULT_PHOTO_SCALE;
 
-  // 画面に収まるよう、指定した縦横比を保ったまま最大サイズを計算する（object-fit: containと同じ考え方）
-  const targetAspect = resolveOverlayAspect(ratio, photoAspectRatio);
-  let renderWidth = stageSize.width;
-  let renderHeight = stageSize.width / targetAspect;
-  if (stageSize.width > 0 && stageSize.height > 0 && renderHeight > stageSize.height) {
+  // 「ストーリー」はインスタのストーリーのように画面(ステージ)いっぱいに表示する（サイドの余白なし）。
+  // それ以外の比率は、指定した縦横比を保ったまま画面に収まる最大サイズにする（object-fit: containと同じ考え方）。
+  let renderWidth: number;
+  let renderHeight: number;
+  if (ratio === 'story') {
+    renderWidth = stageSize.width;
     renderHeight = stageSize.height;
-    renderWidth = stageSize.height * targetAspect;
+  } else {
+    const targetAspect = resolveOverlayAspect(ratio, photoAspectRatio);
+    renderWidth = stageSize.width;
+    renderHeight = stageSize.width / targetAspect;
+    if (stageSize.width > 0 && stageSize.height > 0 && renderHeight > stageSize.height) {
+      renderHeight = stageSize.height;
+      renderWidth = stageSize.height * targetAspect;
+    }
+    renderWidth = Math.min(renderWidth, MaxContentWidth);
   }
-  renderWidth = Math.min(renderWidth, MaxContentWidth);
 
   return (
     <View style={[styles.screen, { backgroundColor: '#000' }]}>
@@ -116,7 +124,9 @@ export default function AdjustScreen() {
           </View>
         ) : (
           <>
-            <View style={styles.stage} onLayout={onStageLayout}>
+            <View
+              style={[styles.stage, ratio === 'story' && styles.stageFullBleed]}
+              onLayout={onStageLayout}>
               {stageSize.width > 0 && (
                 <OverlayCard
                   ref={overlayRef}
@@ -278,10 +288,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 8,
   },
+  stageFullBleed: {
+    paddingHorizontal: 0,
+  },
   iconColumn: {
     position: 'absolute',
     top: 10,
-    right: 18,
+    right: 6,
     gap: 16,
     alignItems: 'center',
   },

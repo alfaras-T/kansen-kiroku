@@ -10,7 +10,8 @@ export interface PhotoOffset {
 export const DEFAULT_PHOTO_OFFSET: PhotoOffset = { x: 0, y: 0 };
 export const MIN_PHOTO_SCALE = 1.0;
 export const MAX_PHOTO_SCALE = 3.0;
-export const DEFAULT_PHOTO_SCALE = 1.4;
+// 写真追加時のデフォルトは最小サイズ(フレームにちょうど収まる状態)にする
+export const DEFAULT_PHOTO_SCALE = MIN_PHOTO_SCALE;
 
 export interface OverlayPalette {
   label: string;
