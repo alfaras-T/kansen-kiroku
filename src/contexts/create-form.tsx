@@ -27,6 +27,16 @@ function todayISO(): string {
   return `${y}-${m}-${day}`;
 }
 
+async function blobUrlToDataUri(blobUrl: string): Promise<string> {
+  const blob = await (await fetch(blobUrl)).blob();
+  return await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
 interface CreateFormContextValue {
   overlayRef: React.RefObject<View | null>;
   /** 保存/共有時に実際にキャプチャする、画面表示とは別の固定解像度の書き出し専用View */
@@ -147,7 +157,20 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     });
     if (!result.canceled && result.assets?.[0]?.uri) {
       const asset = result.assets[0];
-      setPhotoUri(asset.uri);
+      // Web版のexpo-image-pickerはblob: URLを返すが、書き出しに使う
+      // html-to-imageはDOMをSVGに直列化する都合上blob: URLを画像として
+      // 正しく埋め込めず、書き出し画像から写真が消えてしまう
+      // (テロップやグラデーション背景だけが残る)。data: URI(base64)に
+      // 変換してから保持することで、埋め込み時の参照切れを避ける。
+      let uri = asset.uri;
+      if (Platform.OS === 'web' && asset.uri.startsWith('blob:')) {
+        try {
+          uri = await blobUrlToDataUri(asset.uri);
+        } catch (e) {
+          console.warn('写真のdata URI変換に失敗しました。blob URLのまま使用します', e);
+        }
+      }
+      setPhotoUri(uri);
       setPhotoAspectRatio(asset.width && asset.height ? asset.width / asset.height : null);
       resetPhotoAdjustment();
       recordSavedForDraft.current = false;
