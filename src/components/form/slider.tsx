@@ -15,6 +15,10 @@ export interface SliderProps {
 /**
  * ネイティブ依存なしのシンプルなドラッグ式スライダー。
  * PanResponderで実装しているため、Web/iOS/Androidすべてで同じ挙動になる。
+ *
+ * 見た目のバー(track)自体はスリムだが、実際にタッチを検知する当たり判定(hitArea)は
+ * 上下に大きく広げてある。見た目通りの細い線にしか反応しないと指で正確に狙う必要が
+ * あり操作しづらくなるため、指が多少バーから外れていても掴めるようにしている。
  */
 export function Slider({ value, onChange, trackColor, fillColor, knobColor }: SliderProps) {
   const [trackWidth, setTrackWidth] = useState(0);
@@ -37,7 +41,11 @@ export function Slider({ value, onChange, trackColor, fillColor, knobColor }: Sl
     // eslint-disable-next-line react-hooks/refs -- PanResponder.create is a stable, one-time factory
     panResponderRef.current = PanResponder.create({
       onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => true,
       onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
+      // ドラッグ中に他のジェスチャー(写真のパン操作など)へ横取りされないようにする
+      onPanResponderTerminationRequest: () => false,
       onPanResponderGrant: (evt) => updateFromLocationX(evt.nativeEvent.locationX),
       onPanResponderMove: (evt) => updateFromLocationX(evt.nativeEvent.locationX),
     });
@@ -49,19 +57,24 @@ export function Slider({ value, onChange, trackColor, fillColor, knobColor }: Sl
   return (
     <View
       onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}
-      style={[styles.track, { backgroundColor: trackColor }]}
+      style={styles.hitArea}
+      hitSlop={{ top: 12, bottom: 12 }}
       // eslint-disable-next-line react-hooks/refs -- panHandlers is a stable object of event callbacks
       {...panResponder.panHandlers}>
-      <View style={[styles.fill, { backgroundColor: fillColor, width: `${clamped * 100}%` }]} />
-      <View
-        pointerEvents="none"
-        style={[styles.knob, { backgroundColor: knobColor, left: `${clamped * 100}%` }]}
-      />
+      <View pointerEvents="none" style={[styles.track, { backgroundColor: trackColor }]}>
+        <View style={[styles.fill, { backgroundColor: fillColor, width: `${clamped * 100}%` }]} />
+        <View style={[styles.knob, { backgroundColor: knobColor, left: `${clamped * 100}%` }]} />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // 実際にタッチを検知する領域。見た目のtrackより上下に広く取ることで掴みやすくする
+  hitArea: {
+    justifyContent: 'center',
+    paddingVertical: 14,
+  },
   track: {
     height: 6,
     borderRadius: 3,
@@ -76,10 +89,10 @@ const styles = StyleSheet.create({
   },
   knob: {
     position: 'absolute',
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    marginLeft: -9,
-    marginTop: -6,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    marginLeft: -10,
+    marginTop: -7,
   },
 });
