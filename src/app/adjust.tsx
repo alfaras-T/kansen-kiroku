@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
+  ActivityIndicator,
   LayoutChangeEvent,
   Pressable,
   StyleSheet,
@@ -389,12 +390,35 @@ export default function AdjustScreen() {
           </>
         )}
       </SafeAreaView>
+
+      {saving && (
+        <View style={styles.processingOverlay} pointerEvents="auto">
+          <ActivityIndicator size="large" color="#fff" />
+          <Text style={styles.processingText}>画像を作成しています…</Text>
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  processingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.72)",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 14,
+  },
+  processingText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
   safe: {
     flex: 1,
     maxWidth: MaxContentWidth,

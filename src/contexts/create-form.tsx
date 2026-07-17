@@ -281,6 +281,17 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
         const isAbort = e instanceof Error && e.name === 'AbortError';
         if (isAbort) return false;
         console.warn('共有に失敗したためダウンロードにフォールバックします', e);
+        // ブラウザ(特にSafari)はnavigator.share()をユーザー操作の直後でないと
+        // 許可しないことがある。画像生成に時間がかかり、その間にタップから
+        // 時間が経ちすぎるとこのエラーになり得る。ダウンロードにフォールバック
+        // したことだけは伝え、「共有画面が出ない=何も起きていない」という
+        // 誤解を防ぐ。
+        downloadOnWeb(uri);
+        Alert.alert(
+          '共有画面を開けなかったため保存しました',
+          '端末のダウンロードフォルダに画像を保存しました。'
+        );
+        return true;
       }
     }
 
