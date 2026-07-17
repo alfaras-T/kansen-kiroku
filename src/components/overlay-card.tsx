@@ -417,8 +417,8 @@ const styles = StyleSheet.create({
   divider: {
     width: 30,
     height: StyleSheet.hairlineWidth * 2,
-    marginTop: 5,
-    marginBottom: 7,
+    marginTop: 3,
+    marginBottom: 4,
   },
   stadiumLine: {
     fontSize: 12,
