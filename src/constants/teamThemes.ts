@@ -13,7 +13,7 @@ import { TeamCode } from "@/constants/teams";
  * - accent はスコアの数字・選択中のタブ・ボタン背景に使うため、
  *   暗い背景の上でも読め、かつ onAccent の文字が乗るだけの明るさを確保する。
  */
-export const TEAM_THEMES: Partial<Record<TeamCode, Palette>> = {
+export const TEAM_THEMES: Record<TeamCode, Palette> = {
   // ジャイアンツ: オレンジ + 黒
   G: {
     text: "#F2EFEA",
@@ -77,6 +77,19 @@ export const TEAM_THEMES: Partial<Record<TeamCode, Palette>> = {
     accentDim: "#256A99",
     onAccent: "#04121F",
     border: "#21405F",
+    danger: "#C1443A",
+  },
+  // スワローズ: 紺 + 緑(紺を背景の色味、緑を accent に)
+  S: {
+    text: "#EDF1F6",
+    background: "#080E1E",
+    backgroundElement: "#121C31",
+    backgroundSelected: "#16323A",
+    textSecondary: "#8D97A9",
+    accent: "#4FC98A",
+    accentDim: "#2A6B49",
+    onAccent: "#04140C",
+    border: "#22345A",
     danger: "#C1443A",
   },
   // ホークス: 黄色 + 黒(タイガースと差別化するため、やや涼しいレモン寄りの黄と黒)
@@ -157,12 +170,11 @@ export const TEAM_THEMES: Partial<Record<TeamCode, Palette>> = {
     border: "#3D2328",
     danger: "#D4635A",
   },
-  // S(スワローズ)は未定のため、当面は既定のパレットにフォールバックする。
 };
 
 /**
  * お気に入りチームのコードから実際に使うパレットを解決する。
- * 未選択(「特になし」)や、テーマ未定義のチームの場合は既定のパレットを返す。
+ * 未選択(「特になし」)の場合は既定のパレットを返す。
  */
 export function resolveTheme(favoriteTeam: string): Palette {
   return TEAM_THEMES[favoriteTeam as TeamCode] ?? DEFAULT_PALETTE;
