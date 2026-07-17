@@ -85,46 +85,45 @@ export default function HistoryScreen() {
         </View>
       </View>
 
-      <FlatList
-        data={sorted}
-        keyExtractor={(item) => item.id}
-        style={styles.flatList}
-        contentContainerStyle={[
-          styles.list,
-          { paddingBottom: BottomTabInset + Spacing.six },
-          sorted.length === 0 && styles.listEmptyContainer,
-        ]}
-        ListEmptyComponent={
-          loaded ? (
+      {sorted.length === 0 ? (
+        loaded && (
+          <View style={styles.emptyWrap}>
             <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
               まだ記録がありません。「記録する」タブから試合を保存してみましょう。
             </ThemedText>
-          ) : null
-        }
-        renderItem={({ item }) => {
-          const resultTag = item.visitorScore === item.homeScore ? ' ・引分' : '';
+          </View>
+        )
+      ) : (
+        <FlatList
+          data={sorted}
+          keyExtractor={(item) => item.id}
+          style={styles.flatList}
+          contentContainerStyle={[styles.list, { paddingBottom: BottomTabInset + Spacing.six }]}
+          renderItem={({ item }) => {
+            const resultTag = item.visitorScore === item.homeScore ? ' ・引分' : '';
 
-          return (
-            <View style={[styles.row, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.rowMeta, { color: colors.textSecondary }]}>
-                  {formatDateJP(item.date)} {item.stadium}
-                  {resultTag}
-                </Text>
-                <Text style={[styles.rowScore, { color: colors.text }]}>
-                  {item.visitorCode} {item.visitorScore}–{item.homeScore} {item.homeCode}
-                </Text>
-                {!!item.memo && (
-                  <Text style={[styles.rowMemo, { color: colors.textSecondary }]}>{item.memo}</Text>
-                )}
+            return (
+              <View style={[styles.row, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.rowMeta, { color: colors.textSecondary }]}>
+                    {formatDateJP(item.date)} {item.stadium}
+                    {resultTag}
+                  </Text>
+                  <Text style={[styles.rowScore, { color: colors.text }]}>
+                    {item.visitorCode} {item.visitorScore}–{item.homeScore} {item.homeCode}
+                  </Text>
+                  {!!item.memo && (
+                    <Text style={[styles.rowMemo, { color: colors.textSecondary }]}>{item.memo}</Text>
+                  )}
+                </View>
+                <Pressable onPress={() => handleDelete(item.id)} hitSlop={10} style={styles.delBtn}>
+                  <Ionicons name="trash-outline" size={18} color={colors.danger} />
+                </Pressable>
               </View>
-              <Pressable onPress={() => handleDelete(item.id)} hitSlop={10} style={styles.delBtn}>
-                <Ionicons name="trash-outline" size={18} color={colors.danger} />
-              </Pressable>
-            </View>
-          );
-        }}
-      />
+            );
+          }}
+        />
+      )}
     </ThemedView>
   );
 }
@@ -146,7 +145,12 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: 10.5, letterSpacing: 0.5, textTransform: 'uppercase', marginTop: 2 },
   list: { paddingHorizontal: Spacing.four, gap: 8 },
   flatList: { flex: 1 },
-  listEmptyContainer: { flexGrow: 1, justifyContent: 'center' },
+  emptyWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.six,
+  },
   empty: { textAlign: 'center', lineHeight: 20 },
   row: {
     flexDirection: 'row',
