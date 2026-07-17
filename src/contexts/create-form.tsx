@@ -173,8 +173,21 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
       // 描画するため(理由は同ファイルのコメント参照)、テロップ用のカスタム
       // フォント(BebasNeue/Montserrat)がまだ読み込み中のタイミングで書き出すと、
       // ブラウザの代替フォントのままキャプチャされてしまうことがある。
-      // document.fonts.ready で読み込み完了を待ってからキャプチャする。
-      if (Platform.OS === 'web' && typeof document !== 'undefined' && document.fonts?.ready) {
+      // document.fonts.readyを待つだけでは、そのフォントがまだ一度も
+      // 「使用要求」されていない場合に効果が無いことがあるため、
+      // 実際に使っているフォントを名指しでload()して確実に要求してから待つ。
+      if (Platform.OS === 'web' && typeof document !== 'undefined' && document.fonts) {
+        const requiredFonts = [
+          '21px BebasNeue_400Regular',
+          '34px BebasNeue_400Regular',
+          '10.5px Montserrat_600SemiBold',
+          '12px Montserrat_600SemiBold',
+        ];
+        try {
+          await Promise.all(requiredFonts.map((f) => document.fonts.load(f)));
+        } catch (fontLoadError) {
+          console.warn('フォントの明示的読み込みに失敗しました', fontLoadError);
+        }
         await document.fonts.ready;
       }
       // 書き出し専用View(画面上のプレビュー枠より高い固定解像度)がレイアウト・
