@@ -265,8 +265,8 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
   // (=写真自体の境界)と一致し、そこは元々問題なく描画できている。
   const SCRIM_STOP_RATIO = 0.46;
   const scrimColors = isBottom
-    ? (['transparent', palette.scrim, palette.scrim] as const)
-    : ([palette.scrim, palette.scrim, 'transparent'] as const);
+    ? (['transparent', 'transparent', palette.scrim] as const)
+    : ([palette.scrim, 'transparent', 'transparent'] as const);
   const scrimLocations = isBottom
     ? ([0, 1 - SCRIM_STOP_RATIO, 1] as const)
     : ([0, SCRIM_STOP_RATIO, 1] as const);
