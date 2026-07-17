@@ -1,28 +1,37 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
-import { DateField } from '@/components/form/date-field';
-import { LabeledField } from '@/components/form/labeled-field';
-import { SelectModal } from '@/components/form/select-modal';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { OTHER_STADIUM, STADIUMS } from '@/constants/stadiums';
-import { OTHER_TEAM, TEAMS } from '@/constants/teams';
-import { BottomTabInset, Colors, MaxContentWidth, Spacing } from '@/constants/theme';
-import { useCreateForm } from '@/contexts/create-form';
+import { DateField } from "@/components/form/date-field";
+import { LabeledField } from "@/components/form/labeled-field";
+import { SelectModal } from "@/components/form/select-modal";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { OTHER_STADIUM, STADIUMS } from "@/constants/stadiums";
+import { OTHER_TEAM, TEAMS } from "@/constants/teams";
+import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
+import { useCreateForm } from "@/contexts/create-form";
+import { useTheme } from "@/hooks/use-theme";
 
 const TEAM_OPTIONS = [
   ...TEAMS.map((t) => ({ label: `${t.nickname}（${t.code}）`, value: t.code })),
-  { label: 'その他（自由入力）', value: OTHER_TEAM },
+  { label: "その他（自由入力）", value: OTHER_TEAM },
 ];
 const STADIUM_OPTIONS = [
   ...STADIUMS.map((s) => ({ label: s, value: s })),
-  { label: 'その他（直接入力）', value: OTHER_STADIUM },
+  { label: "その他（直接入力）", value: OTHER_STADIUM },
 ];
 
 export default function CreateScreen() {
-  const colors = Colors.dark;
+  const colors = useTheme();
   const router = useRouter();
   const form = useCreateForm();
   const {
@@ -57,7 +66,10 @@ export default function CreateScreen() {
 
   return (
     <ThemedView style={styles.screen}>
-      <ScrollView style={[styles.scroll, { flex: 1 }]} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        style={[styles.scroll, { flex: 1 }]}
+        contentContainerStyle={styles.scrollContent}
+      >
         <View style={styles.header}>
           <ThemedText type="small" themeColor="accent" style={styles.eyebrow}>
             KANSEN KIROKU
@@ -103,7 +115,11 @@ export default function CreateScreen() {
                 keyboardType="number-pad"
                 style={[
                   styles.scoreInput,
-                  { borderColor: colors.border, backgroundColor: colors.backgroundElement, color: colors.text },
+                  {
+                    borderColor: colors.border,
+                    backgroundColor: colors.backgroundElement,
+                    color: colors.text,
+                  },
                 ]}
               />
             </View>
@@ -115,7 +131,12 @@ export default function CreateScreen() {
                 placeholderTextColor={colors.textSecondary}
                 style={[
                   styles.textInput,
-                  { marginTop: 8, borderColor: colors.border, backgroundColor: colors.backgroundElement, color: colors.text },
+                  {
+                    marginTop: 8,
+                    borderColor: colors.border,
+                    backgroundColor: colors.backgroundElement,
+                    color: colors.text,
+                  },
                 ]}
               />
             )}
@@ -137,7 +158,11 @@ export default function CreateScreen() {
                 keyboardType="number-pad"
                 style={[
                   styles.scoreInput,
-                  { borderColor: colors.border, backgroundColor: colors.backgroundElement, color: colors.text },
+                  {
+                    borderColor: colors.border,
+                    backgroundColor: colors.backgroundElement,
+                    color: colors.text,
+                  },
                 ]}
               />
             </View>
@@ -149,14 +174,24 @@ export default function CreateScreen() {
                 placeholderTextColor={colors.textSecondary}
                 style={[
                   styles.textInput,
-                  { marginTop: 8, borderColor: colors.border, backgroundColor: colors.backgroundElement, color: colors.text },
+                  {
+                    marginTop: 8,
+                    borderColor: colors.border,
+                    backgroundColor: colors.backgroundElement,
+                    color: colors.text,
+                  },
                 ]}
               />
             )}
           </LabeledField>
 
           <LabeledField label="📍 球場">
-            <SelectModal title="球場を選択" options={STADIUM_OPTIONS} value={stadium} onChange={setStadium} />
+            <SelectModal
+              title="球場を選択"
+              options={STADIUM_OPTIONS}
+              value={stadium}
+              onChange={setStadium}
+            />
             {stadium === OTHER_STADIUM && (
               <TextInput
                 value={stadiumOther}
@@ -165,7 +200,12 @@ export default function CreateScreen() {
                 placeholderTextColor={colors.textSecondary}
                 style={[
                   styles.textInput,
-                  { marginTop: 8, borderColor: colors.border, backgroundColor: colors.backgroundElement, color: colors.text },
+                  {
+                    marginTop: 8,
+                    borderColor: colors.border,
+                    backgroundColor: colors.backgroundElement,
+                    color: colors.text,
+                  },
                 ]}
               />
             )}
@@ -179,36 +219,62 @@ export default function CreateScreen() {
               placeholderTextColor={colors.textSecondary}
               style={[
                 styles.textInput,
-                { borderColor: colors.border, backgroundColor: colors.backgroundElement, color: colors.text },
+                {
+                  borderColor: colors.border,
+                  backgroundColor: colors.backgroundElement,
+                  color: colors.text,
+                },
               ]}
             />
           </LabeledField>
         </View>
 
         {recordOnly && (
-          <Pressable onPress={handleSaveRecord} style={[styles.recordBtn, { borderColor: colors.border }]}>
+          <Pressable
+            onPress={handleSaveRecord}
+            style={[styles.recordBtn, { borderColor: colors.border }]}
+          >
             <Text style={{ color: colors.textSecondary, fontSize: 13.5 }}>
-              {savedFlash ? '保存しました ✓' : 'この記録を保存する'}
+              {savedFlash ? "保存しました ✓" : "この記録を保存する"}
             </Text>
           </Pressable>
         )}
 
         <View
           style={recordOnly ? styles.disabledSection : undefined}
-          pointerEvents={recordOnly ? 'none' : 'auto'}>
+          pointerEvents={recordOnly ? "none" : "auto"}
+        >
           <Pressable
             onPress={pickPhoto}
-            style={[styles.photoBtn, { borderColor: colors.border, backgroundColor: colors.backgroundElement }]}>
+            style={[
+              styles.photoBtn,
+              {
+                borderColor: colors.border,
+                backgroundColor: colors.backgroundElement,
+              },
+            ]}
+          >
             <Ionicons name="image" size={17} color={colors.accent} />
-            <Text style={{ color: colors.text, fontSize: 14 }}>{photoUri ? '写真を変更' : '写真を選ぶ'}</Text>
+            <Text style={{ color: colors.text, fontSize: 14 }}>
+              {photoUri ? "写真を変更" : "写真を選ぶ"}
+            </Text>
           </Pressable>
 
           {photoUri && (
             <Pressable
-              onPress={() => router.push('/adjust')}
-              style={[styles.adjustBtn, { borderColor: colors.accent }]}>
+              onPress={() => router.push("/adjust")}
+              style={[styles.adjustBtn, { borderColor: colors.accent }]}
+            >
               <Ionicons name="crop" size={17} color={colors.accent} />
-              <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>写真を調整する</Text>
+              <Text
+                style={{
+                  color: colors.accent,
+                  fontSize: 14,
+                  fontWeight: "600",
+                }}
+              >
+                写真を調整する
+              </Text>
             </Pressable>
           )}
 
@@ -230,23 +296,23 @@ const styles = StyleSheet.create({
   scroll: {
     flex: 1,
     maxWidth: MaxContentWidth,
-    width: '100%',
-    alignSelf: 'center',
+    width: "100%",
+    alignSelf: "center",
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: Spacing.four,
     paddingBottom: BottomTabInset + Spacing.four,
   },
   header: { marginBottom: Spacing.three },
-  eyebrow: { letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 },
+  eyebrow: { letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 },
   title: { fontSize: 26, lineHeight: 32 },
   disabledSection: { opacity: 0.35 },
   photoBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 8,
     borderWidth: 1,
     borderRadius: 8,
@@ -254,16 +320,16 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   adjustBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 8,
     borderWidth: 1.5,
     borderRadius: 8,
     paddingVertical: 12,
     marginBottom: 8,
   },
-  clearPhoto: { alignSelf: 'center', marginBottom: Spacing.two, padding: 4 },
+  clearPhoto: { alignSelf: "center", marginBottom: Spacing.two, padding: 4 },
   card: {
     marginBottom: Spacing.three,
   },
@@ -271,7 +337,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     letterSpacing: 0.5,
   },
-  teamRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  teamRow: { flexDirection: "row", gap: 8, alignItems: "center" },
   scoreInput: {
     width: 64,
     borderWidth: 1,
@@ -279,7 +345,7 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     paddingHorizontal: 10,
     fontSize: 15,
-    textAlign: 'center',
+    textAlign: "center",
   },
   textInput: {
     borderWidth: 1,
@@ -289,16 +355,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: 6,
   },
   recordBtn: {
     borderWidth: 1,
     borderRadius: 8,
     paddingVertical: 12,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: Spacing.three,
   },
 });

@@ -1,14 +1,13 @@
+import { resolveTheme } from "@/constants/teamThemes";
+import { Palette } from "@/constants/theme";
+import { useFavoriteTeamOptional } from "@/contexts/favorite-team";
+
 /**
- * Learn more about light and dark modes:
- * https://docs.expo.dev/guides/color-schemes/
+ * 現在のパレットを返す。
+ * 設定(またはオンボーディング)で選ばれたお気に入りチームに応じて配色が切り替わり、
+ * 「特になし」の場合は既定のダークテーマになる。
  */
-
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export function useTheme() {
-  const scheme = useColorScheme();
-  const theme = scheme === 'unspecified' ? 'light' : scheme;
-
-  return Colors[theme];
+export function useTheme(): Palette {
+  const ctx = useFavoriteTeamOptional();
+  return resolveTheme(ctx?.favoriteTeam ?? "");
 }

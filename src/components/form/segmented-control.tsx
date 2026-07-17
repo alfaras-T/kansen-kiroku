@@ -1,6 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-
-import { Colors } from '@/constants/theme';
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTheme } from "@/hooks/use-theme";
 
 export interface SegmentedOption<T extends string> {
   value: T;
@@ -18,7 +17,7 @@ export function SegmentedControl<T extends string>({
   onChange: (value: T) => void;
   wrap?: boolean;
 }) {
-  const colors = Colors.dark;
+  const colors = useTheme();
 
   return (
     <View style={[styles.row, wrap && styles.rowWrap]}>
@@ -31,11 +30,19 @@ export function SegmentedControl<T extends string>({
             style={[
               styles.chip,
               {
-                backgroundColor: selected ? colors.accent : colors.backgroundElement,
+                backgroundColor: selected
+                  ? colors.accent
+                  : colors.backgroundElement,
                 borderColor: selected ? colors.accent : colors.border,
               },
-            ]}>
-            <Text style={[styles.chipText, { color: selected ? '#12100a' : colors.text }]}>
+            ]}
+          >
+            <Text
+              style={[
+                styles.chipText,
+                { color: selected ? colors.onAccent : colors.text },
+              ]}
+            >
               {opt.label}
             </Text>
           </Pressable>
@@ -46,8 +53,8 @@ export function SegmentedControl<T extends string>({
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: 8 },
-  rowWrap: { flexWrap: 'wrap' },
+  row: { flexDirection: "row", gap: 8 },
+  rowWrap: { flexWrap: "wrap" },
   chip: {
     paddingVertical: 9,
     paddingHorizontal: 12,
@@ -56,6 +63,6 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

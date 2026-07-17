@@ -6,15 +6,11 @@ import { SelectModal } from "@/components/form/select-modal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { TEAMS } from "@/constants/teams";
-import {
-  BottomTabInset,
-  Colors,
-  MaxContentWidth,
-  Spacing,
-} from "@/constants/theme";
+import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { useFavoriteTeam } from "@/contexts/favorite-team";
 import { exportBackup, importBackup } from "@/storage/backup";
 import { confirmAsync, notify } from "@/utils/dialogs";
+import { useTheme } from "@/hooks/use-theme";
 
 const FAVORITE_TEAM_OPTIONS = [
   { label: "特になし", value: "" },
@@ -22,7 +18,7 @@ const FAVORITE_TEAM_OPTIONS = [
 ];
 
 export default function SettingsScreen() {
-  const colors = Colors.dark;
+  const colors = useTheme();
   const { favoriteTeam, setFavoriteTeam } = useFavoriteTeam();
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -96,7 +92,7 @@ export default function SettingsScreen() {
             themeColor="textSecondary"
             style={styles.hint}
           >
-            選んだチームに合わせてアプリのデザインを変えられるようになる予定です。「特になし」を選ぶと既存のデザインのままになります。観戦履歴タブの「マイチーム」（成績集計用）とは別の設定です。
+            選んだチームのイメージカラーに合わせて、アプリの配色が変わります。「特になし」を選ぶと既定のデザインになります。観戦履歴タブの「マイチーム」（成績集計用）とは別の設定です。
           </ThemedText>
         </View>
 

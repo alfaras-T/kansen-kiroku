@@ -90,3 +90,11 @@ export function useFavoriteTeam() {
     );
   return ctx;
 }
+
+/**
+ * Provider の外側で呼ばれても例外を投げない版。
+ * テーマ解決(useTheme)のように、Provider 外でも描画され得る箇所から使う。
+ */
+export function useFavoriteTeamOptional(): FavoriteTeamContextValue | null {
+  return useContext(FavoriteTeamContext);
+}

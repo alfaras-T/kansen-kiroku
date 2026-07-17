@@ -1,14 +1,14 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useCallback, useMemo, useState } from 'react';
-import { useFocusEffect } from 'expo-router';
-import { Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from "@expo/vector-icons";
+import { useCallback, useMemo, useState } from "react";
+import { useFocusEffect } from "expo-router";
+import { Pressable, SectionList, StyleSheet, Text, View } from "react-native";
 
-import { formatDateJP } from '@/components/form/date-field';
-import { SelectModal } from '@/components/form/select-modal';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { TEAMS } from '@/constants/teams';
-import { BottomTabInset, Colors, MaxContentWidth, Spacing } from '@/constants/theme';
+import { formatDateJP } from "@/components/form/date-field";
+import { SelectModal } from "@/components/form/select-modal";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { TEAMS } from "@/constants/teams";
+import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import {
   computeRecord,
   deleteHistoryEntry,
@@ -16,20 +16,21 @@ import {
   loadHistory,
   loadMyTeam,
   saveMyTeam,
-} from '@/storage/history';
-import { HistoryEntry } from '@/types/history';
+} from "@/storage/history";
+import { HistoryEntry } from "@/types/history";
+import { useTheme } from "@/hooks/use-theme";
 
 const MY_TEAM_OPTIONS = [
-  { label: '指定しない', value: '' },
+  { label: "指定しない", value: "" },
   ...TEAMS.map((t) => ({ label: `${t.nickname}（${t.code}）`, value: t.code })),
 ];
 
 export default function HistoryScreen() {
-  const colors = Colors.dark;
+  const colors = useTheme();
   const [entries, setEntries] = useState<HistoryEntry[]>([]);
-  const [myTeam, setMyTeam] = useState('');
+  const [myTeam, setMyTeam] = useState("");
   const [loaded, setLoaded] = useState(false);
-  const [selectedYear, setSelectedYear] = useState('');
+  const [selectedYear, setSelectedYear] = useState("");
 
   const refresh = useCallback(async () => {
     const [h, mt] = await Promise.all([loadHistory(), loadMyTeam()]);
@@ -41,7 +42,7 @@ export default function HistoryScreen() {
   useFocusEffect(
     useCallback(() => {
       refresh();
-    }, [refresh])
+    }, [refresh]),
   );
 
   async function handleMyTeamChange(v: string) {
@@ -55,18 +56,26 @@ export default function HistoryScreen() {
   }
 
   const yearOptions = useMemo(() => {
-    const years = Array.from(new Set(entries.map((e) => e.date?.slice(0, 4)).filter(Boolean))).sort((a, b) =>
-      b.localeCompare(a)
-    );
-    return [{ label: 'すべての年', value: '' }, ...years.map((y) => ({ label: `${y}年`, value: y }))];
+    const years = Array.from(
+      new Set(entries.map((e) => e.date?.slice(0, 4)).filter(Boolean)),
+    ).sort((a, b) => b.localeCompare(a));
+    return [
+      { label: "すべての年", value: "" },
+      ...years.map((y) => ({ label: `${y}年`, value: y })),
+    ];
   }, [entries]);
 
   // 記録削除等でその年のデータが無くなった場合は「すべての年」に戻す
-  const effectiveYear = yearOptions.some((o) => o.value === selectedYear) ? selectedYear : '';
+  const effectiveYear = yearOptions.some((o) => o.value === selectedYear)
+    ? selectedYear
+    : "";
 
   const filteredEntries = useMemo(
-    () => (effectiveYear ? entries.filter((e) => e.date?.slice(0, 4) === effectiveYear) : entries),
-    [entries, effectiveYear]
+    () =>
+      effectiveYear
+        ? entries.filter((e) => e.date?.slice(0, 4) === effectiveYear)
+        : entries,
+    [entries, effectiveYear],
   );
 
   const record = computeRecord(filteredEntries, myTeam);
@@ -76,7 +85,7 @@ export default function HistoryScreen() {
         title: `${g.year}年`,
         data: g.entries,
       })),
-    [filteredEntries]
+    [filteredEntries],
   );
 
   return (
@@ -91,7 +100,11 @@ export default function HistoryScreen() {
       </View>
 
       <View style={styles.myTeamRow}>
-        <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: 6 }}>
+        <ThemedText
+          type="small"
+          themeColor="textSecondary"
+          style={{ marginBottom: 6 }}
+        >
           マイチーム
         </ThemedText>
         <SelectModal
@@ -103,7 +116,11 @@ export default function HistoryScreen() {
       </View>
 
       <View style={styles.myTeamRow}>
-        <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: 6 }}>
+        <ThemedText
+          type="small"
+          themeColor="textSecondary"
+          style={{ marginBottom: 6 }}
+        >
           表示する年
         </ThemedText>
         <SelectModal
@@ -115,31 +132,67 @@ export default function HistoryScreen() {
       </View>
 
       <View style={styles.statsRow}>
-        <View style={[styles.statBox, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
-          <Text style={[styles.statNum, { color: colors.accent }]}>{filteredEntries.length}</Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-            {effectiveYear ? `${effectiveYear}年の観戦数` : '総観戦数'}
-          </Text>
-        </View>
-        <View style={[styles.statBox, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
-          <Text style={[styles.statNum, { color: colors.accent }]}>{record ? record.games : '–'}</Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>マイチーム観戦数</Text>
-        </View>
-        <View style={[styles.statBox, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.statBox,
+            {
+              backgroundColor: colors.backgroundElement,
+              borderColor: colors.border,
+            },
+          ]}
+        >
           <Text style={[styles.statNum, { color: colors.accent }]}>
-            {record ? `${record.win}勝${record.lose}敗${record.draw}分` : '–'}
+            {filteredEntries.length}
           </Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>マイチーム成績</Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+            {effectiveYear ? `${effectiveYear}年の観戦数` : "総観戦数"}
+          </Text>
+        </View>
+        <View
+          style={[
+            styles.statBox,
+            {
+              backgroundColor: colors.backgroundElement,
+              borderColor: colors.border,
+            },
+          ]}
+        >
+          <Text style={[styles.statNum, { color: colors.accent }]}>
+            {record ? record.games : "–"}
+          </Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+            マイチーム観戦数
+          </Text>
+        </View>
+        <View
+          style={[
+            styles.statBox,
+            {
+              backgroundColor: colors.backgroundElement,
+              borderColor: colors.border,
+            },
+          ]}
+        >
+          <Text style={[styles.statNum, { color: colors.accent }]}>
+            {record ? `${record.win}勝${record.lose}敗${record.draw}分` : "–"}
+          </Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+            マイチーム成績
+          </Text>
         </View>
       </View>
 
       {sections.length === 0 ? (
         loaded && (
           <View style={styles.emptyWrap}>
-            <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
+            <ThemedText
+              type="small"
+              themeColor="textSecondary"
+              style={styles.empty}
+            >
               {effectiveYear
                 ? `${effectiveYear}年の記録はまだありません。`
-                : 'まだ記録がありません。「記録する」タブから試合を保存してみましょう。'}
+                : "まだ記録がありません。「記録する」タブから試合を保存してみましょう。"}
             </ThemedText>
           </View>
         )
@@ -148,35 +201,74 @@ export default function HistoryScreen() {
           sections={sections}
           keyExtractor={(item) => item.id}
           style={styles.flatList}
-          contentContainerStyle={[styles.list, { paddingBottom: BottomTabInset + Spacing.six }]}
+          contentContainerStyle={[
+            styles.list,
+            { paddingBottom: BottomTabInset + Spacing.six },
+          ]}
           stickySectionHeadersEnabled
           renderSectionHeader={({ section }) => (
-            <View style={[styles.sectionHeader, { backgroundColor: colors.background }]}>
-              <Text style={[styles.sectionHeaderText, { color: colors.text }]}>{section.title}</Text>
-              <Text style={[styles.sectionHeaderCount, { color: colors.textSecondary }]}>
+            <View
+              style={[
+                styles.sectionHeader,
+                { backgroundColor: colors.background },
+              ]}
+            >
+              <Text style={[styles.sectionHeaderText, { color: colors.text }]}>
+                {section.title}
+              </Text>
+              <Text
+                style={[
+                  styles.sectionHeaderCount,
+                  { color: colors.textSecondary },
+                ]}
+              >
                 {section.data.length}試合
               </Text>
             </View>
           )}
           renderItem={({ item }) => {
-            const resultTag = item.visitorScore === item.homeScore ? ' ・引分' : '';
+            const resultTag =
+              item.visitorScore === item.homeScore ? " ・引分" : "";
 
             return (
-              <View style={[styles.row, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
+              <View
+                style={[
+                  styles.row,
+                  {
+                    backgroundColor: colors.backgroundElement,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.rowMeta, { color: colors.textSecondary }]}>
+                  <Text
+                    style={[styles.rowMeta, { color: colors.textSecondary }]}
+                  >
                     {formatDateJP(item.date)} {item.stadium}
                     {resultTag}
                   </Text>
                   <Text style={[styles.rowScore, { color: colors.text }]}>
-                    {item.visitorCode} {item.visitorScore}–{item.homeScore} {item.homeCode}
+                    {item.visitorCode} {item.visitorScore}–{item.homeScore}{" "}
+                    {item.homeCode}
                   </Text>
                   {!!item.memo && (
-                    <Text style={[styles.rowMemo, { color: colors.textSecondary }]}>{item.memo}</Text>
+                    <Text
+                      style={[styles.rowMemo, { color: colors.textSecondary }]}
+                    >
+                      {item.memo}
+                    </Text>
                   )}
                 </View>
-                <Pressable onPress={() => handleDelete(item.id)} hitSlop={10} style={styles.delBtn}>
-                  <Ionicons name="trash-outline" size={18} color={colors.danger} />
+                <Pressable
+                  onPress={() => handleDelete(item.id)}
+                  hitSlop={10}
+                  style={styles.delBtn}
+                >
+                  <Ionicons
+                    name="trash-outline"
+                    size={18}
+                    color={colors.danger}
+                  />
                 </Pressable>
               </View>
             );
@@ -188,47 +280,62 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, maxWidth: MaxContentWidth, width: '100%', alignSelf: 'center' },
+  screen: {
+    flex: 1,
+    maxWidth: MaxContentWidth,
+    width: "100%",
+    alignSelf: "center",
+  },
   header: { padding: Spacing.four, paddingBottom: Spacing.three },
   title: { fontSize: 26, lineHeight: 32, marginBottom: 4 },
   myTeamRow: { paddingHorizontal: Spacing.four, marginBottom: Spacing.three },
-  statsRow: { flexDirection: 'row', gap: 12, paddingHorizontal: Spacing.four, marginBottom: Spacing.three },
+  statsRow: {
+    flexDirection: "row",
+    gap: 12,
+    paddingHorizontal: Spacing.four,
+    marginBottom: Spacing.three,
+  },
   statBox: {
     flex: 1,
     borderWidth: 1,
     borderRadius: 8,
     paddingVertical: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
-  statNum: { fontSize: 20, fontWeight: '700' },
-  statLabel: { fontSize: 10.5, letterSpacing: 0.5, textTransform: 'uppercase', marginTop: 2 },
+  statNum: { fontSize: 20, fontWeight: "700" },
+  statLabel: {
+    fontSize: 10.5,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+    marginTop: 2,
+  },
   list: { paddingHorizontal: Spacing.four, gap: 8 },
   flatList: { flex: 1 },
   sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "space-between",
     paddingVertical: 8,
   },
-  sectionHeaderText: { fontSize: 15, fontWeight: '700' },
+  sectionHeaderText: { fontSize: 15, fontWeight: "700" },
   sectionHeaderCount: { fontSize: 11.5 },
   emptyWrap: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: Spacing.six,
   },
-  empty: { textAlign: 'center', lineHeight: 20 },
+  empty: { textAlign: "center", lineHeight: 20 },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     borderWidth: 1,
     borderRadius: 8,
     padding: 12,
   },
   rowMeta: { fontSize: 11.5, marginBottom: 4 },
-  rowScore: { fontSize: 15, fontWeight: '600' },
+  rowScore: { fontSize: 15, fontWeight: "600" },
   rowMemo: { fontSize: 11.5, marginTop: 3 },
   delBtn: { padding: 6 },
 });
