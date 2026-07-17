@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kansen-kiroku-v2';
+const CACHE_NAME = 'kansen-kiroku-v3';
 
 self.addEventListener('install', () => {
   self.skipWaiting();

@@ -115,14 +115,23 @@ export default function Root({ children }: { children: React.ReactNode }) {
           sw.js自体がCDN/ブラウザにキャッシュされて更新が遅れることがあるため、
           バージョン付きクエリで取得し、登録後は明示的にupdate()も呼んで
           最新のsw.jsを確実に取りに行くようにする。
+          さらに、新しいService Workerが有効化されて制御が切り替わった瞬間に
+          一度だけ自動でページを再読み込みし、手動でキャッシュを消さなくても
+          最新版がすぐに反映されるようにする。
         */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               if ('serviceWorker' in navigator) {
+                var reloadedForSW = false;
+                navigator.serviceWorker.addEventListener('controllerchange', function () {
+                  if (reloadedForSW) return;
+                  reloadedForSW = true;
+                  window.location.reload();
+                });
                 window.addEventListener('load', function () {
                   navigator.serviceWorker
-                    .register('/kansen-kiroku/sw.js?v=2')
+                    .register('/kansen-kiroku/sw.js?v=3')
                     .then(function (reg) {
                       reg.update().catch(function () {});
                     })
