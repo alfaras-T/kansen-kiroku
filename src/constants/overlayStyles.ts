@@ -118,8 +118,23 @@ export function resolveOverlayAspect(ratio: OutputRatio, photoAspectRatio?: numb
  * ブラウザ側のラスタライズがタイル分割されて継ぎ目が出ることがあるため、
  * 安全側の1600pxに据え置く。ネイティブ(iOS/Android)はその制約が無いため、
  * より高い解像度で書き出す。
+ *
+ * 注意: Web版のcaptureRef(html2canvas)はscaleを明示しない場合、
+ * デフォルトでwindow.devicePixelRatio倍の物理解像度でレンダリングする。
+ * そのため、この定数をそのままCSSサイズとして書き出し用Viewに与えると、
+ * dpr=2の端末では実際には1600pxの2倍(3200px)でレンダリングされてしまい、
+ * 上記の「安全側の1600px」という前提が崩れて継ぎ目が再発する。
+ * dprで割った値をCSSサイズとして使うことで、実際にレンダリングされる
+ * 物理ピクセルを常に1600px程度に抑える。
  */
-export const EXPORT_LONG_EDGE = Platform.OS === 'web' ? 1600 : 3000;
+function computeWebExportLongEdge(): number {
+  const SAFE_PHYSICAL_LONG_EDGE = 1600;
+  const dpr =
+    typeof window !== 'undefined' && window.devicePixelRatio ? window.devicePixelRatio : 1;
+  return Math.round(SAFE_PHYSICAL_LONG_EDGE / dpr);
+}
+
+export const EXPORT_LONG_EDGE = Platform.OS === 'web' ? computeWebExportLongEdge() : 3000;
 
 export function resolveExportSize(
   ratio: OutputRatio,
