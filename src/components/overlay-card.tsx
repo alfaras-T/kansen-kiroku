@@ -53,6 +53,14 @@ export interface OverlayCardProps {
   telopScale?: number;
   /** 外側から幅/高さ等を指定して当てはめたい場合のスタイル上書き（例: 画面に収める全画面レイアウト） */
   style?: ViewStyle;
+  /**
+   * テロップのフォントサイズや余白は固定pt値で指定されているため、
+   * 画面プレビューよりずっと大きい/小さいサイズでこのカードを描画する場合
+   * (例: 書き出し専用の高解像度View)、この値にカード幅の比率
+   * (例: 書き出し幅 ÷ プレビュー幅)を渡すことで、見た目の比率をプレビューと揃える。
+   * 未指定時は1(=固定pt値のまま)。
+   */
+  scaleFactor?: number;
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -97,7 +105,12 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
     onPhotoScaleChange,
     telopScale = DEFAULT_TELOP_SCALE,
     style: styleOverride,
+    scaleFactor = 1,
   } = props;
+
+  // テロップの角からの余白(20)は固定pt値なので、scaleFactorに合わせて拡縮し、
+  // カードサイズが変わってもプレビューと同じ見た目の比率になるようにする。
+  const cornerInset = 20 * scaleFactor;
 
   const palette = OVERLAY_STYLES[styleKey];
   // 「元の写真のまま」の場合は写真自体の縦横比を使う。
@@ -295,10 +308,10 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
         pointerEvents="none"
         style={[
           styles.overlayBlock,
-          isBottom ? { bottom: 20 } : { top: 20 },
-          isRight ? { right: 20 } : { left: 20 },
+          isBottom ? { bottom: cornerInset } : { top: cornerInset },
+          isRight ? { right: cornerInset } : { left: cornerInset },
           {
-            transform: [{ scale: telopScale }],
+            transform: [{ scale: telopScale * scaleFactor }],
             // 表示位置の角(コーナー)を支点に拡大縮小することで、サイズを変えても
             // テロップの基準位置(右下/左下/右上/左上)がずれないようにする。
             transformOrigin: `${isRight ? 'right' : 'left'} ${isBottom ? 'bottom' : 'top'}`,

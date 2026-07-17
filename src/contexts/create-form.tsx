@@ -29,6 +29,8 @@ function todayISO(): string {
 
 interface CreateFormContextValue {
   overlayRef: React.RefObject<View | null>;
+  /** 保存/共有時に実際にキャプチャする、画面表示とは別の固定解像度の書き出し専用View */
+  exportRef: React.RefObject<View | null>;
 
   photoUri: string | null;
   photoAspectRatio: number | null;
@@ -93,6 +95,7 @@ const CreateFormContext = createContext<CreateFormContextValue | null>(null);
 export function CreateFormProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const overlayRef = useRef<View>(null);
+  const exportRef = useRef<View>(null);
 
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [photoAspectRatio, setPhotoAspectRatio] = useState<number | null>(null);
@@ -161,12 +164,17 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
   }
 
   async function capture(): Promise<string | null> {
-    if (!overlayRef.current) {
+    if (!exportRef.current) {
       Alert.alert('少し待ってから再度お試しください', 'プレビューの準備がまだ完了していません');
       return null;
     }
     try {
-      return await captureRef(overlayRef, {
+      // 書き出し専用View(画面上のプレビュー枠より高い固定解像度)がレイアウト・
+      // 画像デコードを終える猶予として1フレーム待ってからキャプチャする。
+      // これが無いと、特にWeb上で写真がまだ途中の状態のままキャプチャされ、
+      // 継ぎ目や粗さの原因になることがある。
+      await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+      return await captureRef(exportRef, {
         format: 'png',
         quality: 1,
         result: Platform.OS === 'web' ? 'data-uri' : 'tmpfile',
@@ -297,6 +305,7 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
 
   const value: CreateFormContextValue = {
     overlayRef,
+    exportRef,
     photoUri,
     photoAspectRatio,
     photoOffset,

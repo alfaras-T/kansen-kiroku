@@ -103,6 +103,29 @@ export function resolveOverlayAspect(ratio: OutputRatio, photoAspectRatio?: numb
   return cfg.aspect ?? photoAspectRatio ?? 1;
 }
 
+/**
+ * 書き出し(保存/共有)用の画像サイズを解決する。
+ * 画面上のプレビュー枠(調整しやすいよう画面に収まる小さいサイズ)とは切り離し、
+ * 常にこの解像度で書き出すことで、プレビューがどれだけ小さく表示されていても
+ * 出力画質が劣化しないようにする。
+ *
+ * 長辺をEXPORT_LONG_EDGEに固定しつつ、ブラウザ側のcanvasラスタライズが
+ * 大きすぎる画像でタイル分割されて継ぎ目(横線)が出る問題を避けるため、
+ * 上限も超えないようにする。
+ */
+export const EXPORT_LONG_EDGE = 1600;
+
+export function resolveExportSize(
+  ratio: OutputRatio,
+  photoAspectRatio?: number | null,
+): { width: number; height: number } {
+  const aspect = resolveOverlayAspect(ratio, photoAspectRatio);
+  if (aspect >= 1) {
+    return { width: EXPORT_LONG_EDGE, height: Math.round(EXPORT_LONG_EDGE / aspect) };
+  }
+  return { width: Math.round(EXPORT_LONG_EDGE * aspect), height: EXPORT_LONG_EDGE };
+}
+
 export const POSITIONS: { key: OverlayPosition; label: string }[] = [
   { key: 'br', label: '右下' },
   { key: 'bl', label: '左下' },

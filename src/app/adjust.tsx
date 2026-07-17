@@ -20,6 +20,7 @@ import {
   OverlayPosition,
   OverlayStyleKey,
   POSITIONS,
+  resolveExportSize,
   resolveOverlayAspect,
 } from '@/constants/overlayStyles';
 import { Colors, MaxContentWidth } from '@/constants/theme';
@@ -48,6 +49,7 @@ export default function AdjustScreen() {
   const form = useCreateForm();
   const {
     overlayRef,
+    exportRef,
     photoUri,
     photoAspectRatio,
     photoOffset,
@@ -107,6 +109,15 @@ export default function AdjustScreen() {
   }
   renderWidth = Math.min(renderWidth, MaxContentWidth);
 
+  // 保存/共有時にキャプチャする書き出し専用View用のサイズ。
+  // 画面プレビュー(renderWidth/renderHeight、画面に収まる小さいサイズ)とは
+  // 完全に切り離した固定解像度で、常にこのサイズで書き出す。
+  const exportSize = resolveExportSize(ratio, photoAspectRatio);
+  // テロップの固定pt値(フォントサイズ・余白)はカード幅に対して相対的に決まっていないため、
+  // 書き出しサイズがプレビューよりずっと大きい分だけ追加でスケールし、
+  // プレビューと同じ見た目の比率になるようにする。
+  const exportScaleFactor = renderWidth > 0 ? exportSize.width / renderWidth : 1;
+
   return (
     <View style={[styles.screen, { backgroundColor: '#000' }]}>
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
@@ -156,6 +167,41 @@ export default function AdjustScreen() {
                   style={{ width: renderWidth, height: renderHeight, aspectRatio: undefined }}
                 />
               )}
+
+              {/*
+                書き出し専用の非表示View。
+                画面上のプレビューは操作しやすいよう小さく縮小表示しているが、
+                保存/共有時はこちらを固定解像度でキャプチャすることで、
+                プレビューの表示サイズに関係なく常に一定の画質で書き出す。
+                画面外へ配置し、タッチも奪わないようにする。
+              */}
+              <View pointerEvents="none" style={styles.exportStage}>
+                <OverlayCard
+                  ref={exportRef}
+                  photoUri={photoUri}
+                  photoAspectRatio={photoAspectRatio}
+                  ratio={ratio}
+                  position={position}
+                  styleKey={styleKey}
+                  visitorCode={visitorTeamName}
+                  homeCode={homeTeamName}
+                  visitorScore={visitorScore || '0'}
+                  homeScore={homeScore || '0'}
+                  dateLabel={formatDateOverlay(date)}
+                  stadium={stadiumName}
+                  memo={memo}
+                  winHighlight={winHighlight}
+                  photoOffset={photoOffset}
+                  photoScale={photoScale}
+                  telopScale={telopScale}
+                  scaleFactor={exportScaleFactor}
+                  style={{
+                    width: exportSize.width,
+                    height: exportSize.height,
+                    aspectRatio: undefined,
+                  }}
+                />
+              </View>
 
               <View style={styles.iconColumn}>
                 <View style={styles.iconGroup}>
@@ -309,6 +355,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 8,
+  },
+  // 書き出し専用View置き場。画面には表示しないが、レイアウト計算と
+  // captureRefでのキャプチャは行えるよう画面外に実配置する
+  // (display: 'none'にすると計測・キャプチャ自体ができなくなるため使わない)。
+  exportStage: {
+    position: 'absolute',
+    top: 0,
+    left: -100000,
   },
   iconColumn: {
     position: 'absolute',
