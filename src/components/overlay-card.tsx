@@ -253,14 +253,23 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
   // 写真とテキストの間に敷くスクリム(グラデーション)。テロップのある側の端から
   // 透明に抜けていく。テキストの視認性を上げつつ写真の雰囲気を壊さない、
   // ポスターや映画の字幕帯と同じ手法。
-  // 固定の'46%'指定だと、書き出し時の実ピクセル高さに換算した際に端数px
-  // (例: 981.64px)になり、Web版のcaptureRef(html2canvas)がその境界を
-  // ラスタライズする際に1〜2px幅の濃い横線(継ぎ目)を生んでしまうことがある。
-  // 整数pxに丸め、さらに数px分オーバーラップさせることで、境界が必ず
-  // ピクセルグリッドに揃い、際どい端数による滲みが起きないようにする。
-  const scrimOverlapPx = 4 * scaleFactor;
-  const scrimHeightPx =
-    containerSize.height > 0 ? Math.round(containerSize.height * 0.46) + scrimOverlapPx : undefined;
+  //
+  // 以前は高さ46%の別Viewとして敷いていたが、この方式だと写真の途中(46%地点)に
+  // グラデーションViewの「境界」が生まれる。Web版のcaptureRef(html2canvas)は
+  // この種の半透明要素の境界を合成する際に1px幅の濃い横線(継ぎ目)を描いてしまう
+  // (46%の位置をずらしても継ぎ目もそのまま一緒に移動することで確認済み。
+  // 端数pxの丸め問題ではなく、要素の境界自体がhtml2canvas側の合成バグを誘発していた)。
+  // そのため、Viewの高さ自体はカード全面(写真の上端〜下端)に広げ、
+  // locationsで色の変化だけを46%地点で完了させることで、写真の途中に
+  // 要素の境界が来ないようにする。これならViewの境界は常にカードの外周
+  // (=写真自体の境界)と一致し、そこは元々問題なく描画できている。
+  const SCRIM_STOP_RATIO = 0.46;
+  const scrimColors = isBottom
+    ? (['transparent', palette.scrim, palette.scrim] as const)
+    : ([palette.scrim, palette.scrim, 'transparent'] as const);
+  const scrimLocations = isBottom
+    ? ([0, 1 - SCRIM_STOP_RATIO, 1] as const)
+    : ([0, SCRIM_STOP_RATIO, 1] as const);
 
   return (
     <View
@@ -303,15 +312,12 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
       {photoUri && (
         <LinearGradient
           pointerEvents="none"
-          colors={isBottom ? ['transparent', palette.scrim] : [palette.scrim, 'transparent']}
-          style={[
-            styles.scrim,
-            isBottom
-              ? { bottom: 0, height: scrimHeightPx ?? '46%' }
-              : { top: 0, height: scrimHeightPx ?? '46%' },
-          ]}
+          colors={scrimColors}
+          locations={scrimLocations}
+          style={StyleSheet.absoluteFill}
         />
       )}
+
 
       <View
         pointerEvents="none"
@@ -376,11 +382,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     maxWidth: '88%',
     alignItems: 'center',
-  },
-  scrim: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
   },
   scoreRow: {
     flexDirection: 'row',

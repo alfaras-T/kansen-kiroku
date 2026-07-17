@@ -169,6 +169,14 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
       return null;
     }
     try {
+      // Web版はレイアウトファイル(_layout.tsx)がフォント読み込みを待たずに
+      // 描画するため(理由は同ファイルのコメント参照)、テロップ用のカスタム
+      // フォント(BebasNeue/Montserrat)がまだ読み込み中のタイミングで書き出すと、
+      // ブラウザの代替フォントのままキャプチャされてしまうことがある。
+      // document.fonts.ready で読み込み完了を待ってからキャプチャする。
+      if (Platform.OS === 'web' && typeof document !== 'undefined' && document.fonts?.ready) {
+        await document.fonts.ready;
+      }
       // 書き出し専用View(画面上のプレビュー枠より高い固定解像度)がレイアウト・
       // 画像デコードを終える猶予として1フレーム待ってからキャプチャする。
       // これが無いと、特にWeb上で写真がまだ途中の状態のままキャプチャされ、
