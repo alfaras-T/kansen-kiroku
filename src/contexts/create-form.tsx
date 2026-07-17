@@ -195,10 +195,26 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
       // これが無いと、特にWeb上で写真がまだ途中の状態のままキャプチャされ、
       // 継ぎ目や粗さの原因になることがある。
       await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+
+      if (Platform.OS === 'web') {
+        // Web版はreact-native-view-shotではなくhtml-to-imageを使う。
+        // captureRef(react-native-view-shot)はWeb上ではhtml2canvasベースで、
+        // DOMのレイアウト・グラデーション・フォントをJSで一から再実装して
+        // canvasに描き直すため、実際の画面プレビュー(ブラウザ自身が描画したもの)
+        // と細部が一致しない(継ぎ目・グラデーションのズレ・フォールバックフォント
+        // 化など)。html-to-imageはSVGのforeignObjectを経由し、ブラウザ自身の
+        // 描画エンジンにレンダリングさせてから画像化するため、画面上のプレビューに
+        // 忠実な結果が得られる。
+        const { toPng } = await import('html-to-image');
+        return await toPng(exportRef.current as unknown as HTMLElement, {
+          pixelRatio: 1,
+        });
+      }
+
       return await captureRef(exportRef, {
         format: 'png',
         quality: 1,
-        result: Platform.OS === 'web' ? 'data-uri' : 'tmpfile',
+        result: 'tmpfile',
       });
     } catch (e) {
       console.warn('画像の生成に失敗しました', e);
