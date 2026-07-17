@@ -9,6 +9,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DateField } from "@/components/form/date-field";
 import { LabeledField } from "@/components/form/labeled-field";
@@ -32,6 +33,7 @@ const STADIUM_OPTIONS = [
 
 export default function CreateScreen() {
   const colors = useTheme();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const form = useCreateForm();
   const {
@@ -65,7 +67,7 @@ export default function CreateScreen() {
   } = form;
 
   return (
-    <ThemedView style={styles.screen}>
+    <ThemedView style={[styles.screen, { paddingTop: insets.top }]}>
       <ScrollView
         style={[styles.scroll, { flex: 1 }]}
         contentContainerStyle={styles.scrollContent}

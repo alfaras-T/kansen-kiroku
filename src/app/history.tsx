@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useMemo, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { Pressable, SectionList, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { formatDateJP } from "@/components/form/date-field";
 import { SelectModal } from "@/components/form/select-modal";
@@ -27,6 +28,7 @@ const MY_TEAM_OPTIONS = [
 
 export default function HistoryScreen() {
   const colors = useTheme();
+  const insets = useSafeAreaInsets();
   const [entries, setEntries] = useState<HistoryEntry[]>([]);
   const [myTeam, setMyTeam] = useState("");
   const [loaded, setLoaded] = useState(false);
@@ -89,7 +91,7 @@ export default function HistoryScreen() {
   );
 
   return (
-    <ThemedView style={styles.screen}>
+    <ThemedView style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <ThemedText type="title" style={styles.title}>
           観戦履歴

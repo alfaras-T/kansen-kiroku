@@ -1,6 +1,7 @@
 import Constants from "expo-constants";
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SelectModal } from "@/components/form/select-modal";
 import { ThemedText } from "@/components/themed-text";
@@ -19,6 +20,7 @@ const FAVORITE_TEAM_OPTIONS = [
 
 export default function SettingsScreen() {
   const colors = useTheme();
+  const insets = useSafeAreaInsets();
   const { favoriteTeam, setFavoriteTeam } = useFavoriteTeam();
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -65,7 +67,7 @@ export default function SettingsScreen() {
   }
 
   return (
-    <ThemedView style={styles.screen}>
+    <ThemedView style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <ThemedText type="title" style={styles.title}>
           設定
