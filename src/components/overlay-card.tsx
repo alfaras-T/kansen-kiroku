@@ -253,7 +253,14 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
   // 写真とテキストの間に敷くスクリム(グラデーション)。テロップのある側の端から
   // 透明に抜けていく。テキストの視認性を上げつつ写真の雰囲気を壊さない、
   // ポスターや映画の字幕帯と同じ手法。
-  const scrimHeightPct = '46%' as const;
+  // 固定の'46%'指定だと、書き出し時の実ピクセル高さに換算した際に端数px
+  // (例: 981.64px)になり、Web版のcaptureRef(html2canvas)がその境界を
+  // ラスタライズする際に1〜2px幅の濃い横線(継ぎ目)を生んでしまうことがある。
+  // 整数pxに丸め、さらに数px分オーバーラップさせることで、境界が必ず
+  // ピクセルグリッドに揃い、際どい端数による滲みが起きないようにする。
+  const scrimOverlapPx = 4 * scaleFactor;
+  const scrimHeightPx =
+    containerSize.height > 0 ? Math.round(containerSize.height * 0.46) + scrimOverlapPx : undefined;
 
   return (
     <View
@@ -299,7 +306,9 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
           colors={isBottom ? ['transparent', palette.scrim] : [palette.scrim, 'transparent']}
           style={[
             styles.scrim,
-            isBottom ? { bottom: 0, height: scrimHeightPct } : { top: 0, height: scrimHeightPct },
+            isBottom
+              ? { bottom: 0, height: scrimHeightPx ?? '46%' }
+              : { top: 0, height: scrimHeightPx ?? '46%' },
           ]}
         />
       )}
