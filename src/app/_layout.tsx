@@ -7,7 +7,9 @@ import { Platform } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import AppTabs from '@/components/app-tabs';
+import { OnboardingScreen } from '@/components/onboarding-screen';
 import { CreateFormProvider } from '@/contexts/create-form';
+import { FavoriteTeamProvider, useFavoriteTeam } from '@/contexts/favorite-team';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -26,9 +28,20 @@ export default function TabLayout() {
   return (
     <ThemeProvider value={DarkTheme}>
       <AnimatedSplashOverlay />
-      <CreateFormProvider>
-        <AppTabs />
-      </CreateFormProvider>
+      <FavoriteTeamProvider>
+        <CreateFormProvider>
+          <RootGate />
+        </CreateFormProvider>
+      </FavoriteTeamProvider>
     </ThemeProvider>
   );
+}
+
+// 初回起動時はオンボーディング(お気に入りチーム選択)を完了するまでタブ画面を表示しない。
+function RootGate() {
+  const { loading, onboarded } = useFavoriteTeam();
+
+  if (loading) return null;
+  if (!onboarded) return <OnboardingScreen />;
+  return <AppTabs />;
 }

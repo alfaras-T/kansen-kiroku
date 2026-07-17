@@ -33,6 +33,13 @@ export default function AppTabs() {
         }}
       />
       <Tabs.Screen
+        name="settings"
+        options={{
+          title: '設定',
+          tabBarIcon: ({ color, size }) => <Ionicons name="settings-outline" color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
         name="adjust"
         options={{
           href: null, // タブバーには表示せず、遷移でのみ開く隠しルート
