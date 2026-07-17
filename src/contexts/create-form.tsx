@@ -259,6 +259,19 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
       await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
 
       if (Platform.OS === 'web') {
+        // 上のRAF待ちだけでは、写真の<img>自体のデコードが実際に終わっている
+        // 保証にはならない。html-to-imageはDOMを見たままSVGに直列化するだけで
+        // 未デコードの画像を待ってはくれないため、書き出し専用View内の
+        // すべての<img>についてdecode()完了を明示的に待ってからキャプチャする。
+        const imgs = Array.from(
+          (exportRef.current as unknown as HTMLElement).querySelectorAll('img')
+        );
+        await Promise.all(
+          imgs.map((img) =>
+            img.decode ? img.decode().catch(() => undefined) : Promise.resolve()
+          )
+        );
+
         // Web版はreact-native-view-shotではなくhtml-to-imageを使う。
         // captureRef(react-native-view-shot)はWeb上ではhtml2canvasベースで、
         // DOMのレイアウト・グラデーション・フォントをJSで一から再実装して
