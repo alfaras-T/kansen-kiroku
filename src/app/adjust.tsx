@@ -437,12 +437,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   // 書き出し専用View置き場。画面には表示しないが、レイアウト計算と
-  // captureRefでのキャプチャは行えるよう画面外に実配置する
+  // captureRefでのキャプチャは行えるよう実配置する
   // (display: 'none'にすると計測・キャプチャ自体ができなくなるため使わない)。
+  // 注意: Web版のcaptureRefはhtml2canvasベースで、ドキュメント座標を基準に
+  // レンダリングするため、極端に離れた位置(例: left: -100000)に置くと
+  // レイアウト崩れ(テロップの重なり)やキャプチャ範囲のズレ(余白)が発生する。
+  // そのため位置はそのままにopacityで見た目だけ消す。
   exportStage: {
     position: "absolute",
     top: 0,
-    left: -100000,
+    left: 0,
+    opacity: 0,
   },
   iconColumn: {
     position: "absolute",
