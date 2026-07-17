@@ -14,6 +14,7 @@ import {
 import {
   DEFAULT_PHOTO_OFFSET,
   DEFAULT_PHOTO_SCALE,
+  DEFAULT_TELOP_SCALE,
   MAX_PHOTO_SCALE,
   MIN_PHOTO_SCALE,
   OVERLAY_STYLES,
@@ -48,6 +49,8 @@ export interface OverlayCardProps {
   photoScale?: number;
   /** 拡大率が変わるたびに呼ばれる（ダブルタップでのリセット時など） */
   onPhotoScaleChange?: (scale: number) => void;
+  /** テロップ(日付・スコア・球場等のテキストブロック)の拡大率。1.0が等倍(=挿入時の元のサイズ)。 */
+  telopScale?: number;
   /** 外側から幅/高さ等を指定して当てはめたい場合のスタイル上書き（例: 画面に収める全画面レイアウト） */
   style?: ViewStyle;
 }
@@ -92,6 +95,7 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
     onPhotoOffsetChange,
     photoScale = DEFAULT_PHOTO_SCALE,
     onPhotoScaleChange,
+    telopScale = DEFAULT_TELOP_SCALE,
     style: styleOverride,
   } = props;
 
@@ -293,6 +297,12 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
           styles.overlayBlock,
           isBottom ? { bottom: 20 } : { top: 20 },
           isRight ? { right: 20 } : { left: 20 },
+          {
+            transform: [{ scale: telopScale }],
+            // 表示位置の角(コーナー)を支点に拡大縮小することで、サイズを変えても
+            // テロップの基準位置(右下/左下/右上/左上)がずれないようにする。
+            transformOrigin: `${isRight ? 'right' : 'left'} ${isBottom ? 'bottom' : 'top'}`,
+          },
         ]}>
         <Text style={[styles.dateLine, textShadow, { color: palette.accent }]} numberOfLines={1}>
           {dateLabel}

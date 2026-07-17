@@ -5,11 +5,15 @@ import { LayoutChangeEvent, Pressable, StyleSheet, Switch, Text, View } from 're
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { formatDateOverlay } from '@/components/form/date-field';
+import { Slider } from '@/components/form/slider';
 import { OverlayCard } from '@/components/overlay-card';
 import { ThemedText } from '@/components/themed-text';
 import {
   DEFAULT_PHOTO_OFFSET,
   DEFAULT_PHOTO_SCALE,
+  DEFAULT_TELOP_SCALE,
+  MAX_TELOP_SCALE,
+  MIN_TELOP_SCALE,
   OUTPUT_RATIOS,
   OVERLAY_STYLES,
   OutputRatio,
@@ -30,6 +34,14 @@ function nextInList<T>(list: T[], current: T): T {
   return list[(idx + 1) % list.length];
 }
 
+// テロップの拡大率(MIN_TELOP_SCALE〜MAX_TELOP_SCALE)とスライダーの0〜1の正規化値を相互変換する
+function telopScaleToNorm(scale: number): number {
+  return (scale - MIN_TELOP_SCALE) / (MAX_TELOP_SCALE - MIN_TELOP_SCALE);
+}
+function normToTelopScale(norm: number): number {
+  return MIN_TELOP_SCALE + norm * (MAX_TELOP_SCALE - MIN_TELOP_SCALE);
+}
+
 export default function AdjustScreen() {
   const colors = Colors.dark;
   const router = useRouter();
@@ -42,6 +54,8 @@ export default function AdjustScreen() {
     setPhotoOffset,
     photoScale,
     setPhotoScale,
+    telopScale,
+    setTelopScale,
     ratio,
     setRatio,
     position,
@@ -65,6 +79,7 @@ export default function AdjustScreen() {
   } = form;
 
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
+  const [textSizeOpen, setTextSizeOpen] = useState(false);
 
   function goBack() {
     if (router.canGoBack()) router.back();
@@ -76,7 +91,11 @@ export default function AdjustScreen() {
     setStageSize({ width, height });
   }
 
-  const isAdjusted = photoOffset.x !== 0 || photoOffset.y !== 0 || photoScale !== DEFAULT_PHOTO_SCALE;
+  const isAdjusted =
+    photoOffset.x !== 0 ||
+    photoOffset.y !== 0 ||
+    photoScale !== DEFAULT_PHOTO_SCALE ||
+    telopScale !== DEFAULT_TELOP_SCALE;
 
   // 選んだ比率を保ったまま、画面(ステージ)に収まる最大サイズを計算する（object-fit: containと同じ考え方）
   const targetAspect = resolveOverlayAspect(ratio, photoAspectRatio);
@@ -133,6 +152,7 @@ export default function AdjustScreen() {
                   onPhotoOffsetChange={setPhotoOffset}
                   photoScale={photoScale}
                   onPhotoScaleChange={setPhotoScale}
+                  telopScale={telopScale}
                   style={{ width: renderWidth, height: renderHeight, aspectRatio: undefined }}
                 />
               )}
@@ -170,6 +190,18 @@ export default function AdjustScreen() {
                 </View>
 
                 <View style={styles.iconGroup}>
+                  <Text style={styles.iconLabel}>文字サイズ</Text>
+                  <Pressable
+                    onPress={() => setTextSizeOpen((v) => !v)}
+                    style={[
+                      styles.iconBtn,
+                      textSizeOpen && { backgroundColor: 'rgba(255,255,255,0.28)' },
+                    ]}>
+                    <Ionicons name="text-outline" size={16} color="#fff" />
+                  </Pressable>
+                </View>
+
+                <View style={styles.iconGroup}>
                   <Text style={styles.iconLabel}>ハイライト</Text>
                   <Pressable onPress={() => setWinHighlight(!winHighlight)} style={styles.iconBtn}>
                     <Ionicons
@@ -187,6 +219,7 @@ export default function AdjustScreen() {
                       onPress={() => {
                         setPhotoOffset(DEFAULT_PHOTO_OFFSET);
                         setPhotoScale(DEFAULT_PHOTO_SCALE);
+                        setTelopScale(DEFAULT_TELOP_SCALE);
                       }}
                       style={styles.iconBtn}>
                       <Ionicons name="refresh-outline" size={16} color="#fff" />
@@ -194,6 +227,22 @@ export default function AdjustScreen() {
                   </View>
                 )}
               </View>
+
+              {textSizeOpen && (
+                <View style={styles.textSizePopover}>
+                  <View style={styles.textSizePopoverHeader}>
+                    <Text style={styles.textSizePopoverLabel}>文字サイズ</Text>
+                    <Text style={styles.textSizePopoverValue}>{Math.round(telopScale * 100)}%</Text>
+                  </View>
+                  <Slider
+                    value={telopScaleToNorm(telopScale)}
+                    onChange={(norm) => setTelopScale(normToTelopScale(norm))}
+                    trackColor="rgba(255,255,255,0.25)"
+                    fillColor={colors.accent}
+                    knobColor="#fff"
+                  />
+                </View>
+              )}
             </View>
 
             <View style={styles.historyRow}>
@@ -286,6 +335,24 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
+  textSizePopover: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 8,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  textSizePopoverHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  textSizePopoverLabel: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  textSizePopoverValue: { color: 'rgba(255,255,255,0.75)', fontSize: 12.5 },
   historyRow: {
     flexDirection: 'row',
     alignItems: 'center',

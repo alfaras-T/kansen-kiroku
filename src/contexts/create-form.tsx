@@ -8,6 +8,7 @@ import { captureRef } from 'react-native-view-shot';
 import {
   DEFAULT_PHOTO_OFFSET,
   DEFAULT_PHOTO_SCALE,
+  DEFAULT_TELOP_SCALE,
   OutputRatio,
   OverlayPosition,
   OverlayStyleKey,
@@ -35,6 +36,9 @@ interface CreateFormContextValue {
   setPhotoOffset: (v: PhotoOffset) => void;
   photoScale: number;
   setPhotoScale: (v: number) => void;
+  /** テロップ(日付・スコア・球場等のテキストブロック)の拡大率。1.0が等倍(=挿入時の元のサイズ)。 */
+  telopScale: number;
+  setTelopScale: (v: number) => void;
   ratio: OutputRatio;
   setRatio: (v: OutputRatio) => void;
   position: OverlayPosition;
@@ -94,6 +98,7 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
   const [photoAspectRatio, setPhotoAspectRatio] = useState<number | null>(null);
   const [photoOffset, setPhotoOffset] = useState<PhotoOffset>(DEFAULT_PHOTO_OFFSET);
   const [photoScale, setPhotoScale] = useState(DEFAULT_PHOTO_SCALE);
+  const [telopScale, setTelopScale] = useState(DEFAULT_TELOP_SCALE);
   const [ratio, setRatio] = useState<OutputRatio>('original');
   const [position, setPosition] = useState<OverlayPosition>('br');
   const [styleKey, setStyleKey] = useState<OverlayStyleKey>('classic');
@@ -124,6 +129,7 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
   function resetPhotoAdjustment() {
     setPhotoOffset(DEFAULT_PHOTO_OFFSET);
     setPhotoScale(DEFAULT_PHOTO_SCALE);
+    setTelopScale(DEFAULT_TELOP_SCALE);
   }
 
   async function pickPhoto() {
@@ -297,6 +303,8 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     setPhotoOffset,
     photoScale,
     setPhotoScale,
+    telopScale,
+    setTelopScale,
     ratio,
     setRatio,
     position,

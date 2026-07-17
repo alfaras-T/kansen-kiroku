@@ -13,6 +13,11 @@ export const MAX_PHOTO_SCALE = 3.0;
 // 写真追加時のデフォルトは最小サイズ(フレームにちょうど収まる状態)にする
 export const DEFAULT_PHOTO_SCALE = MIN_PHOTO_SCALE;
 
+export const MIN_TELOP_SCALE = 0.7;
+export const MAX_TELOP_SCALE = 1.6;
+// テロップ(日付・スコア・球場等のテキストブロック)のデフォルトは等倍(=今のサイズ)のまま挿入する
+export const DEFAULT_TELOP_SCALE = 1.0;
+
 export interface OverlayPalette {
   label: string;
   /** チームコードなど本文の色 */
