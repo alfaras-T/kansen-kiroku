@@ -10,6 +10,7 @@ export default function AppTabs() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        sceneStyle: { flex: 1 },
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.textSecondary,
         tabBarStyle: {
