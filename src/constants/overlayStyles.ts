@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 export type OverlayStyleKey = 'classic' | 'minimal' | 'film' | 'night';
 export type OverlayPosition = 'br' | 'bl' | 'tr' | 'tl';
 export type OutputRatio = 'original' | 'square' | 'portrait' | 'story';
@@ -108,12 +110,16 @@ export function resolveOverlayAspect(ratio: OutputRatio, photoAspectRatio?: numb
  * 画面上のプレビュー枠(調整しやすいよう画面に収まる小さいサイズ)とは切り離し、
  * 常にこの解像度で書き出すことで、プレビューがどれだけ小さく表示されていても
  * 出力画質が劣化しないようにする。
- *
- * 長辺をEXPORT_LONG_EDGEに固定しつつ、ブラウザ側のcanvasラスタライズが
- * 大きすぎる画像でタイル分割されて継ぎ目(横線)が出る問題を避けるため、
- * 上限も超えないようにする。
  */
-export const EXPORT_LONG_EDGE = 1600;
+
+/**
+ * 書き出しの長辺(px)。
+ * Web版はcaptureRefがDOM/canvasベースで動作し、大きすぎる画像だと
+ * ブラウザ側のラスタライズがタイル分割されて継ぎ目が出ることがあるため、
+ * 安全側の1600pxに据え置く。ネイティブ(iOS/Android)はその制約が無いため、
+ * より高い解像度で書き出す。
+ */
+export const EXPORT_LONG_EDGE = Platform.OS === 'web' ? 1600 : 3000;
 
 export function resolveExportSize(
   ratio: OutputRatio,
