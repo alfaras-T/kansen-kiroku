@@ -1,6 +1,19 @@
-import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
-import { loadFavoriteTeam, loadOnboarded, saveFavoriteTeam, saveOnboarded } from '@/storage/preferences';
+import { saveMyTeam } from "@/storage/history";
+import {
+  loadFavoriteTeam,
+  loadOnboarded,
+  saveFavoriteTeam,
+  saveOnboarded,
+} from "@/storage/preferences";
 
 interface FavoriteTeamContextValue {
   /** テーマ用のお気に入りチームコード。'' は「特になし」(既存デザインのまま)。 */
@@ -15,16 +28,21 @@ interface FavoriteTeamContextValue {
   completeOnboarding: (code: string) => Promise<void>;
 }
 
-const FavoriteTeamContext = createContext<FavoriteTeamContextValue | null>(null);
+const FavoriteTeamContext = createContext<FavoriteTeamContextValue | null>(
+  null,
+);
 
 export function FavoriteTeamProvider({ children }: { children: ReactNode }) {
-  const [favoriteTeam, setFavoriteTeamState] = useState('');
+  const [favoriteTeam, setFavoriteTeamState] = useState("");
   const [onboarded, setOnboardedState] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
-      const [team, done] = await Promise.all([loadFavoriteTeam(), loadOnboarded()]);
+      const [team, done] = await Promise.all([
+        loadFavoriteTeam(),
+        loadOnboarded(),
+      ]);
       setFavoriteTeamState(team);
       setOnboardedState(done);
       setLoading(false);
@@ -39,12 +57,26 @@ export function FavoriteTeamProvider({ children }: { children: ReactNode }) {
   const completeOnboarding = useCallback(async (code: string) => {
     setFavoriteTeamState(code);
     setOnboardedState(true);
-    await Promise.all([saveFavoriteTeam(code), saveOnboarded()]);
+    await Promise.all([
+      saveFavoriteTeam(code),
+      saveOnboarded(),
+      // 観戦履歴タブの「マイチーム」(成績集計用)の初期値として、
+      // オンボーディングで選んだお気に入りチームをそのまま反映する。
+      // 以降、設定画面でお気に入りチームを変えてもここには影響しない(初回のみ)。
+      saveMyTeam(code),
+    ]);
   }, []);
 
   return (
     <FavoriteTeamContext.Provider
-      value={{ favoriteTeam, onboarded, loading, setFavoriteTeam, completeOnboarding }}>
+      value={{
+        favoriteTeam,
+        onboarded,
+        loading,
+        setFavoriteTeam,
+        completeOnboarding,
+      }}
+    >
       {children}
     </FavoriteTeamContext.Provider>
   );
@@ -52,6 +84,9 @@ export function FavoriteTeamProvider({ children }: { children: ReactNode }) {
 
 export function useFavoriteTeam() {
   const ctx = useContext(FavoriteTeamContext);
-  if (!ctx) throw new Error('useFavoriteTeam は FavoriteTeamProvider の内側で使ってください');
+  if (!ctx)
+    throw new Error(
+      "useFavoriteTeam は FavoriteTeamProvider の内側で使ってください",
+    );
   return ctx;
 }
