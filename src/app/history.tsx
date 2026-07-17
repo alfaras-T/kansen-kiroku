@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
 
 import { formatDateJP } from '@/components/form/date-field';
 import { SelectModal } from '@/components/form/select-modal';
@@ -9,7 +9,14 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { TEAMS } from '@/constants/teams';
 import { BottomTabInset, Colors, MaxContentWidth, Spacing } from '@/constants/theme';
-import { computeRecord, deleteHistoryEntry, loadHistory, loadMyTeam, saveMyTeam } from '@/storage/history';
+import {
+  computeRecord,
+  deleteHistoryEntry,
+  groupHistoryByYear,
+  loadHistory,
+  loadMyTeam,
+  saveMyTeam,
+} from '@/storage/history';
 import { HistoryEntry } from '@/types/history';
 
 const MY_TEAM_OPTIONS = [
@@ -47,7 +54,14 @@ export default function HistoryScreen() {
   }
 
   const record = computeRecord(entries, myTeam);
-  const sorted = [...entries].sort((a, b) => b.createdAt - a.createdAt);
+  const sections = useMemo(
+    () =>
+      groupHistoryByYear(entries).map((g) => ({
+        title: `${g.year}年`,
+        data: g.entries,
+      })),
+    [entries]
+  );
 
   return (
     <ThemedView style={styles.screen}>
@@ -75,7 +89,11 @@ export default function HistoryScreen() {
       <View style={styles.statsRow}>
         <View style={[styles.statBox, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
           <Text style={[styles.statNum, { color: colors.accent }]}>{entries.length}</Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>観戦試合</Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>総観戦数</Text>
+        </View>
+        <View style={[styles.statBox, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
+          <Text style={[styles.statNum, { color: colors.accent }]}>{record ? record.games : '–'}</Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>マイチーム観戦数</Text>
         </View>
         <View style={[styles.statBox, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
           <Text style={[styles.statNum, { color: colors.accent }]}>
@@ -85,7 +103,7 @@ export default function HistoryScreen() {
         </View>
       </View>
 
-      {sorted.length === 0 ? (
+      {sections.length === 0 ? (
         loaded && (
           <View style={styles.emptyWrap}>
             <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
@@ -94,11 +112,20 @@ export default function HistoryScreen() {
           </View>
         )
       ) : (
-        <FlatList
-          data={sorted}
+        <SectionList
+          sections={sections}
           keyExtractor={(item) => item.id}
           style={styles.flatList}
           contentContainerStyle={[styles.list, { paddingBottom: BottomTabInset + Spacing.six }]}
+          stickySectionHeadersEnabled
+          renderSectionHeader={({ section }) => (
+            <View style={[styles.sectionHeader, { backgroundColor: colors.background }]}>
+              <Text style={[styles.sectionHeaderText, { color: colors.text }]}>{section.title}</Text>
+              <Text style={[styles.sectionHeaderCount, { color: colors.textSecondary }]}>
+                {section.data.length}試合
+              </Text>
+            </View>
+          )}
           renderItem={({ item }) => {
             const resultTag = item.visitorScore === item.homeScore ? ' ・引分' : '';
 
@@ -145,6 +172,14 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: 10.5, letterSpacing: 0.5, textTransform: 'uppercase', marginTop: 2 },
   list: { paddingHorizontal: Spacing.four, gap: 8 },
   flatList: { flex: 1 },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+  },
+  sectionHeaderText: { fontSize: 15, fontWeight: '700' },
+  sectionHeaderCount: { fontSize: 11.5 },
   emptyWrap: {
     flex: 1,
     alignItems: 'center',

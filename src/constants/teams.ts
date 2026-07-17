@@ -8,19 +8,21 @@ export interface TeamOption {
   nickname: string;
 }
 
+// 表示順は前年(2025年)のNPB最終順位に準拠(セ・リーグ1〜6位、続けてパ・リーグ1〜6位)。
+// シーズン終了後は毎年この並びを更新する。
 export const TEAMS: TeamOption[] = [
-  { code: 'G', nickname: 'ジャイアンツ' },
-  { code: 'T', nickname: 'タイガース' },
-  { code: 'D', nickname: 'ドラゴンズ' },
-  { code: 'C', nickname: 'カープ' },
-  { code: 'S', nickname: 'スワローズ' },
-  { code: 'DB', nickname: 'ベイスターズ' },
-  { code: 'L', nickname: 'ライオンズ' },
-  { code: 'M', nickname: 'マリーンズ' },
-  { code: 'B', nickname: 'バファローズ' },
-  { code: 'F', nickname: 'ファイターズ' },
-  { code: 'H', nickname: 'ホークス' },
-  { code: 'E', nickname: 'イーグルス' },
+  { code: 'T', nickname: 'タイガース' }, // セ・リーグ 2025年 1位
+  { code: 'DB', nickname: 'ベイスターズ' }, // セ・リーグ 2025年 2位
+  { code: 'G', nickname: 'ジャイアンツ' }, // セ・リーグ 2025年 3位
+  { code: 'D', nickname: 'ドラゴンズ' }, // セ・リーグ 2025年 4位
+  { code: 'C', nickname: 'カープ' }, // セ・リーグ 2025年 5位
+  { code: 'S', nickname: 'スワローズ' }, // セ・リーグ 2025年 6位
+  { code: 'H', nickname: 'ホークス' }, // パ・リーグ 2025年 1位
+  { code: 'F', nickname: 'ファイターズ' }, // パ・リーグ 2025年 2位
+  { code: 'B', nickname: 'バファローズ' }, // パ・リーグ 2025年 3位
+  { code: 'E', nickname: 'イーグルス' }, // パ・リーグ 2025年 4位
+  { code: 'L', nickname: 'ライオンズ' }, // パ・リーグ 2025年 5位
+  { code: 'M', nickname: 'マリーンズ' }, // パ・リーグ 2025年 6位
 ];
 
 /** チーム一覧にない場合に選ぶ、自由入力用のセンチネル値 */

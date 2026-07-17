@@ -68,8 +68,10 @@ export function computeRecord(entries: HistoryEntry[], myTeam: string) {
   let win = 0;
   let lose = 0;
   let draw = 0;
+  let games = 0;
   entries.forEach((e) => {
     if (e.visitorCode !== myTeam && e.homeCode !== myTeam) return;
+    games += 1;
     const v = Number(e.visitorScore);
     const h = Number(e.homeScore);
     if (v === h) {
@@ -80,5 +82,22 @@ export function computeRecord(entries: HistoryEntry[], myTeam: string) {
     if (winnerCode === myTeam) win += 1;
     else lose += 1;
   });
-  return { win, lose, draw };
+  return { win, lose, draw, games };
+}
+
+/** 観戦履歴を試合日(YYYY-MM-DD)の年ごとにグループ化し、年の新しい順に並べる */
+export function groupHistoryByYear(entries: HistoryEntry[]): { year: string; entries: HistoryEntry[] }[] {
+  const map = new Map<string, HistoryEntry[]>();
+  entries.forEach((e) => {
+    const year = e.date?.slice(0, 4) || '不明';
+    const list = map.get(year) ?? [];
+    list.push(e);
+    map.set(year, list);
+  });
+  return Array.from(map.entries())
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([year, list]) => ({
+      year,
+      entries: list.sort((a, b) => b.createdAt - a.createdAt),
+    }));
 }
