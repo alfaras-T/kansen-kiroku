@@ -27,14 +27,33 @@ function todayISO(): string {
   return `${y}-${m}-${day}`;
 }
 
-async function blobUrlToDataUri(blobUrl: string): Promise<string> {
+/**
+ * 写真をdata URI化する際に、書き出しに十分な解像度まで縮小してから
+ * 変換する。html-to-imageはDOMをSVGに直列化する都合上、画像もSVG内に
+ * 文字列(data URI)としてまるごと埋め込む必要があり、スマホのカメラ写真
+ * そのままの解像度(数千px、数MB)だと、埋め込み後のデータが大きくなり
+ * すぎて失敗する(特にSafari/iOSで顕著)ことがある。失敗してもエラーには
+ * ならず、その要素だけ描画されない(=書き出し画像から写真だけ消える)ため
+ * 気づきにくい。書き出し長辺(EXPORT_LONG_EDGE)より十分大きい2400pxを
+ * 上限に縮小し、JPEGで再エンコードすることでデータ量を抑える。
+ */
+async function blobUrlToResizedDataUri(blobUrl: string, maxLongEdge = 2400): Promise<string> {
   const blob = await (await fetch(blobUrl)).blob();
-  return await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(blob);
-  });
+  const bitmap = await createImageBitmap(blob);
+  const longEdge = Math.max(bitmap.width, bitmap.height);
+  const scale = longEdge > maxLongEdge ? maxLongEdge / longEdge : 1;
+  const width = Math.round(bitmap.width * scale);
+  const height = Math.round(bitmap.height * scale);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('canvas 2d context を取得できませんでした');
+  ctx.drawImage(bitmap, 0, 0, width, height);
+  bitmap.close();
+
+  return canvas.toDataURL('image/jpeg', 0.9);
 }
 
 interface CreateFormContextValue {
@@ -157,15 +176,14 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     });
     if (!result.canceled && result.assets?.[0]?.uri) {
       const asset = result.assets[0];
-      // Web版のexpo-image-pickerはblob: URLを返すが、書き出しに使う
-      // html-to-imageはDOMをSVGに直列化する都合上blob: URLを画像として
-      // 正しく埋め込めず、書き出し画像から写真が消えてしまう
-      // (テロップやグラデーション背景だけが残る)。data: URI(base64)に
-      // 変換してから保持することで、埋め込み時の参照切れを避ける。
+      // Web版のexpo-image-pickerはblob: URLを返すが、html-to-imageは
+      // blob: URLを画像として正しく埋め込めない上、埋め込み用にdata URI化
+      // する場合もカメラ写真そのままの解像度では大きすぎて失敗しうるため、
+      // 縮小しつつdata URIへ変換してから保持する。
       let uri = asset.uri;
       if (Platform.OS === 'web' && asset.uri.startsWith('blob:')) {
         try {
-          uri = await blobUrlToDataUri(asset.uri);
+          uri = await blobUrlToResizedDataUri(asset.uri);
         } catch (e) {
           console.warn('写真のdata URI変換に失敗しました。blob URLのまま使用します', e);
         }
