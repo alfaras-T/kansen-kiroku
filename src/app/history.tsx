@@ -29,6 +29,7 @@ export default function HistoryScreen() {
   const [entries, setEntries] = useState<HistoryEntry[]>([]);
   const [myTeam, setMyTeam] = useState('');
   const [loaded, setLoaded] = useState(false);
+  const [selectedYear, setSelectedYear] = useState('');
 
   const refresh = useCallback(async () => {
     const [h, mt] = await Promise.all([loadHistory(), loadMyTeam()]);
@@ -53,14 +54,29 @@ export default function HistoryScreen() {
     setEntries(next);
   }
 
-  const record = computeRecord(entries, myTeam);
+  const yearOptions = useMemo(() => {
+    const years = Array.from(new Set(entries.map((e) => e.date?.slice(0, 4)).filter(Boolean))).sort((a, b) =>
+      b.localeCompare(a)
+    );
+    return [{ label: 'すべての年', value: '' }, ...years.map((y) => ({ label: `${y}年`, value: y }))];
+  }, [entries]);
+
+  // 記録削除等でその年のデータが無くなった場合は「すべての年」に戻す
+  const effectiveYear = yearOptions.some((o) => o.value === selectedYear) ? selectedYear : '';
+
+  const filteredEntries = useMemo(
+    () => (effectiveYear ? entries.filter((e) => e.date?.slice(0, 4) === effectiveYear) : entries),
+    [entries, effectiveYear]
+  );
+
+  const record = computeRecord(filteredEntries, myTeam);
   const sections = useMemo(
     () =>
-      groupHistoryByYear(entries).map((g) => ({
+      groupHistoryByYear(filteredEntries).map((g) => ({
         title: `${g.year}年`,
         data: g.entries,
       })),
-    [entries]
+    [filteredEntries]
   );
 
   return (
@@ -86,10 +102,24 @@ export default function HistoryScreen() {
         />
       </View>
 
+      <View style={styles.myTeamRow}>
+        <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: 6 }}>
+          表示する年
+        </ThemedText>
+        <SelectModal
+          title="表示する年を選択"
+          options={yearOptions}
+          value={effectiveYear}
+          onChange={setSelectedYear}
+        />
+      </View>
+
       <View style={styles.statsRow}>
         <View style={[styles.statBox, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
-          <Text style={[styles.statNum, { color: colors.accent }]}>{entries.length}</Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>総観戦数</Text>
+          <Text style={[styles.statNum, { color: colors.accent }]}>{filteredEntries.length}</Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+            {effectiveYear ? `${effectiveYear}年の観戦数` : '総観戦数'}
+          </Text>
         </View>
         <View style={[styles.statBox, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
           <Text style={[styles.statNum, { color: colors.accent }]}>{record ? record.games : '–'}</Text>
@@ -107,7 +137,9 @@ export default function HistoryScreen() {
         loaded && (
           <View style={styles.emptyWrap}>
             <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
-              まだ記録がありません。「記録する」タブから試合を保存してみましょう。
+              {effectiveYear
+                ? `${effectiveYear}年の記録はまだありません。`
+                : 'まだ記録がありません。「記録する」タブから試合を保存してみましょう。'}
             </ThemedText>
           </View>
         )
