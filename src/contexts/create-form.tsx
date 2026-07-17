@@ -186,7 +186,26 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     recordSavedForDraft.current = false;
   }
 
+  const captureInFlightRef = useRef<Promise<string | null> | null>(null);
+
   async function capture(options?: { silent?: boolean }): Promise<string | null> {
+    // 裏側の事前生成と、ボタン押下時の生成が同時に走ると、同じ書き出し専用DOMを
+    // 2つのhtml-to-image呼び出しが並行して処理することになり、一方の結果が
+    // 壊れる(写真だけ抜け落ちる等)ことがある。進行中のキャプチャがあれば
+    // 新規に始めずそれを使い回す。
+    if (captureInFlightRef.current) {
+      return captureInFlightRef.current;
+    }
+    const promise = captureInner(options);
+    captureInFlightRef.current = promise;
+    try {
+      return await promise;
+    } finally {
+      captureInFlightRef.current = null;
+    }
+  }
+
+  async function captureInner(options?: { silent?: boolean }): Promise<string | null> {
     if (!exportRef.current) {
       if (!options?.silent) {
         Alert.alert('少し待ってから再度お試しください', 'プレビューの準備がまだ完了していません');
