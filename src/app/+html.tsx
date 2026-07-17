@@ -47,36 +47,63 @@ export default function Root({ children }: { children: React.ReactNode }) {
                 margin: 0;
                 padding: 0;
               }
-              html {
-                height: var(--app-height, 100%);
-              }
               body {
-                height: var(--app-height, 100%);
                 overscroll-behavior: none;
-              }
-              #root {
-                height: var(--app-height, 100%);
-              }
-              #root > div {
-                height: 100%;
-                min-height: 100%;
               }
             `,
           }}
         />
+        {/*
+          ホーム画面に追加したPWA(standalone)モードで、コンテンツが画面より短い場合に
+          高さがずれてタブバーごと画面下部に固定されない問題への対策。
+          パーセンテージ指定(height:100%)はどこか1階層でも途切れると効かなくなるため、
+          実際に見えている高さをJavaScriptで測定し、html/body/#root、および
+          #root配下の入れ子(最初の子要素)を辿って、ピクセル単位の高さを直接指定する。
+        */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function () {
-                function setAppHeight() {
-                  var h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
-                  document.documentElement.style.setProperty('--app-height', h + 'px');
+                function getViewportHeight() {
+                  return (window.visualViewport && window.visualViewport.height) || window.innerHeight;
                 }
-                setAppHeight();
-                window.addEventListener('resize', setAppHeight);
-                window.addEventListener('orientationchange', setAppHeight);
+                function applyHeight() {
+                  var h = getViewportHeight() + 'px';
+                  document.documentElement.style.height = h;
+                  document.body.style.height = h;
+                  var el = document.getElementById('root');
+                  var depth = 0;
+                  while (el && depth < 2) {
+                    el.style.height = h;
+                    el.style.minHeight = h;
+                    el = el.firstElementChild;
+                    depth++;
+                  }
+                }
+                applyHeight();
+                window.addEventListener('resize', applyHeight);
+                window.addEventListener('orientationchange', applyHeight);
+                window.addEventListener('load', applyHeight);
                 if (window.visualViewport) {
-                  window.visualViewport.addEventListener('resize', setAppHeight);
+                  window.visualViewport.addEventListener('resize', applyHeight);
+                }
+                // 初期レンダリングのタイミングずれ対策として、少し遅らせても再適用する
+                setTimeout(applyHeight, 100);
+                setTimeout(applyHeight, 500);
+                setTimeout(applyHeight, 1500);
+                // ハイドレーション完了やスプラッシュの消去でDOM構造が変わった時にも再適用する
+                var rootEl = document.getElementById('root');
+                if (rootEl && window.MutationObserver) {
+                  var pending = false;
+                  var observer = new MutationObserver(function () {
+                    if (pending) return;
+                    pending = true;
+                    requestAnimationFrame(function () {
+                      pending = false;
+                      applyHeight();
+                    });
+                  });
+                  observer.observe(rootEl, { childList: true, subtree: true });
                 }
               })();
             `,
