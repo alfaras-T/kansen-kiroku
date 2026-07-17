@@ -1,13 +1,6 @@
 import Constants from "expo-constants";
 import { useState } from "react";
-import {
-  Linking,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { SelectModal } from "@/components/form/select-modal";
 import { ThemedText } from "@/components/themed-text";
@@ -27,9 +20,6 @@ const FAVORITE_TEAM_OPTIONS = [
   { label: "特になし", value: "" },
   ...TEAMS.map((t) => ({ label: `${t.nickname}（${t.code}）`, value: t.code })),
 ];
-
-const REPO_URL = "https://github.com/alfaras-T/kansen-kiroku";
-const WEB_URL = "https://alfaras-t.github.io/kansen-kiroku/";
 
 export default function SettingsScreen() {
   const colors = Colors.dark;
@@ -177,30 +167,12 @@ export default function SettingsScreen() {
               },
             ]}
           >
-            <View style={styles.infoRow}>
+            <View style={[styles.infoRow, styles.infoRowLast]}>
               <ThemedText type="small" themeColor="textSecondary">
                 バージョン
               </ThemedText>
               <ThemedText type="small">{appVersion}</ThemedText>
             </View>
-            <Pressable
-              style={styles.infoRow}
-              onPress={() => Linking.openURL(REPO_URL)}
-            >
-              <ThemedText type="small" themeColor="textSecondary">
-                リポジトリ
-              </ThemedText>
-              <ThemedText type="linkPrimary">GitHub</ThemedText>
-            </Pressable>
-            <Pressable
-              style={[styles.infoRow, styles.infoRowLast]}
-              onPress={() => Linking.openURL(WEB_URL)}
-            >
-              <ThemedText type="small" themeColor="textSecondary">
-                Web版
-              </ThemedText>
-              <ThemedText type="linkPrimary">アプリを開く</ThemedText>
-            </Pressable>
           </View>
           <ThemedText
             type="small"
