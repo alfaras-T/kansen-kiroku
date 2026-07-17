@@ -1,7 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import * as Sharing from 'expo-sharing';
-import { createContext, ReactNode, useContext, useRef, useState } from 'react';
+import { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import { Alert, Platform, View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 
@@ -186,9 +186,11 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     recordSavedForDraft.current = false;
   }
 
-  async function capture(): Promise<string | null> {
+  async function capture(options?: { silent?: boolean }): Promise<string | null> {
     if (!exportRef.current) {
-      Alert.alert('少し待ってから再度お試しください', 'プレビューの準備がまだ完了していません');
+      if (!options?.silent) {
+        Alert.alert('少し待ってから再度お試しください', 'プレビューの準備がまだ完了していません');
+      }
       return null;
     }
     try {
@@ -241,7 +243,9 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
       });
     } catch (e) {
       console.warn('画像の生成に失敗しました', e);
-      Alert.alert('エラー', '画像の生成に失敗しました。もう一度お試しください');
+      if (!options?.silent) {
+        Alert.alert('エラー', '画像の生成に失敗しました。もう一度お試しください');
+      }
       return null;
     }
   }
@@ -252,6 +256,62 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     link.href = dataUri;
     link.click();
   }
+
+  // Web版専用: あらかじめ裏側で画像を生成しておき、共有ボタンを押した瞬間は
+  // 既にできあがった画像をすぐ使えるようにする。
+  //
+  // navigator.share()はブラウザ(特にSafari)の制約で、ボタンを押してから
+  // 呼び出すまでの間隔が空きすぎると「ユーザー操作起点でない」とみなされ
+  // 拒否されることがある。画像生成(フォント読み込み+html-to-imageの
+  // レンダリング)には無視できない時間がかかるため、ボタンを押してから
+  // 生成していたのでは、共有画面が開けず保存だけのフォールバックになる
+  // ことがあった。
+  //
+  // 表示内容(写真・調整・スコア等)が変わるたびに少し待ってから裏で
+  // 再生成し、preparedUriに保持しておく。ボタンが押された時点で
+  // preparedUriが最新であればそれをそのまま使い、無ければ(生成中/未生成)
+  // 従来通りその場でcaptureする。
+  const [preparedUri, setPreparedUri] = useState<string | null>(null);
+  const captureTokenRef = useRef(0);
+
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !photoUri) {
+      setPreparedUri(null);
+      return;
+    }
+    setPreparedUri(null);
+    const token = ++captureTokenRef.current;
+    const timer = setTimeout(async () => {
+      if (!exportRef.current) return;
+      try {
+        const uri = await capture({ silent: true });
+        if (uri && captureTokenRef.current === token) {
+          setPreparedUri(uri);
+        }
+      } catch (e) {
+        console.warn('事前生成に失敗しました(共有時に改めて生成します)', e);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [
+    photoUri,
+    photoAspectRatio,
+    ratio,
+    position,
+    styleKey,
+    visitorTeamName,
+    homeTeamName,
+    visitorScore,
+    homeScore,
+    date,
+    stadiumName,
+    memo,
+    winHighlight,
+    photoOffset,
+    photoScale,
+    telopScale,
+  ]);
 
   /**
    * Web専用: 可能ならWeb Share API(ファイル共有)を使う。ブラウザやOSの制約上、
@@ -311,7 +371,7 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
   async function handleSaveAndShare() {
     setSaving(true);
     try {
-      const uri = await capture();
+      const uri = Platform.OS === 'web' && preparedUri ? preparedUri : await capture();
       if (!uri) return;
 
       if (Platform.OS === 'web') {
