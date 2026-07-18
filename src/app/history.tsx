@@ -19,6 +19,7 @@ import {
   saveMyTeam,
 } from "@/storage/history";
 import { HistoryEntry } from "@/types/history";
+import { confirmAsync } from "@/utils/dialogs";
 import { useTheme } from "@/hooks/use-theme";
 
 const MY_TEAM_OPTIONS = [
@@ -52,8 +53,15 @@ export default function HistoryScreen() {
     await saveMyTeam(v);
   }
 
-  async function handleDelete(id: string) {
-    const next = await deleteHistoryEntry(id);
+  async function handleDelete(entry: HistoryEntry) {
+    const summary = `${formatDateJP(entry.date)} ${entry.stadium}\n${entry.visitorCode} ${entry.visitorScore}–${entry.homeScore} ${entry.homeCode}`;
+    const ok = await confirmAsync(
+      "この観戦記録を削除しますか？",
+      `${summary}\n\n削除すると元に戻せません。`,
+      "削除",
+    );
+    if (!ok) return;
+    const next = await deleteHistoryEntry(entry.id);
     setEntries(next);
   }
 
@@ -262,8 +270,10 @@ export default function HistoryScreen() {
                   )}
                 </View>
                 <Pressable
-                  onPress={() => handleDelete(item.id)}
+                  onPress={() => handleDelete(item)}
                   hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel="この観戦記録を削除"
                   style={styles.delBtn}
                 >
                   <Ionicons

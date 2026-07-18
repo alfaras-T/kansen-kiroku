@@ -6,6 +6,7 @@ import { Alert, Platform } from "react-native";
 export function confirmAsync(
   title: string,
   message?: string,
+  confirmLabel = "OK",
 ): Promise<boolean> {
   if (Platform.OS === "web") {
     const text = message ? `${title}\n\n${message}` : title;
@@ -14,7 +15,7 @@ export function confirmAsync(
   return new Promise((resolve) => {
     Alert.alert(title, message, [
       { text: "キャンセル", style: "cancel", onPress: () => resolve(false) },
-      { text: "OK", style: "destructive", onPress: () => resolve(true) },
+      { text: confirmLabel, style: "destructive", onPress: () => resolve(true) },
     ]);
   });
 }

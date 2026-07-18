@@ -85,7 +85,23 @@ export function computeRecord(entries: HistoryEntry[], myTeam: string) {
   return { win, lose, draw, games };
 }
 
-/** 観戦履歴を試合日(YYYY-MM-DD)の年ごとにグループ化し、年の新しい順に並べる */
+/**
+ * 試合日(YYYY-MM-DD)の新しい順に並べる。
+ * 同じ日付の場合は、後から追加した記録を先に表示する。
+ * 日付が空の記録は末尾へ回す。
+ */
+function compareByDateDesc(a: HistoryEntry, b: HistoryEntry): number {
+  const da = a.date ?? '';
+  const db = b.date ?? '';
+  if (da !== db) {
+    if (!da) return 1;
+    if (!db) return -1;
+    return db.localeCompare(da);
+  }
+  return b.createdAt - a.createdAt;
+}
+
+/** 観戦履歴を試合日(YYYY-MM-DD)の年ごとにグループ化し、年・試合日ともに新しい順に並べる */
 export function groupHistoryByYear(entries: HistoryEntry[]): { year: string; entries: HistoryEntry[] }[] {
   const map = new Map<string, HistoryEntry[]>();
   entries.forEach((e) => {
@@ -98,6 +114,6 @@ export function groupHistoryByYear(entries: HistoryEntry[]): { year: string; ent
     .sort((a, b) => b[0].localeCompare(a[0]))
     .map(([year, list]) => ({
       year,
-      entries: list.sort((a, b) => b.createdAt - a.createdAt),
+      entries: list.sort(compareByDateDesc),
     }));
 }
