@@ -1,9 +1,11 @@
 import Constants from "expo-constants";
+import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SelectModal } from "@/components/form/select-modal";
+import { InfoNote, InfoSheet, InfoStep } from "@/components/info-sheet";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { TEAMS } from "@/constants/teams";
@@ -24,6 +26,7 @@ export default function SettingsScreen() {
   const { favoriteTeam, setFavoriteTeam } = useFavoriteTeam();
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [backupHelpOpen, setBackupHelpOpen] = useState(false);
 
   const appVersion = Constants.expoConfig?.version ?? "1.0.0";
 
@@ -99,13 +102,31 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
-          <ThemedText
-            type="small"
-            themeColor="textSecondary"
-            style={styles.sectionLabel}
-          >
-            データのバックアップ
-          </ThemedText>
+          <View style={styles.sectionLabelRow}>
+            <ThemedText
+              type="small"
+              themeColor="textSecondary"
+              style={styles.sectionLabel}
+            >
+              データのバックアップ
+            </ThemedText>
+            <Pressable
+              onPress={() => setBackupHelpOpen(true)}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel="バックアップの方法を見る"
+              style={styles.helpButton}
+            >
+              <Ionicons
+                name="help-circle-outline"
+                size={18}
+                color={colors.accent}
+              />
+              <Text style={[styles.helpButtonText, { color: colors.accent }]}>
+                方法を見る
+              </Text>
+            </Pressable>
+          </View>
           <Pressable
             onPress={handleExport}
             disabled={exporting}
@@ -181,6 +202,32 @@ export default function SettingsScreen() {
           </ThemedText>
         </View>
       </ScrollView>
+
+      <InfoSheet
+        visible={backupHelpOpen}
+        title="バックアップの方法"
+        onClose={() => setBackupHelpOpen(false)}
+      >
+        <InfoStep index={1}>
+          「観戦履歴を書き出す」を押すと、観戦記録・マイチーム・お気に入りチームをまとめたバックアップファイル（.json）が作られます。
+        </InfoStep>
+        <InfoStep index={2}>
+          表示された共有メニューから、保存先を選びます。iCloud
+          Drive・Googleドライブなどのクラウド、AirDrop、自分宛てのメールやメモアプリなど、どこでも構いません。
+        </InfoStep>
+        <InfoStep index={3}>
+          機種変更やアプリの入れ直しをしたら、新しい端末でこのアプリを開き、「バックアップから読み込む」を押します。
+        </InfoStep>
+        <InfoStep index={4}>
+          さきほど保存したファイルを選ぶと、観戦記録が復元されます。
+        </InfoStep>
+        <InfoNote>
+          ※「バックアップから読み込む」を実行すると、いまこの端末にある記録は選んだファイルの内容で上書きされます。引き継ぎ前の端末で書き出したファイルを読み込んでください。
+        </InfoNote>
+        <InfoNote>
+          ※ ファイルはあなたが選んだ保存先にのみ置かれます。アプリからサーバーへ送信されることはありません。バックアップを取らずにアプリを削除すると記録も消えるため、定期的な書き出しをおすすめします。
+        </InfoNote>
+      </InfoSheet>
     </ThemedView>
   );
 }
@@ -197,6 +244,18 @@ const styles = StyleSheet.create({
   section: { paddingHorizontal: Spacing.four, marginBottom: Spacing.four },
   scrollContent: { paddingBottom: BottomTabInset + Spacing.six },
   sectionLabel: { marginBottom: 6 },
+  sectionLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  helpButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    marginBottom: 6,
+  },
+  helpButtonText: { fontSize: 13, fontWeight: "600" },
   hint: { marginTop: 10, lineHeight: 18 },
   button: {
     borderWidth: 1,
