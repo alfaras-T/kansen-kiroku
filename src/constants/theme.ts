@@ -7,7 +7,7 @@ import "@/global.css";
 
 import { Platform } from "react-native";
 
-// 観戦きろく: 夜間球場をイメージした固定ダークテーマ(ライト/ダーク自動切替はしない)
+// Ball Films: 夜間球場をイメージした固定ダークテーマ(ライト/ダーク自動切替はしない)
 // お気に入りチームが選ばれている場合は、これをベースに constants/teamThemes.ts の
 // 配色で上書きしたパレットが使われる。
 const night = {

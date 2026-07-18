@@ -74,10 +74,10 @@ export default function CreateScreen() {
       >
         <View style={styles.header}>
           <ThemedText type="small" themeColor="accent" style={styles.eyebrow}>
-            KANSEN KIROKU
+            BALL FILMS
           </ThemedText>
           <ThemedText type="title" style={styles.title}>
-            観戦きろく
+            Ball Films
           </ThemedText>
         </View>
 

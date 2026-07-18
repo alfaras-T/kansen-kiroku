@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2048 2048" font-family="'Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="85%">
+      <stop offset="0%" stop-color="#16233E"/>
+      <stop offset="100%" stop-color="#0B1220"/>
+    </radialGradient>
+  </defs>
+  <rect width="2048" height="2048" fill="url(#bg)"/>
+
+  <g transform="translate(1024,900) scale(0.72)">
+    <g fill="#223052">
+      <rect x="-334" y="-316" width="80" height="54" rx="14"/>
+      <rect x="-334" y="-172" width="80" height="54" rx="14"/>
+      <rect x="-334" y="-28" width="80" height="54" rx="14"/>
+      <rect x="-334" y="116" width="80" height="54" rx="14"/>
+      <rect x="-334" y="260" width="80" height="54" rx="14"/>
+      <rect x="254" y="-316" width="80" height="54" rx="14"/>
+      <rect x="254" y="-172" width="80" height="54" rx="14"/>
+      <rect x="254" y="-28" width="80" height="54" rx="14"/>
+      <rect x="254" y="116" width="80" height="54" rx="14"/>
+      <rect x="254" y="260" width="80" height="54" rx="14"/>
+    </g>
+    <rect x="-194" y="-334" width="388" height="668" rx="42" fill="#060B16" stroke="#223052" stroke-width="14"/>
+    <circle r="152" fill="#F5F1E6"/>
+    <path d="M-108,-104 q-48,104 0,208" fill="none" stroke="#E4572E" stroke-width="16" stroke-linecap="round"/>
+    <path d="M108,-104 q48,104 0,208" fill="none" stroke="#E4572E" stroke-width="16" stroke-linecap="round"/>
+    <g stroke="#E4572E" stroke-width="13" stroke-linecap="round">
+      <line x1="-128" y1="-54" x2="-100" y2="-42"/>
+      <line x1="-137" y1="0" x2="-107" y2="0"/>
+      <line x1="-128" y1="54" x2="-100" y2="42"/>
+      <line x1="128" y1="-54" x2="100" y2="-42"/>
+      <line x1="137" y1="0" x2="107" y2="0"/>
+      <line x1="128" y1="54" x2="100" y2="42"/>
+    </g>
+  </g>
+
+  <!-- ワードマーク: 英語のみ、大きめに1行で -->
+  <text x="1024" y="1470" text-anchor="middle" fill="#ECE9E1" font-size="112" font-weight="700" letter-spacing="10">BALL FILMS</text>
+</svg>

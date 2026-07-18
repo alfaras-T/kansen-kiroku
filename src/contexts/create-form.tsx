@@ -302,7 +302,7 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
 
   function downloadOnWeb(dataUri: string) {
     const link = document.createElement('a');
-    link.download = `kansen-kiroku_${date || 'photo'}.png`;
+    link.download = `ball-films_${date || 'photo'}.png`;
     link.href = dataUri;
     link.click();
   }
@@ -376,14 +376,14 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     let file: File | null = null;
     try {
       const blob = await (await fetch(uri)).blob();
-      file = new File([blob], `kansen-kiroku_${date || 'photo'}.png`, { type: 'image/png' });
+      file = new File([blob], `ball-films_${date || 'photo'}.png`, { type: 'image/png' });
     } catch (e) {
       console.warn('画像データの取得に失敗しました', e);
     }
 
     if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
-        await navigator.share({ files: [file], title: '観戦きろく' });
+        await navigator.share({ files: [file], title: 'Ball Films' });
         return true;
       } catch (e) {
         // ユーザーによる意図的なキャンセル(AbortError)なら何もせず終える。
@@ -444,7 +444,7 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
       try {
         const available = await Sharing.isAvailableAsync();
         if (available) {
-          await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: '観戦きろくを共有' });
+          await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Ball Filmsを共有' });
         }
       } catch (e) {
         console.warn('共有シートの表示に失敗しました（保存は完了済み）', e);

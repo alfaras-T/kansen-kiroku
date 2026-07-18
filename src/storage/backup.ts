@@ -114,7 +114,7 @@ function parseBackupJson(raw: string): BackupPayload {
       isHistoryEntry,
     )
   ) {
-    throw new Error("観戦きろくのバックアップファイルではないようです。");
+    throw new Error("Ball Filmsのバックアップファイルではないようです。");
   }
   const p = parsed as BackupPayload;
   return {

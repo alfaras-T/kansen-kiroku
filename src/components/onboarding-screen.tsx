@@ -34,7 +34,7 @@ export function OnboardingScreen() {
       <View style={styles.inner}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.text }]}>
-            観戦きろくへようこそ
+            Ball Filmsへようこそ
           </Text>
           <Text style={[styles.lead, { color: colors.text }]}>
             お気に入りのチームは？

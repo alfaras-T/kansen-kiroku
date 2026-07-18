@@ -15,7 +15,7 @@ export default function Root({ children }: { children: React.ReactNode }) {
         />
         <meta
           name="description"
-          content="野球観戦の写真に日付・スコア・球場を重ねて保存・共有できるアプリ「観戦きろく」"
+          content="野球観戦の写真に日付・スコア・球場を重ねて保存・共有できるアプリ「Ball Films」"
         />
 
         {/* PWA / ホーム画面追加対応 */}
@@ -23,10 +23,12 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="観戦きろく" />
+        <meta name="apple-mobile-web-app-title" content="Ball Films" />
         <link rel="manifest" href="/kansen-kiroku/manifest.json" />
         <link rel="apple-touch-icon" href="/kansen-kiroku/apple-touch-icon.png" />
         <link rel="icon" href="/kansen-kiroku/favicon.ico" />
+
+        <title>Ball Films</title>
 
         {/* Android/Chromeでスクロールバウンス等を無効化し、ネイティブアプリに近い挙動にする */}
         <ScrollViewStyleReset />
