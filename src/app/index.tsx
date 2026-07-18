@@ -300,7 +300,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: "center",
     padding: Spacing.four,
     paddingBottom: BottomTabInset + Spacing.four,
   },
