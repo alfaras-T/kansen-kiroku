@@ -73,9 +73,6 @@ export default function CreateScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.header}>
-          <ThemedText type="small" themeColor="accent" style={styles.eyebrow}>
-            BALL FILMS
-          </ThemedText>
           <ThemedText type="title" style={styles.title}>
             Ball Films
           </ThemedText>
@@ -308,7 +305,6 @@ const styles = StyleSheet.create({
     paddingBottom: BottomTabInset + Spacing.four,
   },
   header: { marginBottom: Spacing.three },
-  eyebrow: { letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 },
   title: { fontSize: 26, lineHeight: 32 },
   disabledSection: { opacity: 0.35 },
   photoBtn: {

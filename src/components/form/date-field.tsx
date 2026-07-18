@@ -1,10 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useMemo, useRef, useState } from "react";
+import { FlatList, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "@/hooks/use-theme";
 
 const WEEKDAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
+
+// 年選択グリッドの下限。NPB発足年(1936年)まで遡れれば十分実用的。
+const MIN_SELECTABLE_YEAR = 1936;
+const YEAR_GRID_COLUMNS = 4;
+const YEAR_CELL_HEIGHT = 46;
 
 function toISODate(d: Date): string {
   const y = d.getFullYear();
@@ -52,18 +57,51 @@ export function DateField({
   const selectedDate = parseISODate(value);
 
   const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<"calendar" | "year">("calendar");
   const [viewYear, setViewYear] = useState(
     (selectedDate ?? today).getFullYear(),
   );
   const [viewMonth, setViewMonth] = useState(
     (selectedDate ?? today).getMonth(),
   );
+  const yearListRef = useRef<FlatList<number>>(null);
+
+  const years = useMemo(() => {
+    const list: number[] = [];
+    for (let y = today.getFullYear(); y >= MIN_SELECTABLE_YEAR; y--) list.push(y);
+    return list;
+  }, [today]);
 
   function openCalendar() {
     const base = selectedDate ?? today;
     setViewYear(base.getFullYear());
     setViewMonth(base.getMonth());
+    setMode("calendar");
     setOpen(true);
+  }
+
+  function openYearPicker() {
+    setMode("year");
+    const index = years.indexOf(viewYear);
+    if (index >= 0) {
+      // 一覧を開いた時点で選択中の年が見える位置までスクロールしておく
+      requestAnimationFrame(() => {
+        yearListRef.current?.scrollToIndex({
+          index,
+          viewPosition: 0.4,
+          animated: false,
+        });
+      });
+    }
+  }
+
+  function selectYear(y: number) {
+    // 選んだ年で表示中の月が未来になってしまう場合は、選べる最新の月まで戻す
+    if (y === today.getFullYear() && viewMonth > today.getMonth()) {
+      setViewMonth(today.getMonth());
+    }
+    setViewYear(y);
+    setMode("calendar");
   }
 
   function shiftMonth(delta: number) {
@@ -155,9 +193,20 @@ export function DateField({
               >
                 <Ionicons name="chevron-back" size={18} color={colors.text} />
               </Pressable>
-              <Text style={[styles.monthLabel, { color: colors.text }]}>
-                {viewYear}年 {viewMonth + 1}月
-              </Text>
+              <Pressable
+                onPress={openYearPicker}
+                hitSlop={8}
+                style={styles.monthLabelBtn}
+              >
+                <Text style={[styles.monthLabel, { color: colors.text }]}>
+                  {viewYear}年 {viewMonth + 1}月
+                </Text>
+                <Ionicons
+                  name="chevron-down"
+                  size={14}
+                  color={colors.textSecondary}
+                />
+              </Pressable>
               <Pressable
                 onPress={() => !isCurrentOrFutureMonth && shiftMonth(1)}
                 hitSlop={10}
@@ -172,7 +221,53 @@ export function DateField({
               </Pressable>
             </View>
 
-            <View style={styles.weekdayRow}>
+            {mode === "year" ? (
+              <FlatList
+                ref={yearListRef}
+                data={years}
+                keyExtractor={(y) => String(y)}
+                numColumns={YEAR_GRID_COLUMNS}
+                style={styles.yearList}
+                getItemLayout={(_, index) => ({
+                  length: YEAR_CELL_HEIGHT,
+                  offset: YEAR_CELL_HEIGHT * Math.floor(index / YEAR_GRID_COLUMNS),
+                  index,
+                })}
+                onScrollToIndexFailed={({ index }) => {
+                  requestAnimationFrame(() => {
+                    yearListRef.current?.scrollToIndex({ index, animated: false });
+                  });
+                }}
+                renderItem={({ item: y }) => {
+                  const isSelectedYear = y === viewYear;
+                  return (
+                    <Pressable
+                      onPress={() => selectYear(y)}
+                      style={[
+                        styles.yearCell,
+                        isSelectedYear && {
+                          backgroundColor: colors.accent,
+                          borderRadius: 8,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.yearText,
+                          {
+                            color: isSelectedYear ? colors.onAccent : colors.text,
+                          },
+                        ]}
+                      >
+                        {y}
+                      </Text>
+                    </Pressable>
+                  );
+                }}
+              />
+            ) : (
+              <>
+                <View style={styles.weekdayRow}>
               {WEEKDAY_LABELS.map((wd, i) => (
                 <Text
                   key={wd}
@@ -254,6 +349,8 @@ export function DateField({
             >
               <Text style={{ color: colors.text, fontSize: 13.5 }}>今日</Text>
             </Pressable>
+              </>
+            )}
           </View>
         </SafeAreaView>
       </Modal>
@@ -304,7 +401,22 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   navBtn: { padding: 6 },
+  monthLabelBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
   monthLabel: { fontSize: 14.5, fontWeight: "600" },
+  yearList: { maxHeight: 46 * 5 },
+  yearCell: {
+    width: `${100 / YEAR_GRID_COLUMNS}%`,
+    height: YEAR_CELL_HEIGHT,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  yearText: { fontSize: 15, fontWeight: "600" },
   weekdayRow: { flexDirection: "row", marginBottom: 4 },
   weekdayCell: {
     flex: 1,
