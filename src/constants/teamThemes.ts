@@ -5,87 +5,85 @@ import { DEFAULT_PALETTE, Palette } from "@/constants/theme";
  * 球団ごとのイメージカラーを反映したパレット。
  *
  * 方針:
- * - 球団のロゴ・正式名称を使わない方針に合わせ、公式に定められたブランドカラーの
- *   色値をそのまま持ち込むことはせず、一般に知られたイメージカラー(オレンジ/黄色/
- *   ネイビー…)の印象に合わせて独自に調整した色を定義する。
- * - 「より球団色を強く」の要望に応じ、accentだけでなく background /
- *   backgroundElement / backgroundSelected / border まで彩度・明度を引き上げ、
- *   画面全体がその球団の色に染まって見えるようにしている。ほぼ黒に近かった
- *   以前の背景と違い、背景だけを見てもどの球団か分かる濃さを狙う。
- * - 2色指定のうち「濃い方の色」を背景の土台に、「映える方の色」を accent に割り当て、
- *   2色目が黒・白でないチーム(紺+緑、ネイビー+ゴールド等)は枠線にも2色目を効かせる。
- * - accent はスコアの数字・選択中のタブ・ボタン背景に使うため、暗い背景の上でも読め、
- *   かつ onAccent の文字が乗るだけの明るさを確保している。
- * - text は常に明るいままキープし、背景を濃くしても本文の可読性(WCAG AA相当)を
- *   損なわないようにしている。
+ * - 球団のロゴを使わない方針に合わせ、公式ブランドカラーの色値をそのまま
+ *   持ち込まず、一般に知られたイメージカラーの印象に合わせて独自調整した色を定義する。
+ * - 各球団は「ベース色(背景の土台)+アクセント色」の2色指定:
+ *   タイガース(黄+黒)/ベイスターズ(青+ゴールド)/ジャイアンツ(黒+オレンジ)/
+ *   ドラゴンズ(青+白)/カープ(赤+白)/スワローズ(紺+緑)/ホークス(黒+黄)/
+ *   ファイターズ(水色+白)/バファローズ(紺+ゴールド)/
+ *   ゴールデンイーグルス(エンジ+ゴールド)/ライオンズ(青+赤)/マリーンズ(黒+白)
+ * - accent はスコア数字・選択中タブ・ボタンに使うため、背景の上で十分読める
+ *   明度を確保する。タイガースのみ黒アクセントを成立させるため明るい黄色の
+ *   土台(ライト基調)とし、他球団はダーク基調のまま。
+ * - text は背景に対して WCAG AA 相当の可読性を保つ。
  */
 export const TEAM_THEMES: Record<TeamCode, Palette> = {
-  // ジャイアンツ: オレンジ + 黒(黒を土台に、深いオレンジで全面を染める)
+  // ジャイアンツ: 黒ベース + オレンジアクセント
   G: {
-    text: "#FFF4EC",
-    background: "#2A1404",
-    backgroundElement: "#56290A",
-    backgroundSelected: "#7C3B10",
-    textSecondary: "#C9A88C",
+    text: "#F5F2EC",
+    background: "#0C0C0E",
+    backgroundElement: "#1C1C20",
+    backgroundSelected: "#2E2E34",
+    textSecondary: "#A3A3A8",
     accent: "#FF7A14",
     accentDim: "#B35410",
     onAccent: "#1F0D02",
-    border: "#A65420",
+    border: "#4A4A50",
     danger: "#FF7A6E",
   },
-  // タイガース: 黄色 + 黒(ホークスと分けるため山吹寄りの濃い黄で染める)
+  // タイガース: 黄色ベース + 黒アクセント(黒を読ませるため明るい黄の土台)
   T: {
-    text: "#FFF8E8",
-    background: "#271D03",
-    backgroundElement: "#544009",
-    backgroundSelected: "#7A5E10",
-    textSecondary: "#C6B584",
-    accent: "#FFCB05",
-    accentDim: "#B08A06",
-    onAccent: "#1E1602",
-    border: "#A17E18",
-    danger: "#FF7A6E",
+    text: "#171207",
+    background: "#E4B400",
+    backgroundElement: "#F2CB1F",
+    backgroundSelected: "#FADD55",
+    textSecondary: "#5C4A0A",
+    accent: "#151515",
+    accentDim: "#4A4A4A",
+    onAccent: "#FFD400",
+    border: "#9A7E0C",
+    danger: "#A61B1B",
   },
-  // カープ: 赤 + 白(白は文字色として使い、背景〜枠線まで赤で染める)
+  // カープ: 赤ベース + 白アクセント
   C: {
     text: "#FFF0F1",
     background: "#270409",
     backgroundElement: "#5C0D18",
     backgroundSelected: "#821724",
     textSecondary: "#C79AA0",
-    accent: "#FF4040",
-    accentDim: "#B22B2B",
-    onAccent: "#240707",
+    accent: "#FFF2F2",
+    accentDim: "#C09098",
+    onAccent: "#3A0A10",
     border: "#AC2432",
     danger: "#FFB0A6",
   },
-  // ドラゴンズ: 青 + 白(白は文字色として使い、鮮やかな青で染める)
+  // ドラゴンズ: 青ベース + 白アクセント
   D: {
     text: "#EFF4FF",
     background: "#04102E",
     backgroundElement: "#0B255E",
     backgroundSelected: "#143A89",
     textSecondary: "#97A8CC",
-    accent: "#4D9BFF",
-    accentDim: "#2A62B0",
-    onAccent: "#041027",
+    accent: "#F2F6FF",
+    accentDim: "#8FA3C4",
+    onAccent: "#0A1B3A",
     border: "#2153AE",
     danger: "#FF8A80",
   },
-  // ベイスターズ: 青 + 水色(マリンブルーの土台に水色を効かせる)
+  // ベイスターズ: 青ベース + ゴールドアクセント
   DB: {
     text: "#EFF6FC",
     background: "#03142B",
     backgroundElement: "#093157",
     backgroundSelected: "#104B80",
     textSecondary: "#92B2CC",
-    accent: "#45C0FF",
-    accentDim: "#2478A8",
-    onAccent: "#03141F",
+    accent: "#F5C542",
+    accentDim: "#A8842E",
+    onAccent: "#1A1204",
     border: "#1B6CA9",
     danger: "#FF8A80",
   },
-  // スワローズ: 紺 + 緑(紺の土台を明るめに起こし、枠線と accent へ緑を強く効かせる)
+  // スワローズ: 紺ベース + 緑アクセント
   S: {
     text: "#EFF4FA",
     background: "#051124",
@@ -98,20 +96,20 @@ export const TEAM_THEMES: Record<TeamCode, Palette> = {
     border: "#2E9B63",
     danger: "#FF8A80",
   },
-  // ホークス: 黄色 + 黒(タイガースと分けるためレモン寄りの黄で染める)
+  // ホークス: 黒ベース + 黄色アクセント
   H: {
-    text: "#FEFBE6",
-    background: "#232105",
-    backgroundElement: "#4C490B",
-    backgroundSelected: "#6F6B12",
-    textSecondary: "#C4C084",
+    text: "#F7F4E4",
+    background: "#0B0B08",
+    backgroundElement: "#1D1D16",
+    backgroundSelected: "#31311F",
+    textSecondary: "#A6A48F",
     accent: "#FFE83D",
     accentDim: "#ABA020",
     onAccent: "#1D1B03",
-    border: "#948E1C",
+    border: "#4C4A32",
     danger: "#FF7A6E",
   },
-  // バファローズ: ネイビー + ゴールド(ネイビーを明るめに起こし、枠線と accent へゴールド)
+  // バファローズ: 紺ベース + ゴールドアクセント
   B: {
     text: "#EFF0FA",
     background: "#050B26",
@@ -124,20 +122,20 @@ export const TEAM_THEMES: Record<TeamCode, Palette> = {
     border: "#A8893A",
     danger: "#FF8A80",
   },
-  // ファイターズ: 水色 + 白(白は文字色として使い、深い水色で染める)
+  // ファイターズ: 水色ベース + 白アクセント
   F: {
     text: "#EFF8FC",
     background: "#041B26",
     backgroundElement: "#0A3C52",
     backgroundSelected: "#125877",
     textSecondary: "#90BCCC",
-    accent: "#57D4FF",
-    accentDim: "#2C88AA",
-    onAccent: "#04161F",
+    accent: "#F3FBFF",
+    accentDim: "#9CC4D4",
+    onAccent: "#0A2530",
     border: "#1D80A6",
     danger: "#FF8A80",
   },
-  // マリーンズ: 黒 + 白(モノクロのままコントラストを強め、シルバーを立てる)
+  // マリーンズ: 黒ベース + 白アクセント
   M: {
     text: "#F4F5F7",
     background: "#0B0C0E",
@@ -150,20 +148,20 @@ export const TEAM_THEMES: Record<TeamCode, Palette> = {
     border: "#61666E",
     danger: "#FF8A80",
   },
-  // ライオンズ: 紺 + 水色(最も深い紺を土台に、水色をより明るく立てる)
+  // ライオンズ: 青ベース + 赤アクセント
   L: {
     text: "#EFF0FA",
     background: "#030723",
     backgroundElement: "#0B124E",
     backgroundSelected: "#131F74",
     textSecondary: "#979CCB",
-    accent: "#6FD0FF",
-    accentDim: "#3D85B0",
-    onAccent: "#041022",
-    border: "#29609F",
+    accent: "#FF5062",
+    accentDim: "#B03040",
+    onAccent: "#2A040A",
+    border: "#95404E",
     danger: "#FF8A80",
   },
-  // イーグルス: えんじ + ゴールド(えんじを明るめに起こし、枠線と accent へゴールド)
+  // ゴールデンイーグルス: エンジベース + ゴールドアクセント
   E: {
     text: "#FCEFF2",
     background: "#240610",
