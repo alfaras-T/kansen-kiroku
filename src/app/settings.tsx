@@ -99,7 +99,7 @@ export default function SettingsScreen() {
             themeColor="textSecondary"
             style={styles.hint}
           >
-            選んだチームのイメージカラーに合わせて、アプリの配色が変わります。「特になし」を選ぶと既定のデザインになります。観戦履歴タブの「マイチーム」（成績集計用）とは別の設定です。
+            選んだチームのイメージカラーに合わせて、アプリの配色が変わります。「特になし」を選ぶと既定のデザインになります。
           </ThemedText>
         </View>
 
@@ -200,7 +200,7 @@ export default function SettingsScreen() {
             themeColor="textSecondary"
             style={styles.hint}
           >
-            観戦記録・写真・設定はすべてこの端末内にのみ保存され、サーバーには送信されません。球団のロゴ・正式名称は使用していません。
+            観戦記録・写真・設定はすべてこの端末内にのみ保存され、サーバーには送信されません。
           </ThemedText>
         </View>
 

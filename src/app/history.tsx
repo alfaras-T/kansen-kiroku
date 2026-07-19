@@ -104,9 +104,6 @@ export default function HistoryScreen() {
         <ThemedText type="title" style={styles.title}>
           観戦履歴
         </ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          記録はこの端末にのみ保存されています。
-        </ThemedText>
       </View>
 
       <View style={styles.myTeamRow}>
@@ -314,7 +311,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: "center",
   },
-  statNum: { fontSize: 20, fontWeight: "700" },
+  statNum: { fontSize: 16, fontWeight: "700" },
   statLabel: {
     fontSize: 10.5,
     letterSpacing: 0.5,
