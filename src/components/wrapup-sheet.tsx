@@ -48,6 +48,7 @@ export function WrapUpSheet({
   const [busy, setBusy] = useState(false);
   const [backgroundUri, setBackgroundUri] = useState<string | null>(null);
   const exportRef = useRef<View>(null);
+  const previewRef = useRef<View>(null);
 
   // 背景写真のデコード完了を待つための仕組み。
   // 選んだ直後に共有をタップされても、書き出し用ステージの画像が
@@ -119,18 +120,8 @@ export function WrapUpSheet({
 
   async function capture(): Promise<string | null> {
     try {
-      // 背景をセットした直後は、Reactの再描画→ネイティブのビュー階層への反映が
-      // まだ済んでいないことがある。ここで1フレーム待つことで、背景画像を含む
-      // 書き出し用Viewが確実にレイアウト・反映されてからキャプチャする。
+      // Reactの再描画→描画反映を1フレーム待ってからキャプチャする。
       await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
-
-      if (Platform.OS !== "web") {
-        // ネイティブでは、busyでステージがopacity:1になった後、
-        // 画像テクスチャのデコード・描画コミットが終わるまで少し待つ。
-        // (これを待たないと、写真だけ空のままキャプチャされることがある)
-        await new Promise((resolve) => setTimeout(resolve, 350));
-        await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
-      }
 
       if (Platform.OS === "web") {
         // html-to-imageはDOMを見たまま直列化するだけで未デコードの画像を
@@ -150,10 +141,16 @@ export function WrapUpSheet({
         return await toPng(el, { pixelRatio: 1 });
       }
 
-      return await captureRef(exportRef, {
+      // ネイティブ: 隠しステージではなく「画面に見えているプレビューカード」を
+      // そのままキャプチャする。プレビューには背景写真が確実に描画されている
+      // (ユーザーに見えているものをそのまま撮るので、写真が抜け落ちる余地がない)。
+      // width/height指定で書き出し解像度(1080x1920 / 1080x1080)へ拡大する。
+      return await captureRef(previewRef, {
         format: "png",
         quality: 1,
         result: "tmpfile",
+        width: EXPORT_WIDTH,
+        height: wrapCardHeight(ratio, EXPORT_WIDTH),
       });
     } catch (e) {
       console.warn("まとめ画像の生成に失敗しました", e);
@@ -318,12 +315,14 @@ export function WrapUpSheet({
           {/* プレビュー */}
           <View style={{ alignItems: "center", marginTop: 14 }}>
             <WrapUpCard
+              ref={previewRef}
               summary={summary}
               myTeam={myTeam}
               ratio={ratio}
               width={PREVIEW_WIDTH}
               colors={colors}
               backgroundUri={backgroundUri}
+              onBackgroundLoad={markBackgroundLoaded}
             />
           </View>
 
@@ -350,36 +349,32 @@ export function WrapUpSheet({
         </ScrollView>
 
         {/*
-          書き出し専用ステージ。
-          - Web: opacity:0 のままで問題ない(html-to-imageはDOMを直接描画するため)。
-          - iOS: 祖先が opacity:0 のまま一度も画面表示されていない Image は、
-            描画テクスチャが用意されず view-shot で「画像だけ空」になる
-            (今回の不具合: スクリム・文字は写るのに写真だけ写らない症状の原因)。
-            そこでキャプチャ中(busy)だけ opacity:1 にして実際に表示状態にする。
-            その瞬間は直後に重なる全画面の処理中オーバーレイ(黒72%)が
-            覆っているため、ユーザーにはほぼ見えない。
+          書き出し専用ステージ(Web専用)。
+          Webのhtml-to-imageはopacity:0のDOMも直接描画できるため、
+          高解像度の隠しステージ方式が使える。
+          ネイティブはこの方式だと写真が写らないため使わず、
+          画面に見えているプレビューカードをwidth/height指定で
+          拡大キャプチャする(capture()参照)。
         */}
-        <View
-          pointerEvents="none"
-          style={[
-            styles.exportStage,
-            { width: EXPORT_WIDTH, height: exportHeight },
-            Platform.OS === "web"
-              ? { opacity: 0 }
-              : { opacity: busy ? 1 : 0 },
-          ]}
-        >
-          <WrapUpCard
-            ref={exportRef}
-            summary={summary}
-            myTeam={myTeam}
-            ratio={ratio}
-            width={EXPORT_WIDTH}
-            colors={colors}
-            backgroundUri={backgroundUri}
-            onBackgroundLoad={markBackgroundLoaded}
-          />
-        </View>
+        {Platform.OS === "web" && (
+          <View
+            pointerEvents="none"
+            style={[
+              styles.exportStage,
+              { width: EXPORT_WIDTH, height: exportHeight },
+            ]}
+          >
+            <WrapUpCard
+              ref={exportRef}
+              summary={summary}
+              myTeam={myTeam}
+              ratio={ratio}
+              width={EXPORT_WIDTH}
+              colors={colors}
+              backgroundUri={backgroundUri}
+            />
+          </View>
+        )}
 
         {/* 保存/共有中の表示。観戦記録作成時(adjust.tsx)と同じ見た目に揃えている */}
         {busy && (
@@ -441,7 +436,7 @@ const styles = StyleSheet.create({
   },
   shareBtnText: { fontSize: 15, fontWeight: "700" },
   note: { fontSize: 12, marginTop: 10, textAlign: "center" },
-  exportStage: { position: "absolute", top: 0, left: 0 },
+  exportStage: { position: "absolute", top: 0, left: 0, opacity: 0 },
   processingOverlay: {
     position: "absolute",
     top: 0,
