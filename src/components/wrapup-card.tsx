@@ -1,5 +1,5 @@
 import { forwardRef } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 
 import { Palette } from "@/constants/theme";
 import {
@@ -19,8 +19,9 @@ export function wrapCardHeight(ratio: WrapRatio, width: number): number {
 
 /**
  * 年間観戦まとめカード。
- * 写真は使わず、観戦履歴の集計だけで構成する(記録のみ保存のユーザーにも出せる)。
- * 配色は現在のテーマ(お気に入りチーム)に追従する。
+ * 既定は写真なしの統計グラフィック(記録のみ保存のユーザーにも出せる)。
+ * backgroundUri を渡すと、その写真を背景に敷き、暗いスクリムを重ねて
+ * 文字の可読性を保つ。配色は現在のテーマ(お気に入りチーム)に追従する。
  */
 export const WrapUpCard = forwardRef<View, {
   summary: YearSummary;
@@ -28,7 +29,11 @@ export const WrapUpCard = forwardRef<View, {
   ratio: WrapRatio;
   width: number;
   colors: Palette;
-}>(function WrapUpCard({ summary, myTeam, ratio, width, colors }, ref) {
+  backgroundUri?: string | null;
+}>(function WrapUpCard(
+  { summary, myTeam, ratio, width, colors, backgroundUri },
+  ref,
+) {
   const s = width / BASE_WIDTH; // scale
   const height = wrapCardHeight(ratio, width);
   const story = ratio === "story";
@@ -36,10 +41,15 @@ export const WrapUpCard = forwardRef<View, {
   const rec = summary.record;
   const pct =
     summary.winRate !== null ? Math.round(summary.winRate * 100) : null;
-  const best = summary.bestGame;
 
+  // 表示項目は固定4つ。データが無い項目はカードごと出さない。
   const rows: { label: string; value: string }[] = [];
-  // 優先度順に候補を積み、上から表示枠ぶんだけ使う
+  if (summary.topStadium) {
+    rows.push({
+      label: "今年のホーム",
+      value: `${summary.topStadium.name} × ${summary.topStadium.count}`,
+    });
+  }
   if (summary.luckyStadium) {
     const st = summary.luckyStadium;
     rows.push({
@@ -47,51 +57,14 @@ export const WrapUpCard = forwardRef<View, {
       value: `${st.name}（${st.win}勝${st.lose}敗${st.draw > 0 ? `${st.draw}分` : ""}）`,
     });
   }
-  if (summary.topMonth && summary.topMonth.count >= 2) {
-    rows.push({
-      label: "一番通った月",
-      value: `${summary.topMonth.month}月に ${summary.topMonth.count} 試合`,
-    });
-  }
-  if (summary.maxWinStreak >= 2) {
-    rows.push({ label: "現地連勝", value: `最大 ${summary.maxWinStreak} 連勝` });
-  }
-  if (summary.slugfest && summary.slugfest.total >= 10) {
-    const g = summary.slugfest.entry;
-    rows.push({
-      label: "一番打ち合った夜",
-      value: `${formatShortDate(g.date)}  ${g.visitorCode} ${g.visitorScore}–${g.homeScore} ${g.homeCode}`,
-    });
-  }
-  if (summary.stadiumsVisited >= 3) {
+  if (summary.stadiumsVisited >= 2) {
     rows.push({ label: "巡った球場", value: `${summary.stadiumsVisited} 球場` });
   }
-  // 上が埋まらないときの控え
-  if (best) {
-    rows.push({
-      label: "忘れられない試合",
-      value: `${formatShortDate(best.date)}  ${best.visitorCode} ${best.visitorScore}–${best.homeScore} ${best.homeCode}`,
-    });
+  if (summary.maxWinStreak >= 2) {
+    rows.push({ label: "現地最大連勝", value: `${summary.maxWinStreak} 連勝` });
   }
-  if (summary.oneRunGames > 0) {
-    rows.push({ label: "1点差の熱戦", value: `${summary.oneRunGames} 試合` });
-  }
-  if (summary.topStadium) {
-    rows.push({
-      label: "今年のホーム",
-      value: `${summary.topStadium.name} × ${summary.topStadium.count}`,
-    });
-  }
-  // 重複値の行(打ち合った夜と忘れられない試合が同一試合 等)を除いたうえで、
-  // ストーリー4行・スクエア2行に収める(フッターとの重なり防止)
-  const seen = new Set<string>();
-  const visibleRows = rows
-    .filter((r) => {
-      if (seen.has(r.value)) return false;
-      seen.add(r.value);
-      return true;
-    })
-    .slice(0, story ? 4 : 2);
+  // スクエアは縦が足りないため2行までに絞る
+  const visibleRows = rows.slice(0, story ? 4 : 2);
 
   return (
     <View
@@ -105,10 +78,26 @@ export const WrapUpCard = forwardRef<View, {
           backgroundColor: colors.background,
           borderColor: colors.accent,
           borderWidth: Math.max(2, 3 * s),
-          padding: 22 * s,
         },
       ]}
     >
+      {backgroundUri && (
+        <>
+          <Image
+            source={{ uri: backgroundUri }}
+            style={StyleSheet.absoluteFill}
+            resizeMode="cover"
+          />
+          {/* 文字の可読性を保つための暗いスクリム */}
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: "rgba(0,0,0,0.52)" },
+            ]}
+          />
+        </>
+      )}
+      <View style={{ flex: 1, padding: 22 * s }}>
       {/* ヘッダー */}
       <View>
         <Text
@@ -199,7 +188,9 @@ export const WrapUpCard = forwardRef<View, {
               styles.row,
               {
                 borderColor: colors.accent,
-                backgroundColor: colors.backgroundElement,
+                backgroundColor: backgroundUri
+                  ? "rgba(0,0,0,0.38)"
+                  : colors.backgroundElement,
                 borderRadius: 10 * s,
                 paddingVertical: (story ? 10 : 7) * s,
                 paddingHorizontal: 12 * s,
@@ -246,6 +237,7 @@ export const WrapUpCard = forwardRef<View, {
         >
           Ball Films
         </Text>
+      </View>
       </View>
     </View>
   );

@@ -18,6 +18,7 @@ import { OTHER_STADIUM } from '@/constants/stadiums';
 import { OTHER_TEAM } from '@/constants/teams';
 import { addHistoryEntry } from '@/storage/history';
 import { HistoryEntry } from '@/types/history';
+import { blobUrlToResizedDataUri } from '@/utils/image';
 
 function todayISO(): string {
   const d = new Date();
@@ -27,34 +28,6 @@ function todayISO(): string {
   return `${y}-${m}-${day}`;
 }
 
-/**
- * 写真をdata URI化する際に、書き出しに十分な解像度まで縮小してから
- * 変換する。html-to-imageはDOMをSVGに直列化する都合上、画像もSVG内に
- * 文字列(data URI)としてまるごと埋め込む必要があり、スマホのカメラ写真
- * そのままの解像度(数千px、数MB)だと、埋め込み後のデータが大きくなり
- * すぎて失敗する(特にSafari/iOSで顕著)ことがある。失敗してもエラーには
- * ならず、その要素だけ描画されない(=書き出し画像から写真だけ消える)ため
- * 気づきにくい。書き出し長辺(EXPORT_LONG_EDGE)より十分大きい2400pxを
- * 上限に縮小し、JPEGで再エンコードすることでデータ量を抑える。
- */
-async function blobUrlToResizedDataUri(blobUrl: string, maxLongEdge = 2400): Promise<string> {
-  const blob = await (await fetch(blobUrl)).blob();
-  const bitmap = await createImageBitmap(blob);
-  const longEdge = Math.max(bitmap.width, bitmap.height);
-  const scale = longEdge > maxLongEdge ? maxLongEdge / longEdge : 1;
-  const width = Math.round(bitmap.width * scale);
-  const height = Math.round(bitmap.height * scale);
-
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('canvas 2d context を取得できませんでした');
-  ctx.drawImage(bitmap, 0, 0, width, height);
-  bitmap.close();
-
-  return canvas.toDataURL('image/jpeg', 0.9);
-}
 
 interface CreateFormContextValue {
   overlayRef: React.RefObject<View | null>;

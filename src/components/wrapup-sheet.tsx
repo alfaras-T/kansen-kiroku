@@ -1,7 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import * as Sharing from "expo-sharing";
 import { useRef, useState } from "react";
 import {
+  Alert,
   Modal,
   Platform,
   Pressable,
@@ -20,6 +22,7 @@ import {
 } from "@/components/wrapup-card";
 import { useTheme } from "@/hooks/use-theme";
 import { notify } from "@/utils/dialogs";
+import { blobUrlToResizedDataUri } from "@/utils/image";
 import { YearSummary } from "@/utils/yearSummary";
 
 /** 書き出し解像度(幅)。ストーリーは1080x1920、スクエアは1080x1080になる。 */
@@ -41,9 +44,39 @@ export function WrapUpSheet({
   const colors = useTheme();
   const [ratio, setRatio] = useState<WrapRatio>("story");
   const [busy, setBusy] = useState(false);
+  const [backgroundUri, setBackgroundUri] = useState<string | null>(null);
   const exportRef = useRef<View>(null);
 
   if (!summary) return null;
+
+  function handleClose() {
+    setBackgroundUri(null);
+    onClose();
+  }
+
+  async function pickBackground() {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert("権限が必要です", "写真ライブラリへのアクセスを許可してください");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 1,
+    });
+    if (result.canceled || !result.assets?.[0]?.uri) return;
+    let uri = result.assets[0].uri;
+    // Web版はblob: URLのままだとhtml-to-imageで書き出せないため、
+    // data URIへ変換して保持する(create-form.tsxのpickPhotoと同じ理由)。
+    if (Platform.OS === "web" && uri.startsWith("blob:")) {
+      try {
+        uri = await blobUrlToResizedDataUri(uri);
+      } catch (e) {
+        console.warn("背景画像のdata URI変換に失敗しました。blob URLのまま使用します", e);
+      }
+    }
+    setBackgroundUri(uri);
+  }
 
   async function capture(): Promise<string | null> {
     try {
@@ -129,8 +162,8 @@ export function WrapUpSheet({
   const exportHeight = wrapCardHeight(ratio, EXPORT_WIDTH);
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose} />
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={handleClose}>
+      <Pressable style={styles.backdrop} onPress={handleClose} />
       <SafeAreaView
         edges={["bottom"]}
         style={[styles.sheet, { backgroundColor: colors.backgroundElement }]}
@@ -139,7 +172,7 @@ export function WrapUpSheet({
           <Text style={[styles.sheetTitle, { color: colors.text }]}>
             {summary.year}年の観戦まとめ
           </Text>
-          <Pressable onPress={onClose} hitSlop={12} accessibilityRole="button" accessibilityLabel="閉じる">
+          <Pressable onPress={handleClose} hitSlop={12} accessibilityRole="button" accessibilityLabel="閉じる">
             <Ionicons name="close" size={22} color={colors.textSecondary} />
           </Pressable>
         </View>
@@ -180,6 +213,31 @@ export function WrapUpSheet({
             })}
           </View>
 
+          {/* 背景画像 */}
+          <Pressable
+            onPress={pickBackground}
+            style={[
+              styles.bgBtn,
+              { borderColor: colors.border, backgroundColor: colors.backgroundElement },
+            ]}
+          >
+            <Ionicons
+              name={backgroundUri ? "image" : "image-outline"}
+              size={16}
+              color={colors.text}
+            />
+            <Text style={[styles.bgBtnText, { color: colors.text }]}>
+              {backgroundUri ? "背景画像を変更" : "背景画像を選ぶ"}
+            </Text>
+          </Pressable>
+          {backgroundUri && (
+            <Pressable onPress={() => setBackgroundUri(null)} style={styles.bgClear}>
+              <Text style={{ color: colors.textSecondary, fontSize: 12.5 }}>
+                背景画像を外す
+              </Text>
+            </Pressable>
+          )}
+
           {/* プレビュー */}
           <View style={{ alignItems: "center", marginTop: 14 }}>
             <WrapUpCard
@@ -188,6 +246,7 @@ export function WrapUpSheet({
               ratio={ratio}
               width={PREVIEW_WIDTH}
               colors={colors}
+              backgroundUri={backgroundUri}
             />
           </View>
 
@@ -225,6 +284,7 @@ export function WrapUpSheet({
             ratio={ratio}
             width={EXPORT_WIDTH}
             colors={colors}
+            backgroundUri={backgroundUri}
           />
         </View>
       </SafeAreaView>
@@ -256,6 +316,18 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 14,
   },
+  bgBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 10,
+    marginTop: 10,
+  },
+  bgBtnText: { fontSize: 13, fontWeight: "600" },
+  bgClear: { alignItems: "center", marginTop: 6 },
   shareBtn: {
     flexDirection: "row",
     alignItems: "center",
