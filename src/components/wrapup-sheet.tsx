@@ -122,8 +122,15 @@ export function WrapUpSheet({
       // 背景をセットした直後は、Reactの再描画→ネイティブのビュー階層への反映が
       // まだ済んでいないことがある。ここで1フレーム待つことで、背景画像を含む
       // 書き出し用Viewが確実にレイアウト・反映されてからキャプチャする。
-      // (動作実績のある adjust.tsx / create-form.tsx と同じ待ち合わせ)
       await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+
+      if (Platform.OS !== "web") {
+        // ネイティブでは、busyでステージがopacity:1になった後、
+        // 画像テクスチャのデコード・描画コミットが終わるまで少し待つ。
+        // (これを待たないと、写真だけ空のままキャプチャされることがある)
+        await new Promise((resolve) => setTimeout(resolve, 350));
+        await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+      }
 
       if (Platform.OS === "web") {
         // html-to-imageはDOMを見たまま直列化するだけで未デコードの画像を
@@ -343,14 +350,24 @@ export function WrapUpSheet({
         </ScrollView>
 
         {/*
-          書き出し専用ステージ。動作実績のある adjust.tsx と同じく
-          opacity で見た目だけ消す(位置は画面内に保つ)。
-          opacity:0 でも react-native-view-shot は中身を正しくキャプチャできる
-          (adjust.tsx の写真書き出しがネイティブで機能していることで実証済み)。
+          書き出し専用ステージ。
+          - Web: opacity:0 のままで問題ない(html-to-imageはDOMを直接描画するため)。
+          - iOS: 祖先が opacity:0 のまま一度も画面表示されていない Image は、
+            描画テクスチャが用意されず view-shot で「画像だけ空」になる
+            (今回の不具合: スクリム・文字は写るのに写真だけ写らない症状の原因)。
+            そこでキャプチャ中(busy)だけ opacity:1 にして実際に表示状態にする。
+            その瞬間は直後に重なる全画面の処理中オーバーレイ(黒72%)が
+            覆っているため、ユーザーにはほぼ見えない。
         */}
         <View
           pointerEvents="none"
-          style={[styles.exportStage, { width: EXPORT_WIDTH, height: exportHeight }]}
+          style={[
+            styles.exportStage,
+            { width: EXPORT_WIDTH, height: exportHeight },
+            Platform.OS === "web"
+              ? { opacity: 0 }
+              : { opacity: busy ? 1 : 0 },
+          ]}
         >
           <WrapUpCard
             ref={exportRef}
@@ -424,7 +441,7 @@ const styles = StyleSheet.create({
   },
   shareBtnText: { fontSize: 15, fontWeight: "700" },
   note: { fontSize: 12, marginTop: 10, textAlign: "center" },
-  exportStage: { position: "absolute", top: 0, left: 0, opacity: 0 },
+  exportStage: { position: "absolute", top: 0, left: 0 },
   processingOverlay: {
     position: "absolute",
     top: 0,
