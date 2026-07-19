@@ -119,14 +119,30 @@ export function WrapUpSheet({
 
   async function capture(): Promise<string | null> {
     try {
+      // 背景をセットした直後は、Reactの再描画→ネイティブのビュー階層への反映が
+      // まだ済んでいないことがある。ここで1フレーム待つことで、背景画像を含む
+      // 書き出し用Viewが確実にレイアウト・反映されてからキャプチャする。
+      // (動作実績のある adjust.tsx / create-form.tsx と同じ待ち合わせ)
+      await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+
       if (Platform.OS === "web") {
+        // html-to-imageはDOMを見たまま直列化するだけで未デコードの画像を
+        // 待たないため、書き出し用View内のすべての<img>のdecode()完了を待つ。
+        const el = exportRef.current as unknown as HTMLElement;
+        if (el?.querySelectorAll) {
+          const imgs = Array.from(el.querySelectorAll("img"));
+          await Promise.all(
+            imgs.map((img) =>
+              img.decode ? img.decode().catch(() => undefined) : Promise.resolve(),
+            ),
+          );
+        }
         // Web版はhtml-to-image(ブラウザ自身の描画エンジン経由)を使う。
         // 理由はcreate-form.tsxのコメント参照(captureRefのWeb実装は再現度が低い)。
         const { toPng } = await import("html-to-image");
-        return await toPng(exportRef.current as unknown as HTMLElement, {
-          pixelRatio: 1,
-        });
+        return await toPng(el, { pixelRatio: 1 });
       }
+
       return await captureRef(exportRef, {
         format: "png",
         quality: 1,
@@ -327,22 +343,14 @@ export function WrapUpSheet({
         </ScrollView>
 
         {/*
-          書き出し専用ステージ。
-          - Web: html-to-imageはopacity:0の要素も描画できるため、従来どおり
-            opacityで見た目だけ消す(画面座標を保ったままにできる)。
-          - iOS/Android: react-native-view-shotはopacity:0のViewをキャプチャ
-            すると中身(特に背景画像)が透過して写らないため、opacityは使わず
-            画面の上端外へ押し出して隠す。こうすると不透明のまま確実に写る。
+          書き出し専用ステージ。動作実績のある adjust.tsx と同じく
+          opacity で見た目だけ消す(位置は画面内に保つ)。
+          opacity:0 でも react-native-view-shot は中身を正しくキャプチャできる
+          (adjust.tsx の写真書き出しがネイティブで機能していることで実証済み)。
         */}
         <View
           pointerEvents="none"
-          style={[
-            styles.exportStage,
-            Platform.OS === "web"
-              ? styles.exportStageWeb
-              : styles.exportStageNative,
-            { width: EXPORT_WIDTH, height: exportHeight },
-          ]}
+          style={[styles.exportStage, { width: EXPORT_WIDTH, height: exportHeight }]}
         >
           <WrapUpCard
             ref={exportRef}
@@ -416,14 +424,7 @@ const styles = StyleSheet.create({
   },
   shareBtnText: { fontSize: 15, fontWeight: "700" },
   note: { fontSize: 12, marginTop: 10, textAlign: "center" },
-  exportStage: { position: "absolute", left: 0 },
-  // Web: 画面座標を保ったまま透明化(html-to-imageはこれで問題なくキャプチャできる)
-  exportStageWeb: { top: 0, opacity: 0 },
-  // ネイティブ: 透明化(opacity:0)するとview-shotで背景画像が写らないため、
-  // opacityは使わず、zIndexを下げてシートの中身の裏に隠す。
-  // view-shotは指定Viewを直接ラスタライズするので、他要素に覆われていても
-  // 不透明のまま(背景画像を含めて)正しくキャプチャできる。
-  exportStageNative: { top: 0, zIndex: -1 },
+  exportStage: { position: "absolute", top: 0, left: 0, opacity: 0 },
   processingOverlay: {
     position: "absolute",
     top: 0,
