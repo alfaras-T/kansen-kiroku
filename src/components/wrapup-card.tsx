@@ -118,11 +118,11 @@ export const WrapUpCard = forwardRef<View, {
             onLoad={onBackgroundLoad}
             onError={onBackgroundLoad}
           />
-          {/* 文字の可読性を保つための暗いスクリム */}
+          {/* 文字の可読性を保ちつつ、写真自体が沈みすぎないようにするスクリム */}
           <View
             style={[
               StyleSheet.absoluteFill,
-              { backgroundColor: "rgba(0,0,0,0.52)" },
+              { backgroundColor: "rgba(0,0,0,0.4)" },
             ]}
           />
         </>

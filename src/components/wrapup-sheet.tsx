@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Modal,
   Platform,
   Pressable,
@@ -78,28 +79,42 @@ export function WrapUpSheet({
   }
 
   async function pickBackground() {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) {
-      Alert.alert("権限が必要です", "写真ライブラリへのアクセスを許可してください");
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      quality: 1,
-    });
-    if (result.canceled || !result.assets?.[0]?.uri) return;
-    let uri = result.assets[0].uri;
-    // Web版はblob: URLのままだとhtml-to-imageで書き出せないため、
-    // data URIへ変換して保持する(create-form.tsxのpickPhotoと同じ理由)。
-    if (Platform.OS === "web" && uri.startsWith("blob:")) {
-      try {
-        uri = await blobUrlToResizedDataUri(uri);
-      } catch (e) {
-        console.warn("背景画像のdata URI変換に失敗しました。blob URLのまま使用します", e);
+    try {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert("権限が必要です", "写真ライブラリへのアクセスを許可してください");
+        return;
       }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        quality: 1,
+      });
+      if (result.canceled || !result.assets?.[0]?.uri) return;
+      let uri = result.assets[0].uri;
+      // Web版はblob: URLのままだとhtml-to-imageで書き出せないため、
+      // data URIへ変換して保持する(create-form.tsxのpickPhotoと同じ理由)。
+      if (Platform.OS === "web" && uri.startsWith("blob:")) {
+        try {
+          uri = await blobUrlToResizedDataUri(uri);
+        } catch (e) {
+          console.warn("背景画像のdata URI変換に失敗しました。blob URLのまま使用します", e);
+        }
+      }
+      // 実際に画面へ表示する前にキャッシュへ読み込んでおく。onLoadだけに
+      // 頼るより早く・確実に「読み込み済み」の状態を作れる。
+      try {
+        await Image.prefetch(uri);
+      } catch (e) {
+        console.warn("背景画像のprefetchに失敗しました(そのまま続行します)", e);
+      }
+      bgReadyRef.current = false;
+      setBackgroundUri(uri);
+    } catch (e) {
+      // launchImageLibraryAsync自体が例外を投げるケースを含め、ここで必ず拾う。
+      // 拾わないと「タップしても何も起きない」ように見えてしまうため。
+      console.warn("背景画像の選択に失敗しました", e);
+      Alert.alert("背景画像を選べませんでした", "もう一度お試しください。");
     }
-    bgReadyRef.current = false;
-    setBackgroundUri(uri);
   }
 
   async function capture(): Promise<string | null> {
@@ -243,16 +258,24 @@ export function WrapUpSheet({
             onPress={pickBackground}
             style={[
               styles.bgBtn,
-              { borderColor: colors.border, backgroundColor: colors.backgroundElement },
+              {
+                borderColor: backgroundUri ? colors.accent : colors.border,
+                backgroundColor: colors.backgroundElement,
+              },
             ]}
           >
             <Ionicons
-              name={backgroundUri ? "image" : "image-outline"}
+              name={backgroundUri ? "checkmark-circle" : "image-outline"}
               size={16}
-              color={colors.text}
+              color={backgroundUri ? colors.accent : colors.text}
             />
-            <Text style={[styles.bgBtnText, { color: colors.text }]}>
-              {backgroundUri ? "背景画像を変更" : "背景画像を選ぶ"}
+            <Text
+              style={[
+                styles.bgBtnText,
+                { color: backgroundUri ? colors.accent : colors.text },
+              ]}
+            >
+              {backgroundUri ? "背景画像を設定しました(変更する)" : "背景画像を選ぶ"}
             </Text>
           </Pressable>
           {backgroundUri && (
