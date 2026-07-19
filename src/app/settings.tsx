@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SelectModal } from "@/components/form/select-modal";
 import { InfoNote, InfoSheet, InfoStep } from "@/components/info-sheet";
+import { ContactSheet } from "@/components/contact-sheet";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { TEAMS } from "@/constants/teams";
@@ -27,6 +28,7 @@ export default function SettingsScreen() {
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [backupHelpOpen, setBackupHelpOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
 
   const appVersion = Constants.expoConfig?.version ?? "1.0.0";
 
@@ -201,6 +203,33 @@ export default function SettingsScreen() {
             観戦記録・写真・設定はすべてこの端末内にのみ保存され、サーバーには送信されません。球団のロゴ・正式名称は使用していません。
           </ThemedText>
         </View>
+
+        <View style={styles.section}>
+          <ThemedText
+            type="small"
+            themeColor="textSecondary"
+            style={styles.sectionLabel}
+          >
+            ご要望・お問い合わせ
+          </ThemedText>
+          <Pressable
+            onPress={() => setContactOpen(true)}
+            style={[
+              styles.button,
+              {
+                backgroundColor: colors.backgroundElement,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <Text style={[styles.buttonText, { color: colors.text }]}>
+              ご要望・お問い合わせフォーム
+            </Text>
+          </Pressable>
+          <ThemedText type="small" themeColor="textSecondary" style={styles.hint}>
+            機能のご要望や不具合の報告をお送りいただけます。フォームから端末のメールアプリが開きます。いただいた内容は改善の参考にさせていただきます。
+          </ThemedText>
+        </View>
       </ScrollView>
 
       <InfoSheet
@@ -228,6 +257,8 @@ export default function SettingsScreen() {
           ※ ファイルはあなたが選んだ保存先にのみ置かれます。アプリからサーバーへ送信されることはありません。バックアップを取らずにアプリを削除すると記録も消えるため、定期的な書き出しをおすすめします。
         </InfoNote>
       </InfoSheet>
+
+      <ContactSheet visible={contactOpen} onClose={() => setContactOpen(false)} />
     </ThemedView>
   );
 }

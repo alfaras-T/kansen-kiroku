@@ -27,3 +27,30 @@ export function notify(title: string, message?: string): void {
   }
   Alert.alert(title, message);
 }
+
+/**
+ * 端末のメールアプリを、宛先・件名・本文を入れた状態で開く。
+ * アプリ自身はデータを送信しない（送信はユーザーのメールアプリが行う）。
+ * メールアプリが開けなかった場合は false を返す。
+ */
+export async function openMailComposer(params: {
+  to: string;
+  subject: string;
+  body: string;
+}): Promise<boolean> {
+  const { to, subject, body } = params;
+  const url = `mailto:${to}?subject=${encodeURIComponent(
+    subject,
+  )}&body=${encodeURIComponent(body)}`;
+  try {
+    if (Platform.OS === "web") {
+      window.location.href = url;
+      return true;
+    }
+    const { Linking } = await import("react-native");
+    await Linking.openURL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
