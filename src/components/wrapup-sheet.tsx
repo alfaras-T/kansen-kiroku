@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import * as Sharing from "expo-sharing";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -49,6 +49,10 @@ export function WrapUpSheet({
   const [backgroundUri, setBackgroundUri] = useState<string | null>(null);
   const exportRef = useRef<View>(null);
   const previewRef = useRef<View>(null);
+  // 進行中キャプチャの使い回し(同じDOMを並行処理すると壊れるため。create-form.tsxと同じ)
+  const captureInFlightRef = useRef<Promise<string | null> | null>(null);
+  // Web用: 事前生成した書き出し画像(タップ時に即share/downloadするため)
+  const preparedRef = useRef<{ key: string; uri: string } | null>(null);
 
   // 背景写真の読み込み状態。タイムアウトで推測せず、プレビューカードの
   // Image onLoad/onError を唯一の完了合図として確定的に管理する。
@@ -73,6 +77,23 @@ export function WrapUpSheet({
       setTimeout(resolve, 15000);
     });
   }
+
+  // Web用: 書き出し画像の事前生成。
+  // タップしてから変換すると (1) Safariの初回バグで写真が抜ける
+  // (2) 変換に時間がかかりnavigator.shareのユーザー操作ウィンドウを外れる
+  // ため、条件が揃った時点で裏で生成しておく(create-form.tsxと同じ方式)。
+  useEffect(() => {
+    if (Platform.OS !== "web" || !visible || !summary) return;
+    if (backgroundUri && bgStatus !== "ready") return;
+    const key = `${ratio}|${backgroundUri ?? ""}`;
+    preparedRef.current = null; // 条件が変わったら旧画像は破棄
+    const timer = setTimeout(async () => {
+      const uri = await capture();
+      if (uri) preparedRef.current = { key, uri };
+    }, 600);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, summary, ratio, backgroundUri, bgStatus]);
 
   if (!summary) return null;
 
@@ -124,6 +145,19 @@ export function WrapUpSheet({
   }
 
   async function capture(): Promise<string | null> {
+    if (captureInFlightRef.current) {
+      return captureInFlightRef.current;
+    }
+    const promise = captureInner();
+    captureInFlightRef.current = promise;
+    try {
+      return await promise;
+    } finally {
+      captureInFlightRef.current = null;
+    }
+  }
+
+  async function captureInner(): Promise<string | null> {
     try {
       // Reactの再描画→描画反映を1フレーム待ってからキャプチャする。
       await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
@@ -142,8 +176,17 @@ export function WrapUpSheet({
         }
         // Web版はhtml-to-image(ブラウザ自身の描画エンジン経由)を使う。
         // 理由はcreate-form.tsxのコメント参照(captureRefのWeb実装は再現度が低い)。
+        //
+        // 重要: Safari(iOSのPWA含む)にはSVG foreignObject内の画像が
+        // 「初回の変換では描画されない」既知のバグがあり、1回だけの変換だと
+        // 背景写真が抜けた画像が出力される。複数回変換して最後の結果を使う
+        // (2回目以降はSafari内部で画像がウォームアップ済みになり正しく写る)。
         const { toPng } = await import("html-to-image");
-        return await toPng(el, { pixelRatio: 1 });
+        let dataUrl = "";
+        for (let i = 0; i < 3; i += 1) {
+          dataUrl = await toPng(el, { pixelRatio: 1 });
+        }
+        return dataUrl;
       }
 
       // ネイティブ: 隠しステージではなく「画面に見えているプレビューカード」を
@@ -195,7 +238,15 @@ export function WrapUpSheet({
     setBusy(true);
     try {
       if (backgroundUri) await waitForBackground();
-      const uri = await capture();
+      // Webは事前生成済みの画像があればそれを使う(タップ直後に共有できる)
+      const key = `${ratio}|${backgroundUri ?? ""}`;
+      let uri: string | null = null;
+      if (Platform.OS === "web" && preparedRef.current?.key === key) {
+        uri = preparedRef.current.uri;
+      }
+      if (!uri) {
+        uri = await capture();
+      }
       if (!uri) {
         notify("画像の生成に失敗しました", "もう一度お試しください。");
         return;
