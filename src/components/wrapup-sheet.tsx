@@ -67,8 +67,9 @@ export function WrapUpSheet({
     if (bgReadyRef.current) return Promise.resolve();
     return new Promise<void>((resolve) => {
       bgWaitersRef.current.push(resolve);
-      // 万一onLoad/onErrorが発火しない場合の保険(無限待機を防ぐ)
-      setTimeout(resolve, 8000);
+      // 万一onLoad/onErrorが発火しない場合の保険(無限待機を防ぐ)。
+      // プレビューに写真が見えている時点で実質読み込み済みのため、短めでよい。
+      setTimeout(resolve, 2000);
     });
   }
 
@@ -197,19 +198,45 @@ export function WrapUpSheet({
       }
       // ネイティブ: 写真に保存してから共有シートを開く(既存の保存導線と同じ流れ)
       const MediaLibrary = await import("expo-media-library");
-      const perm = await MediaLibrary.requestPermissionsAsync();
+      // 権限を確認し、未許可のときだけダイアログを出す(毎回出さない)
+      let perm = await MediaLibrary.getPermissionsAsync();
+      let prompted = false;
+      if (!perm.granted) {
+        perm = await MediaLibrary.requestPermissionsAsync();
+        prompted = true;
+      }
       if (perm.granted) {
         await MediaLibrary.saveToLibraryAsync(uri);
       }
+      // iOSでは、権限ダイアログが閉じるアニメーションの最中に共有シートを
+      // 出そうとすると表示が静かに失敗する(初回タップで共有画面が開かない
+      // 症状の原因)。ダイアログを出した直後は少し待ってから表示する。
+      if (prompted) {
+        await new Promise((resolve) => setTimeout(resolve, 700));
+      }
       try {
         if (await Sharing.isAvailableAsync()) {
-          await Sharing.shareAsync(uri, {
-            mimeType: "image/png",
-            dialogTitle: "観戦まとめを共有",
-          });
+          try {
+            await Sharing.shareAsync(uri, {
+              mimeType: "image/png",
+              dialogTitle: "観戦まとめを共有",
+            });
+          } catch (firstError) {
+            // 表示タイミングの競合で失敗した場合に備え、少し待って1回だけ再試行
+            console.warn("共有シートの表示に失敗。再試行します", firstError);
+            await new Promise((resolve) => setTimeout(resolve, 600));
+            await Sharing.shareAsync(uri, {
+              mimeType: "image/png",
+              dialogTitle: "観戦まとめを共有",
+            });
+          }
         }
       } catch (e) {
-        console.warn("共有シートの表示に失敗しました", e);
+        console.warn("共有シートの表示に失敗しました(保存は完了済み)", e);
+        notify(
+          "写真に保存しました",
+          "共有画面を開けなかったため、保存のみ行いました。写真アプリから共有できます。",
+        );
       }
       if (!perm.granted) {
         notify("写真への保存はスキップしました", "権限が無いため共有のみ行いました。");
