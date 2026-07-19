@@ -50,15 +50,16 @@ export function WrapUpSheet({
   const exportRef = useRef<View>(null);
   const previewRef = useRef<View>(null);
 
-  // 背景写真のデコード完了を待つための仕組み。
-  // 選んだ直後に共有をタップされても、書き出し用ステージの画像が
-  // まだ読み込み終わっていないことがあるため(特に大きな写真)、
-  // 読み込み完了まで待ってからキャプチャする。
+  // 背景写真の読み込み状態。タイムアウトで推測せず、プレビューカードの
+  // Image onLoad/onError を唯一の完了合図として確定的に管理する。
+  // "loading" の間は共有ボタンを読み込み中表示にし、キャプチャも行わない。
+  const [bgStatus, setBgStatus] = useState<"none" | "loading" | "ready">("none");
   const bgReadyRef = useRef(true);
   const bgWaitersRef = useRef<(() => void)[]>([]);
 
   function markBackgroundLoaded() {
     bgReadyRef.current = true;
+    setBgStatus("ready");
     bgWaitersRef.current.forEach((resolve) => resolve());
     bgWaitersRef.current = [];
   }
@@ -67,15 +68,17 @@ export function WrapUpSheet({
     if (bgReadyRef.current) return Promise.resolve();
     return new Promise<void>((resolve) => {
       bgWaitersRef.current.push(resolve);
-      // 万一onLoad/onErrorが発火しない場合の保険(無限待機を防ぐ)。
-      // プレビューに写真が見えている時点で実質読み込み済みのため、短めでよい。
-      setTimeout(resolve, 2000);
+      // 完了合図が来ない場合の最終保険(15秒)。ここまで来たら読み込みは
+      // 諦めて撮る(無限に固まるよりは写真なしでも書き出す)。
+      setTimeout(resolve, 15000);
     });
   }
 
   if (!summary) return null;
 
   function handleClose() {
+    bgReadyRef.current = true;
+    setBgStatus("none");
     setBackgroundUri(null);
     onClose();
   }
@@ -110,6 +113,7 @@ export function WrapUpSheet({
         console.warn("背景画像のprefetchに失敗しました(そのまま続行します)", e);
       }
       bgReadyRef.current = false;
+      setBgStatus("loading");
       setBackgroundUri(uri);
     } catch (e) {
       // launchImageLibraryAsync自体が例外を投げるケースを含め、ここで必ず拾う。
@@ -143,8 +147,12 @@ export function WrapUpSheet({
       }
 
       // ネイティブ: 隠しステージではなく「画面に見えているプレビューカード」を
-      // そのままキャプチャする。プレビューには背景写真が確実に描画されている
-      // (ユーザーに見えているものをそのまま撮るので、写真が抜け落ちる余地がない)。
+      // そのままキャプチャする。背景写真がある場合は、onLoad完了後さらに
+      // ひと呼吸(300ms+1フレーム)おいて、描画が画面に反映しきってから撮る。
+      if (backgroundUri) {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+      }
       // width/height指定で書き出し解像度(1080x1920 / 1080x1080)へ拡大する。
       return await captureRef(previewRef, {
         format: "png",
@@ -312,23 +320,34 @@ export function WrapUpSheet({
             ]}
           >
             <Ionicons
-              name={backgroundUri ? "checkmark-circle" : "image-outline"}
+              name={
+                bgStatus === "ready"
+                  ? "checkmark-circle"
+                  : bgStatus === "loading"
+                    ? "hourglass-outline"
+                    : "image-outline"
+              }
               size={16}
-              color={backgroundUri ? colors.accent : colors.text}
+              color={bgStatus === "ready" ? colors.accent : colors.text}
             />
             <Text
               style={[
                 styles.bgBtnText,
-                { color: backgroundUri ? colors.accent : colors.text },
+                { color: bgStatus === "ready" ? colors.accent : colors.text },
               ]}
             >
-              {backgroundUri ? "背景画像を設定しました(変更する)" : "背景画像を選ぶ"}
+              {bgStatus === "ready"
+                ? "背景画像を設定しました(変更する)"
+                : bgStatus === "loading"
+                  ? "背景画像を読み込んでいます…"
+                  : "背景画像を選ぶ"}
             </Text>
           </Pressable>
           {backgroundUri && (
             <Pressable
               onPress={() => {
                 bgReadyRef.current = true;
+                setBgStatus("none");
                 setBackgroundUri(null);
               }}
               style={styles.bgClear}
@@ -355,19 +374,24 @@ export function WrapUpSheet({
 
           <Pressable
             onPress={handleShare}
-            disabled={busy}
+            disabled={busy || bgStatus === "loading"}
             style={[
               styles.shareBtn,
-              { backgroundColor: colors.accent, opacity: busy ? 0.6 : 1 },
+              {
+                backgroundColor: colors.accent,
+                opacity: busy || bgStatus === "loading" ? 0.6 : 1,
+              },
             ]}
           >
             <Ionicons name="share-outline" size={18} color={colors.onAccent} />
             <Text style={[styles.shareBtnText, { color: colors.onAccent }]}>
               {busy
                 ? "処理中…"
-                : Platform.OS === "web"
-                  ? "画像を共有・保存"
-                  : "写真に保存して共有"}
+                : bgStatus === "loading"
+                  ? "背景画像を読み込み中…"
+                  : Platform.OS === "web"
+                    ? "画像を共有・保存"
+                    : "写真に保存して共有"}
             </Text>
           </Pressable>
           <Text style={[styles.note, { color: colors.textSecondary }]}>
