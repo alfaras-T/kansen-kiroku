@@ -17,6 +17,23 @@ export function wrapCardHeight(ratio: WrapRatio, width: number): number {
   return ratio === "story" ? (width * 16) / 9 : width;
 }
 
+/** #RRGGBB の相対輝度(WCAG基準)。0(黒)〜1(白)。 */
+function luminance(hex: string): number {
+  const n = hex.replace("#", "");
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(n.slice(i, i + 2), 16) / 255);
+  const f = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+}
+
+/**
+ * 背景写真+暗いスクリムの上でも読めるよう、暗すぎる色は明るい既定色に
+ * 差し替える。タイガースのように「明るい背景向けに黒に近い文字色」を
+ * 持つチームでも、写真モードでは白抜けせず可視性を保つための保険。
+ */
+function readableOnPhoto(hex: string, fallback: string): string {
+  return luminance(hex) < 0.35 ? fallback : hex;
+}
+
 /**
  * 年間観戦まとめカード。
  * 既定は写真なしの統計グラフィック(記録のみ保存のユーザーにも出せる)。
@@ -30,13 +47,24 @@ export const WrapUpCard = forwardRef<View, {
   width: number;
   colors: Palette;
   backgroundUri?: string | null;
+  /** 背景写真のデコードが完了した時に呼ばれる(書き出し前の待ち合わせに使う) */
+  onBackgroundLoad?: () => void;
 }>(function WrapUpCard(
-  { summary, myTeam, ratio, width, colors, backgroundUri },
+  { summary, myTeam, ratio, width, colors, backgroundUri, onBackgroundLoad },
   ref,
 ) {
   const s = width / BASE_WIDTH; // scale
   const height = wrapCardHeight(ratio, width);
   const story = ratio === "story";
+  const photoMode = !!backgroundUri;
+
+  // 写真モードでは、チームテーマの文字色が暗すぎる場合(タイガース等)に
+  // 読める色へ差し替える。写真が無い通常モードはテーマの色をそのまま使う。
+  const tc = photoMode ? readableOnPhoto(colors.text, "#FFFFFF") : colors.text;
+  const tc2 = photoMode
+    ? readableOnPhoto(colors.textSecondary, "rgba(255,255,255,0.78)")
+    : colors.textSecondary;
+  const ac = photoMode ? readableOnPhoto(colors.accent, "#FFD84D") : colors.accent;
 
   const rec = summary.record;
   const pct =
@@ -76,7 +104,7 @@ export const WrapUpCard = forwardRef<View, {
           width,
           height,
           backgroundColor: colors.background,
-          borderColor: colors.accent,
+          borderColor: ac,
           borderWidth: Math.max(2, 3 * s),
         },
       ]}
@@ -87,6 +115,8 @@ export const WrapUpCard = forwardRef<View, {
             source={{ uri: backgroundUri }}
             style={StyleSheet.absoluteFill}
             resizeMode="cover"
+            onLoad={onBackgroundLoad}
+            onError={onBackgroundLoad}
           />
           {/* 文字の可読性を保つための暗いスクリム */}
           <View
@@ -102,7 +132,7 @@ export const WrapUpCard = forwardRef<View, {
       <View>
         <Text
           style={{
-            color: colors.accent,
+            color: ac,
             fontSize: (story ? 58 : 24) * s,
             fontWeight: "800",
             letterSpacing: 2 * s,
@@ -113,7 +143,7 @@ export const WrapUpCard = forwardRef<View, {
         </Text>
         <Text
           style={{
-            color: colors.text,
+            color: tc,
             fontSize: (story ? 17 : 13) * s,
             fontWeight: "700",
             marginTop: (story ? 2 : 1) * s,
@@ -127,13 +157,13 @@ export const WrapUpCard = forwardRef<View, {
 
       {/* メイン: 観戦数 */}
       <View style={{ marginTop: (story ? 12 : 6) * s }}>
-        <Text style={{ color: colors.textSecondary, fontSize: (story ? 12.5 : 10.5) * s }}>
+        <Text style={{ color: tc2, fontSize: (story ? 12.5 : 10.5) * s }}>
           今年、球場にいた回数
         </Text>
         <View style={styles.bigRow}>
           <Text
             style={{
-              color: colors.accent,
+              color: ac,
               fontSize: (story ? 84 : 27) * s,
               fontWeight: "800",
               lineHeight: (story ? 90 : 31) * s,
@@ -143,7 +173,7 @@ export const WrapUpCard = forwardRef<View, {
           </Text>
           <Text
             style={{
-              color: colors.text,
+              color: tc,
               fontSize: (story ? 16 : 12) * s,
               fontWeight: "700",
               marginBottom: (story ? 12 : 5) * s,
@@ -158,12 +188,12 @@ export const WrapUpCard = forwardRef<View, {
       {/* マイチーム成績 */}
       {rec && (
         <View style={{ marginTop: (story ? 18 : 6) * s }}>
-          <Text style={{ color: colors.textSecondary, fontSize: (story ? 12.5 : 10.5) * s }}>
+          <Text style={{ color: tc2, fontSize: (story ? 12.5 : 10.5) * s }}>
             {nicknameOf(myTeam)}とともに
           </Text>
           <Text
             style={{
-              color: colors.text,
+              color: tc,
               fontSize: (story ? 24 : 14) * s,
               fontWeight: "800",
               marginTop: 2 * s,
@@ -171,7 +201,7 @@ export const WrapUpCard = forwardRef<View, {
           >
             {rec.win}勝{rec.lose}敗{rec.draw > 0 ? `${rec.draw}分` : ""}
             {pct !== null && (
-              <Text style={{ color: colors.accent }}>{`  勝率${pct}%`}</Text>
+              <Text style={{ color: ac }}>{`  勝率${pct}%`}</Text>
             )}
           </Text>
         </View>
@@ -187,7 +217,7 @@ export const WrapUpCard = forwardRef<View, {
             style={[
               styles.row,
               {
-                borderColor: colors.accent,
+                borderColor: ac,
                 backgroundColor: backgroundUri
                   ? "rgba(0,0,0,0.38)"
                   : colors.backgroundElement,
@@ -199,7 +229,7 @@ export const WrapUpCard = forwardRef<View, {
           >
             <Text
               style={{
-                color: colors.textSecondary,
+                color: tc2,
                 fontSize: (story ? 11.5 : 9.5) * s,
               }}
             >
@@ -207,7 +237,7 @@ export const WrapUpCard = forwardRef<View, {
             </Text>
             <Text
               style={{
-                color: colors.text,
+                color: tc,
                 fontSize: (story ? 13.5 : 11.5) * s,
                 fontWeight: "700",
                 marginTop: 1 * s,
@@ -223,13 +253,13 @@ export const WrapUpCard = forwardRef<View, {
       {/* フッター(通常フローで最下部に置き、行との重なりを構造的に防ぐ) */}
       <View style={[styles.footer, { paddingTop: (story ? 14 : 6) * s }]}>
         {summary.firstDate && summary.lastDate && (
-          <Text style={{ color: colors.textSecondary, fontSize: (story ? 11.5 : 9.5) * s }}>
+          <Text style={{ color: tc2, fontSize: (story ? 11.5 : 9.5) * s }}>
             {formatShortDate(summary.firstDate)} 〜 {formatShortDate(summary.lastDate)}
           </Text>
         )}
         <Text
           style={{
-            color: colors.accent,
+            color: ac,
             fontSize: (story ? 12.5 : 10.5) * s,
             fontWeight: "800",
             letterSpacing: 1 * s,

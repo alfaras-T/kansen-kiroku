@@ -3,6 +3,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as Sharing from "expo-sharing";
 import { useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Modal,
   Platform,
@@ -47,6 +48,28 @@ export function WrapUpSheet({
   const [backgroundUri, setBackgroundUri] = useState<string | null>(null);
   const exportRef = useRef<View>(null);
 
+  // 背景写真のデコード完了を待つための仕組み。
+  // 選んだ直後に共有をタップされても、書き出し用ステージの画像が
+  // まだ読み込み終わっていないことがあるため(特に大きな写真)、
+  // 読み込み完了まで待ってからキャプチャする。
+  const bgReadyRef = useRef(true);
+  const bgWaitersRef = useRef<(() => void)[]>([]);
+
+  function markBackgroundLoaded() {
+    bgReadyRef.current = true;
+    bgWaitersRef.current.forEach((resolve) => resolve());
+    bgWaitersRef.current = [];
+  }
+
+  function waitForBackground(): Promise<void> {
+    if (bgReadyRef.current) return Promise.resolve();
+    return new Promise<void>((resolve) => {
+      bgWaitersRef.current.push(resolve);
+      // 万一onLoad/onErrorが発火しない場合の保険(無限待機を防ぐ)
+      setTimeout(resolve, 8000);
+    });
+  }
+
   if (!summary) return null;
 
   function handleClose() {
@@ -75,6 +98,7 @@ export function WrapUpSheet({
         console.warn("背景画像のdata URI変換に失敗しました。blob URLのまま使用します", e);
       }
     }
+    bgReadyRef.current = false;
     setBackgroundUri(uri);
   }
 
@@ -126,6 +150,7 @@ export function WrapUpSheet({
     if (busy) return;
     setBusy(true);
     try {
+      if (backgroundUri) await waitForBackground();
       const uri = await capture();
       if (!uri) {
         notify("画像の生成に失敗しました", "もう一度お試しください。");
@@ -231,7 +256,13 @@ export function WrapUpSheet({
             </Text>
           </Pressable>
           {backgroundUri && (
-            <Pressable onPress={() => setBackgroundUri(null)} style={styles.bgClear}>
+            <Pressable
+              onPress={() => {
+                bgReadyRef.current = true;
+                setBackgroundUri(null);
+              }}
+              style={styles.bgClear}
+            >
               <Text style={{ color: colors.textSecondary, fontSize: 12.5 }}>
                 背景画像を外す
               </Text>
@@ -261,7 +292,7 @@ export function WrapUpSheet({
             <Ionicons name="share-outline" size={18} color={colors.onAccent} />
             <Text style={[styles.shareBtnText, { color: colors.onAccent }]}>
               {busy
-                ? "画像を生成中…"
+                ? "処理中…"
                 : Platform.OS === "web"
                   ? "画像を共有・保存"
                   : "写真に保存して共有"}
@@ -285,8 +316,17 @@ export function WrapUpSheet({
             width={EXPORT_WIDTH}
             colors={colors}
             backgroundUri={backgroundUri}
+            onBackgroundLoad={markBackgroundLoaded}
           />
         </View>
+
+        {/* 保存/共有中の表示。観戦記録作成時(adjust.tsx)と同じ見た目に揃えている */}
+        {busy && (
+          <View style={styles.processingOverlay} pointerEvents="auto">
+            <ActivityIndicator size="large" color="#fff" />
+            <Text style={styles.processingText}>画像を作成しています…</Text>
+          </View>
+        )}
       </SafeAreaView>
     </Modal>
   );
@@ -340,4 +380,20 @@ const styles = StyleSheet.create({
   shareBtnText: { fontSize: 15, fontWeight: "700" },
   note: { fontSize: 12, marginTop: 10, textAlign: "center" },
   exportStage: { position: "absolute", top: 0, left: 0, opacity: 0 },
+  processingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.72)",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 14,
+  },
+  processingText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
 });
