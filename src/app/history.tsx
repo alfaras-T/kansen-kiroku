@@ -20,6 +20,8 @@ import {
 } from "@/storage/history";
 import { HistoryEntry } from "@/types/history";
 import { confirmAsync } from "@/utils/dialogs";
+import { summarizeYear } from "@/utils/yearSummary";
+import { WrapUpSheet } from "@/components/wrapup-sheet";
 import { useTheme } from "@/hooks/use-theme";
 
 const MY_TEAM_OPTIONS = [
@@ -34,6 +36,7 @@ export default function HistoryScreen() {
   const [myTeam, setMyTeam] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [selectedYear, setSelectedYear] = useState("");
+  const [wrapOpen, setWrapOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     const [h, mt] = await Promise.all([loadHistory(), loadMyTeam()]);
@@ -89,6 +92,14 @@ export default function HistoryScreen() {
   );
 
   const record = computeRecord(filteredEntries, myTeam);
+
+  // 観戦まとめの対象年: 「表示する年」を選んでいればその年、
+  // 「すべての年」なら記録のある最新の年
+  const wrapYear = effectiveYear || (yearOptions[1]?.value ?? "");
+  const wrapSummary = useMemo(
+    () => (wrapYear ? summarizeYear(entries, myTeam, wrapYear) : null),
+    [entries, myTeam, wrapYear],
+  );
   const sections = useMemo(
     () =>
       groupHistoryByYear(filteredEntries).map((g) => ({
@@ -189,6 +200,24 @@ export default function HistoryScreen() {
         </View>
       </View>
 
+      {wrapSummary && wrapSummary.games > 0 && (
+        <Pressable
+          onPress={() => setWrapOpen(true)}
+          style={[
+            styles.wrapBtn,
+            {
+              borderColor: colors.accent,
+              backgroundColor: colors.backgroundElement,
+            },
+          ]}
+        >
+          <Ionicons name="sparkles-outline" size={16} color={colors.accent} />
+          <Text style={[styles.wrapBtnText, { color: colors.accent }]}>
+            {wrapYear}年の観戦まとめを作る
+          </Text>
+        </Pressable>
+      )}
+
       {sections.length === 0 ? (
         loaded && (
           <View style={styles.emptyWrap}>
@@ -284,6 +313,12 @@ export default function HistoryScreen() {
           }}
         />
       )}
+      <WrapUpSheet
+        visible={wrapOpen}
+        onClose={() => setWrapOpen(false)}
+        summary={wrapSummary}
+        myTeam={myTeam}
+      />
     </ThemedView>
   );
 }
@@ -312,6 +347,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   statNum: { fontSize: 16, fontWeight: "700" },
+  wrapBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 11,
+    marginHorizontal: Spacing.four,
+    marginBottom: Spacing.three,
+  },
+  wrapBtnText: { fontSize: 13.5, fontWeight: "700" },
   statLabel: {
     fontSize: 10.5,
     letterSpacing: 0.5,
