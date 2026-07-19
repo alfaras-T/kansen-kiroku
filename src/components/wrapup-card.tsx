@@ -122,7 +122,7 @@ export const WrapUpCard = forwardRef<View, {
           <View
             style={[
               StyleSheet.absoluteFill,
-              { backgroundColor: "rgba(0,0,0,0.4)" },
+              { backgroundColor: "rgba(0,0,0,0.48)" },
             ]}
           />
         </>
