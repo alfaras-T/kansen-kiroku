@@ -63,8 +63,8 @@ export const WrapUpCard = forwardRef<View, {
   if (summary.maxWinStreak >= 2) {
     rows.push({ label: "現地最大連勝", value: `${summary.maxWinStreak} 連勝` });
   }
-  // スクエアは縦が足りないため2行までに絞る
-  const visibleRows = rows.slice(0, story ? 4 : 2);
+  // 表示は常に全4項目(スクエアも専用に詰めたレイアウトで全項目収める)
+  const visibleRows = rows.slice(0, 4);
 
   return (
     <View
@@ -97,16 +97,16 @@ export const WrapUpCard = forwardRef<View, {
           />
         </>
       )}
-      <View style={{ flex: 1, padding: 22 * s }}>
+      <View style={{ flex: 1, padding: (story ? 22 : 15) * s }}>
       {/* ヘッダー */}
       <View>
         <Text
           style={{
             color: colors.accent,
-            fontSize: (story ? 58 : 36) * s,
+            fontSize: (story ? 58 : 24) * s,
             fontWeight: "800",
             letterSpacing: 2 * s,
-            lineHeight: (story ? 62 : 40) * s,
+            lineHeight: (story ? 62 : 24) * s,
           }}
         >
           {summary.year}
@@ -114,9 +114,9 @@ export const WrapUpCard = forwardRef<View, {
         <Text
           style={{
             color: colors.text,
-            fontSize: 17 * s,
+            fontSize: (story ? 17 : 13) * s,
             fontWeight: "700",
-            marginTop: 2 * s,
+            marginTop: (story ? 2 : 1) * s,
           }}
         >
           観戦まとめ
@@ -126,17 +126,17 @@ export const WrapUpCard = forwardRef<View, {
       {story && <View style={{ flexGrow: 1, maxHeight: 40 * s }} />}
 
       {/* メイン: 観戦数 */}
-      <View style={{ marginTop: (story ? 12 : 14) * s }}>
-        <Text style={{ color: colors.textSecondary, fontSize: 12.5 * s }}>
+      <View style={{ marginTop: (story ? 12 : 6) * s }}>
+        <Text style={{ color: colors.textSecondary, fontSize: (story ? 12.5 : 10.5) * s }}>
           今年、球場にいた回数
         </Text>
         <View style={styles.bigRow}>
           <Text
             style={{
               color: colors.accent,
-              fontSize: (story ? 84 : 48) * s,
+              fontSize: (story ? 84 : 27) * s,
               fontWeight: "800",
-              lineHeight: (story ? 90 : 54) * s,
+              lineHeight: (story ? 90 : 31) * s,
             }}
           >
             {summary.games}
@@ -144,10 +144,10 @@ export const WrapUpCard = forwardRef<View, {
           <Text
             style={{
               color: colors.text,
-              fontSize: 16 * s,
+              fontSize: (story ? 16 : 12) * s,
               fontWeight: "700",
-              marginBottom: (story ? 12 : 8) * s,
-              marginLeft: 6 * s,
+              marginBottom: (story ? 12 : 5) * s,
+              marginLeft: (story ? 6 : 4) * s,
             }}
           >
             回
@@ -157,14 +157,14 @@ export const WrapUpCard = forwardRef<View, {
 
       {/* マイチーム成績 */}
       {rec && (
-        <View style={{ marginTop: (story ? 18 : 10) * s }}>
-          <Text style={{ color: colors.textSecondary, fontSize: 12.5 * s }}>
+        <View style={{ marginTop: (story ? 18 : 6) * s }}>
+          <Text style={{ color: colors.textSecondary, fontSize: (story ? 12.5 : 10.5) * s }}>
             {nicknameOf(myTeam)}とともに
           </Text>
           <Text
             style={{
               color: colors.text,
-              fontSize: (story ? 24 : 18) * s,
+              fontSize: (story ? 24 : 14) * s,
               fontWeight: "800",
               marginTop: 2 * s,
             }}
@@ -180,7 +180,7 @@ export const WrapUpCard = forwardRef<View, {
       {story && <View style={{ flexGrow: 1, maxHeight: 40 * s }} />}
 
       {/* 明細行 */}
-      <View style={{ marginTop: (story ? 14 : 12) * s, gap: (story ? 12 : 7) * s }}>
+      <View style={{ marginTop: (story ? 14 : 6) * s, gap: (story ? 12 : 3) * s }}>
         {visibleRows.map((r) => (
           <View
             key={r.label}
@@ -191,16 +191,16 @@ export const WrapUpCard = forwardRef<View, {
                 backgroundColor: backgroundUri
                   ? "rgba(0,0,0,0.38)"
                   : colors.backgroundElement,
-                borderRadius: 10 * s,
-                paddingVertical: (story ? 10 : 7) * s,
-                paddingHorizontal: 12 * s,
+                borderRadius: (story ? 10 : 8) * s,
+                paddingVertical: (story ? 10 : 3) * s,
+                paddingHorizontal: (story ? 12 : 10) * s,
               },
             ]}
           >
             <Text
               style={{
                 color: colors.textSecondary,
-                fontSize: 11.5 * s,
+                fontSize: (story ? 11.5 : 9.5) * s,
               }}
             >
               {r.label}
@@ -208,7 +208,7 @@ export const WrapUpCard = forwardRef<View, {
             <Text
               style={{
                 color: colors.text,
-                fontSize: 13.5 * s,
+                fontSize: (story ? 13.5 : 11.5) * s,
                 fontWeight: "700",
                 marginTop: 1 * s,
               }}
@@ -221,16 +221,16 @@ export const WrapUpCard = forwardRef<View, {
       </View>
 
       {/* フッター(通常フローで最下部に置き、行との重なりを構造的に防ぐ) */}
-      <View style={[styles.footer, { paddingTop: 14 * s }]}>
+      <View style={[styles.footer, { paddingTop: (story ? 14 : 6) * s }]}>
         {summary.firstDate && summary.lastDate && (
-          <Text style={{ color: colors.textSecondary, fontSize: 11.5 * s }}>
+          <Text style={{ color: colors.textSecondary, fontSize: (story ? 11.5 : 9.5) * s }}>
             {formatShortDate(summary.firstDate)} 〜 {formatShortDate(summary.lastDate)}
           </Text>
         )}
         <Text
           style={{
             color: colors.accent,
-            fontSize: 12.5 * s,
+            fontSize: (story ? 12.5 : 10.5) * s,
             fontWeight: "800",
             letterSpacing: 1 * s,
           }}
