@@ -20,7 +20,7 @@ export const TEAMS: TeamOption[] = [
   { code: 'H', nickname: 'ホークス' }, // パ・リーグ 2025年 1位
   { code: 'F', nickname: 'ファイターズ' }, // パ・リーグ 2025年 2位
   { code: 'B', nickname: 'バファローズ' }, // パ・リーグ 2025年 3位
-  { code: 'E', nickname: 'イーグルス' }, // パ・リーグ 2025年 4位
+  { code: 'E', nickname: 'ゴールデンイーグルス' }, // パ・リーグ 2025年 4位
   { code: 'L', nickname: 'ライオンズ' }, // パ・リーグ 2025年 5位
   { code: 'M', nickname: 'マリーンズ' }, // パ・リーグ 2025年 6位
 ];

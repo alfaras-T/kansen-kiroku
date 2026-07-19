@@ -4,7 +4,7 @@ export const OTHER_STADIUM = '__other__';
 // 北（北海道）から南（福岡）の順に並べている。
 export const STADIUMS: string[] = [
   'エスコンフィールド北海道',
-  '楽天モバイルパーク宮城',
+  '楽天モバイル最強パーク宮城',
   'ベルーナドーム',
   '東京ドーム',
   '神宮球場',
