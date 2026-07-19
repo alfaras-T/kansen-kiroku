@@ -15,6 +15,8 @@ import { DEFAULT_PALETTE, Palette } from "@/constants/theme";
  * - accent はスコア数字・選択中タブ・ボタンに使うため、背景の上で十分読める
  *   明度を確保する。タイガースのみ黒アクセントを成立させるため明るい黄色の
  *   土台(ライト基調)とし、他球団はダーク基調のまま。
+ * - border(縁取り)は各球団の accent と同色にし、カードや入力欄の輪郭にも
+ *   アクセント色を効かせる。
  * - text は背景に対して WCAG AA 相当の可読性を保つ。
  */
 export const TEAM_THEMES: Record<TeamCode, Palette> = {
@@ -28,7 +30,7 @@ export const TEAM_THEMES: Record<TeamCode, Palette> = {
     accent: "#FF7A14",
     accentDim: "#B35410",
     onAccent: "#1F0D02",
-    border: "#4A4A50",
+    border: "#FF7A14",
     danger: "#FF7A6E",
   },
   // タイガース: 黄色ベース + 黒アクセント(黒を読ませるため明るい黄の土台)
@@ -41,7 +43,7 @@ export const TEAM_THEMES: Record<TeamCode, Palette> = {
     accent: "#151515",
     accentDim: "#4A4A4A",
     onAccent: "#FFD400",
-    border: "#9A7E0C",
+    border: "#151515",
     danger: "#A61B1B",
   },
   // カープ: 赤ベース + 白アクセント
@@ -54,7 +56,7 @@ export const TEAM_THEMES: Record<TeamCode, Palette> = {
     accent: "#FFF2F2",
     accentDim: "#C09098",
     onAccent: "#3A0A10",
-    border: "#AC2432",
+    border: "#FFF2F2",
     danger: "#FFB0A6",
   },
   // ドラゴンズ: 青ベース + 白アクセント
@@ -67,7 +69,7 @@ export const TEAM_THEMES: Record<TeamCode, Palette> = {
     accent: "#F2F6FF",
     accentDim: "#8FA3C4",
     onAccent: "#0A1B3A",
-    border: "#2153AE",
+    border: "#F2F6FF",
     danger: "#FF8A80",
   },
   // ベイスターズ: 青ベース + ゴールドアクセント
@@ -80,7 +82,7 @@ export const TEAM_THEMES: Record<TeamCode, Palette> = {
     accent: "#F5C542",
     accentDim: "#A8842E",
     onAccent: "#1A1204",
-    border: "#1B6CA9",
+    border: "#F5C542",
     danger: "#FF8A80",
   },
   // スワローズ: 紺ベース + 緑アクセント
@@ -93,7 +95,7 @@ export const TEAM_THEMES: Record<TeamCode, Palette> = {
     accent: "#35D687",
     accentDim: "#1F8A55",
     onAccent: "#04170D",
-    border: "#2E9B63",
+    border: "#35D687",
     danger: "#FF8A80",
   },
   // ホークス: 黒ベース + 黄色アクセント
@@ -106,7 +108,7 @@ export const TEAM_THEMES: Record<TeamCode, Palette> = {
     accent: "#FFE83D",
     accentDim: "#ABA020",
     onAccent: "#1D1B03",
-    border: "#4C4A32",
+    border: "#FFE83D",
     danger: "#FF7A6E",
   },
   // バファローズ: 紺ベース + ゴールドアクセント
@@ -119,7 +121,7 @@ export const TEAM_THEMES: Record<TeamCode, Palette> = {
     accent: "#F0C25E",
     accentDim: "#A8842E",
     onAccent: "#1A1204",
-    border: "#A8893A",
+    border: "#F0C25E",
     danger: "#FF8A80",
   },
   // ファイターズ: 水色ベース + 白アクセント
@@ -132,7 +134,7 @@ export const TEAM_THEMES: Record<TeamCode, Palette> = {
     accent: "#F3FBFF",
     accentDim: "#9CC4D4",
     onAccent: "#0A2530",
-    border: "#1D80A6",
+    border: "#F3FBFF",
     danger: "#FF8A80",
   },
   // マリーンズ: 黒ベース + 白アクセント
@@ -145,7 +147,7 @@ export const TEAM_THEMES: Record<TeamCode, Palette> = {
     accent: "#F2F3F5",
     accentDim: "#85888E",
     onAccent: "#0A0B0C",
-    border: "#61666E",
+    border: "#F2F3F5",
     danger: "#FF8A80",
   },
   // ライオンズ: 青ベース + 赤アクセント
@@ -158,7 +160,7 @@ export const TEAM_THEMES: Record<TeamCode, Palette> = {
     accent: "#FF5062",
     accentDim: "#B03040",
     onAccent: "#2A040A",
-    border: "#95404E",
+    border: "#FF5062",
     danger: "#FF8A80",
   },
   // ゴールデンイーグルス: エンジベース + ゴールドアクセント
@@ -171,7 +173,7 @@ export const TEAM_THEMES: Record<TeamCode, Palette> = {
     accent: "#E9BA2E",
     accentDim: "#A5821E",
     onAccent: "#191002",
-    border: "#A9872F",
+    border: "#E9BA2E",
     danger: "#FFB0A6",
   },
 };
