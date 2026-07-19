@@ -49,10 +49,10 @@ export const TEAM_THEMES: Record<TeamCode, Palette> = {
   // カープ: 赤ベース + 白アクセント
   C: {
     text: "#FFF0F1",
-    background: "#270409",
-    backgroundElement: "#5C0D18",
-    backgroundSelected: "#821724",
-    textSecondary: "#C79AA0",
+    background: "#330309",
+    backgroundElement: "#7E0A1B",
+    backgroundSelected: "#AC1226",
+    textSecondary: "#D69CA4",
     accent: "#FFF2F2",
     accentDim: "#C09098",
     onAccent: "#3A0A10",
@@ -75,10 +75,10 @@ export const TEAM_THEMES: Record<TeamCode, Palette> = {
   // ベイスターズ: 青ベース + ゴールドアクセント
   DB: {
     text: "#EFF6FC",
-    background: "#03142B",
-    backgroundElement: "#093157",
-    backgroundSelected: "#104B80",
-    textSecondary: "#92B2CC",
+    background: "#031B40",
+    backgroundElement: "#0A3F82",
+    backgroundSelected: "#0F5DBB",
+    textSecondary: "#93BCE4",
     accent: "#F5C542",
     accentDim: "#A8842E",
     onAccent: "#1A1204",
