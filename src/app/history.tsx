@@ -17,11 +17,13 @@ import {
   loadHistory,
   loadMyTeam,
   saveMyTeam,
+  updateHistoryEntry,
 } from "@/storage/history";
 import { HistoryEntry } from "@/types/history";
 import { confirmAsync } from "@/utils/dialogs";
 import { summarizeYear } from "@/utils/yearSummary";
 import { WrapUpSheet } from "@/components/wrapup-sheet";
+import { EditEntrySheet } from "@/components/edit-entry-sheet";
 import { useTheme } from "@/hooks/use-theme";
 
 const MY_TEAM_OPTIONS = [
@@ -37,6 +39,7 @@ export default function HistoryScreen() {
   const [loaded, setLoaded] = useState(false);
   const [selectedYear, setSelectedYear] = useState("");
   const [wrapOpen, setWrapOpen] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<HistoryEntry | null>(null);
 
   const refresh = useCallback(async () => {
     const [h, mt] = await Promise.all([loadHistory(), loadMyTeam()]);
@@ -276,7 +279,12 @@ export default function HistoryScreen() {
                   },
                 ]}
               >
-                <View style={{ flex: 1 }}>
+                <Pressable
+                  style={{ flex: 1 }}
+                  onPress={() => setEditingEntry(item)}
+                  accessibilityRole="button"
+                  accessibilityLabel="この観戦記録を編集"
+                >
                   <Text
                     style={[styles.rowMeta, { color: colors.textSecondary }]}
                   >
@@ -294,7 +302,20 @@ export default function HistoryScreen() {
                       {item.memo}
                     </Text>
                   )}
-                </View>
+                </Pressable>
+                <Pressable
+                  onPress={() => setEditingEntry(item)}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel="この観戦記録を編集"
+                  style={styles.delBtn}
+                >
+                  <Ionicons
+                    name="pencil-outline"
+                    size={17}
+                    color={colors.textSecondary}
+                  />
+                </Pressable>
                 <Pressable
                   onPress={() => handleDelete(item)}
                   hitSlop={10}
@@ -318,6 +339,14 @@ export default function HistoryScreen() {
         onClose={() => setWrapOpen(false)}
         summary={wrapSummary}
         myTeam={myTeam}
+      />
+      <EditEntrySheet
+        entry={editingEntry}
+        onClose={() => setEditingEntry(null)}
+        onSave={async (updated) => {
+          const next = await updateHistoryEntry(updated);
+          setEntries(next);
+        }}
       />
     </ThemedView>
   );

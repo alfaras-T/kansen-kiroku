@@ -39,6 +39,13 @@ export async function addHistoryEntry(entry: HistoryEntry): Promise<HistoryEntry
   return next;
 }
 
+export async function updateHistoryEntry(entry: HistoryEntry): Promise<HistoryEntry[]> {
+  const current = await loadHistory();
+  const next = current.map((e) => (e.id === entry.id ? entry : e));
+  await saveHistory(next);
+  return next;
+}
+
 export async function deleteHistoryEntry(id: string): Promise<HistoryEntry[]> {
   const current = await loadHistory();
   const next = current.filter((e) => e.id !== id);
