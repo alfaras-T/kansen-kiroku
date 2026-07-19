@@ -39,15 +39,34 @@ export const WrapUpCard = forwardRef<View, {
   const best = summary.bestGame;
 
   const rows: { label: string; value: string }[] = [];
-  if (summary.topStadium) {
+  // 優先度順に候補を積み、上から表示枠ぶんだけ使う
+  if (summary.luckyStadium) {
+    const st = summary.luckyStadium;
     rows.push({
-      label: "今年のホーム",
-      value: `${summary.topStadium.name} × ${summary.topStadium.count}`,
+      label: "今年のラッキー球場",
+      value: `${st.name}（${st.win}勝${st.lose}敗${st.draw > 0 ? `${st.draw}分` : ""}）`,
+    });
+  }
+  if (summary.topMonth && summary.topMonth.count >= 2) {
+    rows.push({
+      label: "一番通った月",
+      value: `${summary.topMonth.month}月に ${summary.topMonth.count} 試合`,
     });
   }
   if (summary.maxWinStreak >= 2) {
     rows.push({ label: "現地連勝", value: `最大 ${summary.maxWinStreak} 連勝` });
   }
+  if (summary.slugfest && summary.slugfest.total >= 10) {
+    const g = summary.slugfest.entry;
+    rows.push({
+      label: "一番打ち合った夜",
+      value: `${formatShortDate(g.date)}  ${g.visitorCode} ${g.visitorScore}–${g.homeScore} ${g.homeCode}`,
+    });
+  }
+  if (summary.stadiumsVisited >= 3) {
+    rows.push({ label: "巡った球場", value: `${summary.stadiumsVisited} 球場` });
+  }
+  // 上が埋まらないときの控え
   if (best) {
     rows.push({
       label: "忘れられない試合",
@@ -57,15 +76,22 @@ export const WrapUpCard = forwardRef<View, {
   if (summary.oneRunGames > 0) {
     rows.push({ label: "1点差の熱戦", value: `${summary.oneRunGames} 試合` });
   }
-  if (summary.topOpponent && summary.topOpponent.games >= 2) {
-    const o = summary.topOpponent;
+  if (summary.topStadium) {
     rows.push({
-      label: `${nicknameOf(o.code)}戦`,
-      value: `${o.win}勝${o.lose}敗${o.draw > 0 ? `${o.draw}分` : ""}`,
+      label: "今年のホーム",
+      value: `${summary.topStadium.name} × ${summary.topStadium.count}`,
     });
   }
-  // スクエアは行数を絞る(縦が足りないため)
-  const visibleRows = rows.slice(0, story ? 5 : 2);
+  // 重複値の行(打ち合った夜と忘れられない試合が同一試合 等)を除いたうえで、
+  // ストーリー4行・スクエア2行に収める(フッターとの重なり防止)
+  const seen = new Set<string>();
+  const visibleRows = rows
+    .filter((r) => {
+      if (seen.has(r.value)) return false;
+      seen.add(r.value);
+      return true;
+    })
+    .slice(0, story ? 4 : 2);
 
   return (
     <View
@@ -108,8 +134,10 @@ export const WrapUpCard = forwardRef<View, {
         </Text>
       </View>
 
+      {story && <View style={{ flexGrow: 1, maxHeight: 40 * s }} />}
+
       {/* メイン: 観戦数 */}
-      <View style={{ marginTop: (story ? 26 : 14) * s }}>
+      <View style={{ marginTop: (story ? 12 : 14) * s }}>
         <Text style={{ color: colors.textSecondary, fontSize: 12.5 * s }}>
           今年、球場にいた回数
         </Text>
@@ -160,8 +188,10 @@ export const WrapUpCard = forwardRef<View, {
         </View>
       )}
 
+      {story && <View style={{ flexGrow: 1, maxHeight: 40 * s }} />}
+
       {/* 明細行 */}
-      <View style={{ marginTop: (story ? 22 : 12) * s, gap: (story ? 12 : 7) * s }}>
+      <View style={{ marginTop: (story ? 14 : 12) * s, gap: (story ? 12 : 7) * s }}>
         {visibleRows.map((r) => (
           <View
             key={r.label}
@@ -199,13 +229,8 @@ export const WrapUpCard = forwardRef<View, {
         ))}
       </View>
 
-      {/* フッター */}
-      <View
-        style={[
-          styles.footer,
-          { left: 22 * s, right: 22 * s, bottom: 18 * s },
-        ]}
-      >
+      {/* フッター(通常フローで最下部に置き、行との重なりを構造的に防ぐ) */}
+      <View style={[styles.footer, { paddingTop: 14 * s }]}>
         {summary.firstDate && summary.lastDate && (
           <Text style={{ color: colors.textSecondary, fontSize: 11.5 * s }}>
             {formatShortDate(summary.firstDate)} 〜 {formatShortDate(summary.lastDate)}
@@ -231,7 +256,7 @@ const styles = StyleSheet.create({
   bigRow: { flexDirection: "row", alignItems: "flex-end" },
   row: { borderWidth: 1 },
   footer: {
-    position: "absolute",
+    marginTop: "auto",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
