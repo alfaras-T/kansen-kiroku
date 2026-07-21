@@ -1,7 +1,8 @@
 import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SelectModal } from "@/components/form/select-modal";
@@ -25,9 +26,21 @@ const FAVORITE_TEAM_OPTIONS = [
 export default function SettingsScreen() {
   const colors = useTheme();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { favoriteTeam, setFavoriteTeam } = useFavoriteTeam();
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
+
+  // Web版はページ全体のリロードを避け、同一タブ内で遷移する。
+  // これにより、遷移時の白画面フラッシュやスプラッシュの再生を防ぐ。
+  // ネイティブ版は引き続き外部ブラウザで開く。
+  function openLegalPage(path: "/privacy" | "/support") {
+    if (Platform.OS === "web") {
+      router.push(path);
+    } else {
+      Linking.openURL(`${WEB_BASE_URL}${path}`);
+    }
+  }
   const [backupHelpOpen, setBackupHelpOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
 
@@ -224,18 +237,12 @@ export default function SettingsScreen() {
             </View>
           </View>
           <View style={styles.linkRow}>
-            <Pressable
-              onPress={() => Linking.openURL(`${WEB_BASE_URL}/privacy`)}
-              hitSlop={6}
-            >
+            <Pressable onPress={() => openLegalPage("/privacy")} hitSlop={6}>
               <ThemedText type="link" themeColor="accent">
                 プライバシーポリシー
               </ThemedText>
             </Pressable>
-            <Pressable
-              onPress={() => Linking.openURL(`${WEB_BASE_URL}/support`)}
-              hitSlop={6}
-            >
+            <Pressable onPress={() => openLegalPage("/support")} hitSlop={6}>
               <ThemedText type="link" themeColor="accent">
                 サポート
               </ThemedText>

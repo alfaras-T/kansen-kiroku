@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { Linking, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -30,11 +31,19 @@ function QA({ q, children }: { q: string; children: React.ReactNode }) {
 export default function SupportScreen() {
   const colors = useTheme();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   function backToApp() {
     if (Platform.OS === "web") {
-      // 新規タブで開かれている場合が多く、ブラウザの戻る履歴に頼れないため、
-      // アプリのトップへ同じタブで直接遷移する。
-      window.location.href = `${WEB_BASE_URL}/`;
+      // アプリ内(設定画面など)から遷移してきた場合は、同一タブ内の
+      // クライアントサイド遷移で戻ることで、ページ全体のリロード
+      // (白画面フラッシュやスプラッシュの再生)を避ける。
+      // 直接URLを開かれた場合など戻り先の履歴がない場合のみ、
+      // アプリのトップへ直接遷移する。
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        window.location.href = `${WEB_BASE_URL}/`;
+      }
     } else {
       Linking.openURL(WEB_BASE_URL);
     }
@@ -56,7 +65,7 @@ export default function SupportScreen() {
             サポート
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            Ball Films（観戦きろく）のヘルプ・お問い合わせ
+            Ball Filmsのヘルプ・お問い合わせ
           </ThemedText>
         </View>
 
@@ -77,7 +86,7 @@ export default function SupportScreen() {
         </ThemedText>
 
         <QA q="記録したデータはどこに保存されますか？">
-          この端末（アプリ／ブラウザ）の中にのみ保存されます。サーバーには送信されません。機種変更やブラウザのデータ消去で失われるため、設定タブの「観戦履歴を書き出す」で定期的にバックアップを取ることをおすすめします。
+          この端末の中にのみ保存されます。サーバーには送信されません。機種変更やアプリのデータ消去で失われるため、設定タブの「観戦履歴を書き出す」で定期的にバックアップを取ることをおすすめします。
         </QA>
 
         <QA q="機種変更したときはどうすればいいですか？">

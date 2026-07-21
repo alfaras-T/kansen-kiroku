@@ -51,10 +51,10 @@ export function ContactSheet({
     }
     setSending(true);
     // メール本文の末尾に環境情報を添える（不具合調査の手がかり用。個人データは含めない）。
-    const footer = `\n\n----------------\n種別: ${category}\nアプリ: 観戦きろく v${appVersion}\n端末: ${Platform.OS}`;
+    const footer = `\n\n----------------\n種別: ${category}\nアプリ: Ball Films v${appVersion}\n端末: ${Platform.OS}`;
     const ok = await openMailComposer({
       to: CONTACT_EMAIL,
-      subject: `【観戦きろく】${category}`,
+      subject: `【Ball Films】${category}`,
       body: `${trimmed}${footer}`,
     });
     setSending(false);
