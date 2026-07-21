@@ -21,6 +21,8 @@ import { OTHER_TEAM, TEAMS } from "@/constants/teams";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { useCreateForm } from "@/contexts/create-form";
 import { useTheme } from "@/hooks/use-theme";
+import { confirmAsync } from "@/utils/dialogs";
+import { sanitizeScoreInput } from "@/utils/score";
 
 const TEAM_OPTIONS = [
   ...TEAMS.map((t) => ({ label: `${t.nickname}（${t.code}）`, value: t.code })),
@@ -64,7 +66,30 @@ export default function CreateScreen() {
     pickPhoto,
     clearPhoto,
     handleSaveRecord,
+    visitorTeamName,
+    homeTeamName,
   } = form;
+
+  async function handleSaveRecordWithChecks() {
+    // 「同じチーム同士」は入力ミスの可能性が高いため、保存前に一声かける。
+    // 参考記録として意図的に残したい場合もあるため、あくまで確認であって
+    // 禁止はしない。
+    // (試合日は DateField 側が未来日を選択不可にしているため、ここでの
+    // 未来日チェックは不要)
+    if (
+      visitorTeamName &&
+      homeTeamName &&
+      visitorTeamName === homeTeamName
+    ) {
+      const ok = await confirmAsync(
+        "先攻と後攻が同じチームです",
+        "このまま保存しますか？",
+        "保存する",
+      );
+      if (!ok) return;
+    }
+    await handleSaveRecord();
+  }
 
   return (
     <ThemedView style={[styles.screen, { paddingTop: insets.top }]}>
@@ -110,8 +135,9 @@ export default function CreateScreen() {
               </View>
               <TextInput
                 value={visitorScore}
-                onChangeText={setVisitorScore}
+                onChangeText={(t) => setVisitorScore(sanitizeScoreInput(t))}
                 keyboardType="number-pad"
+                accessibilityLabel="先攻チームの得点"
                 style={[
                   styles.scoreInput,
                   {
@@ -153,8 +179,9 @@ export default function CreateScreen() {
               </View>
               <TextInput
                 value={homeScore}
-                onChangeText={setHomeScore}
+                onChangeText={(t) => setHomeScore(sanitizeScoreInput(t))}
                 keyboardType="number-pad"
+                accessibilityLabel="後攻チームの得点"
                 style={[
                   styles.scoreInput,
                   {
@@ -230,7 +257,7 @@ export default function CreateScreen() {
 
         {recordOnly && (
           <Pressable
-            onPress={handleSaveRecord}
+            onPress={handleSaveRecordWithChecks}
             style={[styles.recordBtn, { borderColor: colors.border }]}
           >
             <Text style={{ color: colors.textSecondary, fontSize: 13.5 }}>

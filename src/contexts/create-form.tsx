@@ -2,7 +2,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react';
-import { Alert, Platform, View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 
 import {
@@ -18,6 +18,7 @@ import { OTHER_STADIUM } from '@/constants/stadiums';
 import { OTHER_TEAM } from '@/constants/teams';
 import { addHistoryEntry } from '@/storage/history';
 import { HistoryEntry } from '@/types/history';
+import { confirmAsync, notify } from '@/utils/dialogs';
 import { blobUrlToResizedDataUri } from '@/utils/image';
 
 function todayISO(): string {
@@ -89,7 +90,7 @@ interface CreateFormContextValue {
   clearPhoto: () => void;
   resetPhotoAdjustment: () => void;
   handleSaveAndShare: () => Promise<void>;
-  handleSaveRecord: () => Promise<void>;
+  handleSaveRecord: () => Promise<boolean>;
 }
 
 const CreateFormContext = createContext<CreateFormContextValue | null>(null);
@@ -140,7 +141,7 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
   async function pickPhoto() {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert('権限が必要です', '写真ライブラリへのアクセスを許可してください');
+      notify('権限が必要です', '写真ライブラリへのアクセスを許可してください');
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -199,7 +200,7 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
   async function captureInner(options?: { silent?: boolean }): Promise<string | null> {
     if (!exportRef.current) {
       if (!options?.silent) {
-        Alert.alert('少し待ってから再度お試しください', 'プレビューの準備がまだ完了していません');
+        notify('少し待ってから再度お試しください', 'プレビューの準備がまだ完了していません');
       }
       return null;
     }
@@ -267,7 +268,7 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       console.warn('画像の生成に失敗しました', e);
       if (!options?.silent) {
-        Alert.alert('エラー', '画像の生成に失敗しました。もう一度お試しください');
+        notify('エラー', '画像の生成に失敗しました。もう一度お試しください');
       }
       return null;
     }
@@ -370,7 +371,7 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
         // したことだけは伝え、「共有画面が出ない=何も起きていない」という
         // 誤解を防ぐ。
         downloadOnWeb(uri);
-        Alert.alert(
+        notify(
           '共有画面を開けなかったため保存しました',
           '端末のダウンロードフォルダに画像を保存しました。'
         );
@@ -407,7 +408,7 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
       const MediaLibrary = await import('expo-media-library');
       const perm = await MediaLibrary.requestPermissionsAsync();
       if (!perm.granted) {
-        Alert.alert('権限が必要です', '写真アプリへの保存を許可してください');
+        notify('権限が必要です', '写真アプリへの保存を許可してください');
         return;
       }
       await MediaLibrary.saveToLibraryAsync(uri);
@@ -424,13 +425,32 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
       }
     } catch (e) {
       console.warn('保存に失敗しました', e);
-      Alert.alert('保存に失敗しました', 'もう一度お試しください');
+      notify('保存に失敗しました', 'もう一度お試しください');
     } finally {
       setSaving(false);
     }
   }
 
-  async function handleSaveRecord() {
+  /**
+   * 観戦履歴への保存に必要な項目が揃っているかを確認する。
+   * 「その他」を選んだのに自由入力欄が空、といったケースを弾くための
+   * 最低限のガード。写真の保存/共有自体は妨げず、履歴への記録だけを
+   * スキップする(呼び出し側で通知する)。
+   */
+  function validateRecordInput(): string | null {
+    if (!date) return '試合日を入力してください';
+    if (!stadiumName) return '球場を入力してください';
+    if (!visitorTeamName || !homeTeamName) return '先攻・後攻のチームを入力してください';
+    return null;
+  }
+
+  /** 保存に成功したら true、必須項目が不足していて保存しなかった場合は false を返す */
+  async function handleSaveRecord(): Promise<boolean> {
+    const error = validateRecordInput();
+    if (error) {
+      notify('観戦履歴に保存できませんでした', error);
+      return false;
+    }
     const entry: HistoryEntry = {
       id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
       createdAt: Date.now(),
@@ -445,6 +465,7 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     await addHistoryEntry(entry);
     setSavedFlash(true);
     setTimeout(() => setSavedFlash(false), 1600);
+    return true;
   }
 
   /**
@@ -453,8 +474,10 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
    */
   async function maybeSaveRecordAfterExport() {
     if (!alsoSaveToHistory || recordSavedForDraft.current) return;
-    recordSavedForDraft.current = true;
-    await handleSaveRecord();
+    // 保存に成功した場合のみ「この下書きは保存済み」の印を付ける。
+    // 失敗時に印を付けてしまうと、入力を直しても二度と保存されなくなる。
+    const saved = await handleSaveRecord();
+    if (saved) recordSavedForDraft.current = true;
   }
 
   const value: CreateFormContextValue = {

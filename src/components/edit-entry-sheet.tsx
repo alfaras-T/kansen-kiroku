@@ -18,7 +18,8 @@ import { OTHER_STADIUM, STADIUMS } from "@/constants/stadiums";
 import { OTHER_TEAM, TEAMS } from "@/constants/teams";
 import { useTheme } from "@/hooks/use-theme";
 import { HistoryEntry } from "@/types/history";
-import { notify } from "@/utils/dialogs";
+import { confirmAsync, notify } from "@/utils/dialogs";
+import { sanitizeScoreInput } from "@/utils/score";
 
 const TEAM_OPTIONS = [
   ...TEAMS.map((t) => ({ label: `${t.nickname}（${t.code}）`, value: t.code })),
@@ -118,6 +119,14 @@ export function EditEntrySheet({
       notify("先攻・後攻のチームを入力してください");
       return;
     }
+    if (visitorTeamName === homeTeamName) {
+      const ok = await confirmAsync(
+        "先攻と後攻が同じチームです",
+        "このまま保存しますか？",
+        "保存する",
+      );
+      if (!ok) return;
+    }
     setSaving(true);
     try {
       await onSave({
@@ -176,8 +185,9 @@ export function EditEntrySheet({
               </View>
               <TextInput
                 value={visitorScore}
-                onChangeText={setVisitorScore}
+                onChangeText={(t) => setVisitorScore(sanitizeScoreInput(t))}
                 keyboardType="number-pad"
+                accessibilityLabel="先攻チームの得点"
                 style={[
                   styles.scoreInput,
                   {
@@ -219,8 +229,9 @@ export function EditEntrySheet({
               </View>
               <TextInput
                 value={homeScore}
-                onChangeText={setHomeScore}
+                onChangeText={(t) => setHomeScore(sanitizeScoreInput(t))}
                 keyboardType="number-pad"
+                accessibilityLabel="後攻チームの得点"
                 style={[
                   styles.scoreInput,
                   {

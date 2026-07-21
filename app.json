@@ -9,7 +9,7 @@
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0B1220",
     "ios": {
-      "icon": "./assets/expo.icon",
+      "icon": "./assets/images/icon.png",
       "bundleIdentifier": "com.example.kansenkiroku",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "観戦写真を選んでスコアを重ねるために使用します。",
