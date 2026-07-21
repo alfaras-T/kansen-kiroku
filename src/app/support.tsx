@@ -32,7 +32,8 @@ export default function SupportScreen() {
   const insets = useSafeAreaInsets();
   function backToApp() {
     if (Platform.OS === "web") {
-      // 新規タブで開かれている場合が多く、ブラウザの戻る履歴に頼れないため、
+      // ストア審査やURLを直接開いた場合など、アプリ内の遷移履歴を
+      // 持たずに開かれることもあるため、履歴に頼らず
       // アプリのトップへ同じタブで直接遷移する。
       window.location.href = `${WEB_BASE_URL}/`;
     } else {

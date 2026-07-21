@@ -1,7 +1,7 @@
 import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SelectModal } from "@/components/form/select-modal";
@@ -28,6 +28,18 @@ export default function SettingsScreen() {
   const { favoriteTeam, setFavoriteTeam } = useFavoriteTeam();
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
+
+  // Web: Linking.openURLは既定でwindow.open(url, '_blank')を呼ぶため、
+  // 中身が届くまで真っ白な新規タブが必ず一瞬表示されてしまう。
+  // 同一タブでの通常遷移(window.location.href)にすることでこれを避ける。
+  // ネイティブでは引き続き外部ブラウザで開く。
+  function openLegalPage(path: "/privacy" | "/support") {
+    if (Platform.OS === "web") {
+      window.location.href = `${WEB_BASE_URL}${path}`;
+    } else {
+      Linking.openURL(`${WEB_BASE_URL}${path}`);
+    }
+  }
   const [backupHelpOpen, setBackupHelpOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
 
@@ -224,18 +236,12 @@ export default function SettingsScreen() {
             </View>
           </View>
           <View style={styles.linkRow}>
-            <Pressable
-              onPress={() => Linking.openURL(`${WEB_BASE_URL}/privacy`)}
-              hitSlop={6}
-            >
+            <Pressable onPress={() => openLegalPage("/privacy")} hitSlop={6}>
               <ThemedText type="link" themeColor="accent">
                 プライバシーポリシー
               </ThemedText>
             </Pressable>
-            <Pressable
-              onPress={() => Linking.openURL(`${WEB_BASE_URL}/support`)}
-              hitSlop={6}
-            >
+            <Pressable onPress={() => openLegalPage("/support")} hitSlop={6}>
               <ThemedText type="link" themeColor="accent">
                 サポート
               </ThemedText>
