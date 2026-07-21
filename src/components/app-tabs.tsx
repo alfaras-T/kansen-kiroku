@@ -52,6 +52,20 @@ export default function AppTabs() {
           tabBarStyle: { display: "none" }, // このページでは全画面表示のためタブバー自体を隠す
         }}
       />
+      <Tabs.Screen
+        name="privacy"
+        options={{
+          href: null, // タブバーには表示しない(設定画面のリンク/直接URLでのみ開く)
+          tabBarStyle: { display: "none" },
+        }}
+      />
+      <Tabs.Screen
+        name="support"
+        options={{
+          href: null,
+          tabBarStyle: { display: "none" },
+        }}
+      />
     </Tabs>
   );
 }

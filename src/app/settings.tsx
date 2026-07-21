@@ -1,7 +1,7 @@
 import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SelectModal } from "@/components/form/select-modal";
@@ -9,6 +9,7 @@ import { InfoNote, InfoSheet, InfoStep } from "@/components/info-sheet";
 import { ContactSheet } from "@/components/contact-sheet";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { WEB_BASE_URL } from "@/constants/contact";
 import { TEAMS } from "@/constants/teams";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { useFavoriteTeam } from "@/contexts/favorite-team";
@@ -195,6 +196,24 @@ export default function SettingsScreen() {
               <ThemedText type="small">{appVersion}</ThemedText>
             </View>
           </View>
+          <View style={styles.linkRow}>
+            <Pressable
+              onPress={() => Linking.openURL(`${WEB_BASE_URL}/privacy`)}
+              hitSlop={6}
+            >
+              <ThemedText type="link" themeColor="accent">
+                プライバシーポリシー
+              </ThemedText>
+            </Pressable>
+            <Pressable
+              onPress={() => Linking.openURL(`${WEB_BASE_URL}/support`)}
+              hitSlop={6}
+            >
+              <ThemedText type="link" themeColor="accent">
+                サポート
+              </ThemedText>
+            </Pressable>
+          </View>
           <ThemedText
             type="small"
             themeColor="textSecondary"
@@ -275,6 +294,12 @@ const styles = StyleSheet.create({
   section: { paddingHorizontal: Spacing.four, marginBottom: Spacing.four },
   scrollContent: { paddingBottom: BottomTabInset + Spacing.six },
   sectionLabel: { marginBottom: 6 },
+  linkRow: {
+    flexDirection: "row",
+    gap: 20,
+    marginTop: 10,
+    marginBottom: 2,
+  },
   sectionLabelRow: {
     flexDirection: "row",
     alignItems: "center",
