@@ -10,14 +10,14 @@
     "backgroundColor": "#0B1220",
     "ios": {
       "icon": "./assets/images/icon.png",
-      "bundleIdentifier": "com.example.kansenkiroku",
+      "bundleIdentifier": "jp.ballfilms.app",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "観戦写真を選んでスコアを重ねるために使用します。",
         "NSPhotoLibraryAddUsageDescription": "作成した画像を写真アプリに保存するために使用します。"
       }
     },
     "android": {
-      "package": "com.example.kansenkiroku",
+      "package": "jp.ballfilms.app",
       "adaptiveIcon": {
         "backgroundColor": "#0B1220",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
