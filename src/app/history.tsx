@@ -120,36 +120,37 @@ export default function HistoryScreen() {
         </ThemedText>
       </View>
 
-      <View style={styles.myTeamRow}>
-        <ThemedText
-          type="small"
-          themeColor="textSecondary"
-          style={{ marginBottom: 6 }}
-        >
-          マイチーム
-        </ThemedText>
-        <SelectModal
-          title="マイチームを選択"
-          options={MY_TEAM_OPTIONS}
-          value={myTeam}
-          onChange={handleMyTeamChange}
-        />
-      </View>
-
-      <View style={styles.myTeamRow}>
-        <ThemedText
-          type="small"
-          themeColor="textSecondary"
-          style={{ marginBottom: 6 }}
-        >
-          表示する年
-        </ThemedText>
-        <SelectModal
-          title="表示する年を選択"
-          options={yearOptions}
-          value={effectiveYear}
-          onChange={setSelectedYear}
-        />
+      <View style={styles.selectorsRow}>
+        <View style={styles.selectorCol}>
+          <ThemedText
+            type="small"
+            themeColor="textSecondary"
+            style={{ marginBottom: 6 }}
+          >
+            マイチーム
+          </ThemedText>
+          <SelectModal
+            title="マイチームを選択"
+            options={MY_TEAM_OPTIONS}
+            value={myTeam}
+            onChange={handleMyTeamChange}
+          />
+        </View>
+        <View style={styles.selectorCol}>
+          <ThemedText
+            type="small"
+            themeColor="textSecondary"
+            style={{ marginBottom: 6 }}
+          >
+            表示する年
+          </ThemedText>
+          <SelectModal
+            title="表示する年を選択"
+            options={yearOptions}
+            value={effectiveYear}
+            onChange={setSelectedYear}
+          />
+        </View>
       </View>
 
       <View style={styles.statsRow}>
@@ -359,20 +360,26 @@ const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
   },
-  header: { padding: Spacing.four, paddingBottom: Spacing.three },
-  title: { fontSize: 26, lineHeight: 32, marginBottom: 4 },
-  myTeamRow: { paddingHorizontal: Spacing.four, marginBottom: Spacing.three },
-  statsRow: {
+  header: { padding: Spacing.four, paddingBottom: Spacing.two },
+  title: { fontSize: 22, lineHeight: 28, marginBottom: 0 },
+  selectorsRow: {
     flexDirection: "row",
     gap: 12,
     paddingHorizontal: Spacing.four,
     marginBottom: Spacing.three,
   },
+  selectorCol: { flex: 1 },
+  statsRow: {
+    flexDirection: "row",
+    gap: 12,
+    paddingHorizontal: Spacing.four,
+    marginBottom: Spacing.two,
+  },
   statBox: {
     flex: 1,
     borderWidth: 1,
     borderRadius: 8,
-    paddingVertical: 12,
+    paddingVertical: 10,
     alignItems: "center",
   },
   statNum: { fontSize: 16, fontWeight: "700" },
@@ -383,9 +390,9 @@ const styles = StyleSheet.create({
     gap: 6,
     borderWidth: 1,
     borderRadius: 8,
-    paddingVertical: 11,
+    paddingVertical: 9,
     marginHorizontal: Spacing.four,
-    marginBottom: Spacing.three,
+    marginBottom: Spacing.two,
   },
   wrapBtnText: { fontSize: 13.5, fontWeight: "700" },
   statLabel: {
