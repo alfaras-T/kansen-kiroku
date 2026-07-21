@@ -10,7 +10,7 @@
   <!-- フィルム: 左右のパーフォレーション + 中央の1コマ。全体をmaskable安全圏(中心80%)に収める -->
   <g>
     <!-- パーフォレーション -->
-    <g fill="#223052">
+    <g fill="#D4AF37">
       <rect x="178" y="196" width="80" height="54" rx="14"/>
       <rect x="178" y="340" width="80" height="54" rx="14"/>
       <rect x="178" y="484" width="80" height="54" rx="14"/>
@@ -24,7 +24,7 @@
     </g>
 
     <!-- コマ -->
-    <rect x="318" y="178" width="388" height="668" rx="42" fill="#0B1220" stroke="#223052" stroke-width="14"/>
+    <rect x="318" y="178" width="388" height="668" rx="42" fill="#0B1220" stroke="#D4AF37" stroke-width="14"/>
 
     <!-- コマの中のボール -->
     <g transform="translate(512,512)">

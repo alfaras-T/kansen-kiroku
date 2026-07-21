@@ -9,7 +9,7 @@
 
   <!-- maskable安全円(半径409px=中心80%)に収まるよう0.8倍で縮小・中央配置 -->
   <g transform="translate(512,512) scale(0.8) translate(-512,-512)">
-    <g fill="#223052">
+    <g fill="#D4AF37">
       <rect x="178" y="196" width="80" height="54" rx="14"/>
       <rect x="178" y="340" width="80" height="54" rx="14"/>
       <rect x="178" y="484" width="80" height="54" rx="14"/>
@@ -21,7 +21,7 @@
       <rect x="766" y="628" width="80" height="54" rx="14"/>
       <rect x="766" y="772" width="80" height="54" rx="14"/>
     </g>
-    <rect x="318" y="178" width="388" height="668" rx="42" fill="#0B1220" stroke="#223052" stroke-width="14"/>
+    <rect x="318" y="178" width="388" height="668" rx="42" fill="#0B1220" stroke="#D4AF37" stroke-width="14"/>
     <g transform="translate(512,512)">
       <circle r="152" fill="#F5F1E6"/>
       <path d="M-108,-104 q-48,104 0,208" fill="none" stroke="#E4572E" stroke-width="16" stroke-linecap="round"/>
