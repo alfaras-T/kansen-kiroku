@@ -21,6 +21,8 @@ export default function TabLayout() {
     Montserrat_500Medium,
     Montserrat_600SemiBold,
   });
+  const pathname = usePathname();
+  const isLegalPage = pathname === '/privacy' || pathname === '/support';
 
   // ネイティブではフォント読み込み完了(または失敗)までスプラッシュを表示。
   // Webではフォントを待たずに描画する(読み込み後に自動適用される)。
@@ -29,7 +31,7 @@ export default function TabLayout() {
 
   return (
     <ThemeProvider value={DarkTheme}>
-      <AnimatedSplashOverlay />
+      <AnimatedSplashOverlay skipAnimation={isLegalPage} />
       <FavoriteTeamProvider>
         <CreateFormProvider>
           <RootGate />

@@ -1,4 +1,3 @@
-import { useRouter } from "expo-router";
 import { Linking, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -36,19 +35,11 @@ function Body({ children }: { children: React.ReactNode }) {
 
 export default function PrivacyScreen() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   function backToApp() {
     if (Platform.OS === "web") {
-      // アプリ内(設定画面など)から遷移してきた場合は、同一タブ内の
-      // クライアントサイド遷移で戻ることで、ページ全体のリロード
-      // (白画面フラッシュやスプラッシュの再生)を避ける。
-      // 直接URLを開かれた場合など戻り先の履歴がない場合のみ、
-      // アプリのトップへ直接遷移する。
-      if (router.canGoBack()) {
-        router.back();
-      } else {
-        window.location.href = `${WEB_BASE_URL}/`;
-      }
+      // 新規タブで開かれている場合が多く、ブラウザの戻る履歴に頼れないため、
+      // アプリのトップへ同じタブで直接遷移する。
+      window.location.href = `${WEB_BASE_URL}/`;
     } else {
       Linking.openURL(WEB_BASE_URL);
     }

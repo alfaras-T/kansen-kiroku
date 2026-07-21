@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import * as SplashScreen from 'expo-splash-screen';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
 import Animated, { Easing, Keyframe } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -8,11 +8,20 @@ import { scheduleOnRN } from 'react-native-worklets';
 const INITIAL_SCALE_FACTOR = Dimensions.get('screen').height / 90;
 const DURATION = 600;
 
-export function AnimatedSplashOverlay() {
+export function AnimatedSplashOverlay({ skipAnimation = false }: { skipAnimation?: boolean }) {
   const [animate, setAnimate] = useState(false);
   const [visible, setVisible] = useState(true);
 
+  // /privacy・/support は毎回新規タブでの読み込みになるため、ブランドの
+  // アイコンアニメーションを省略し、スプラッシュを即座に隠して本文を表示する。
+  useEffect(() => {
+    if (skipAnimation) {
+      SplashScreen.hideAsync().finally(() => setVisible(false));
+    }
+  }, [skipAnimation]);
+
   if (!visible) return null;
+  if (skipAnimation) return <View style={styles.splashOverlay} />;
 
   const splashKeyframe = new Keyframe({
     0: {
@@ -33,7 +42,7 @@ export function AnimatedSplashOverlay() {
     },
   });
 
-  const image = <Image style={styles.splashImage} source={require('@/assets/images/splash-icon.png')} />;
+  const image = <Image style={styles.splashImage} source={require('@/assets/images/baseball-icon.png')} />;
 
   return animate ? (
     <Animated.View
@@ -132,9 +141,8 @@ const styles = StyleSheet.create({
     height: 71,
   },
   splashImage: {
-    width: 96,
-    height: 96,
-    borderRadius: 20,
+    width: 88,
+    height: 88,
   },
   background: {
     borderRadius: 40,
