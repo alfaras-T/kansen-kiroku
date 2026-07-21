@@ -177,7 +177,7 @@ export function WrapUpSheet({
         // Web版はhtml-to-image(ブラウザ自身の描画エンジン経由)を使う。
         // 理由はcreate-form.tsxのコメント参照(captureRefのWeb実装は再現度が低い)。
         //
-        // 重要: Safari(iOSのPWA含む)にはSVG foreignObject内の画像が
+        // 重要: SafariにはSVG foreignObject内の画像が
         // 「初回の変換では描画されない」既知のバグがあり、1回だけの変換だと
         // 背景写真が抜けた画像が出力される。複数回変換して最後の結果を使う
         // (2回目以降はSafari内部で画像がウォームアップ済みになり正しく写る)。

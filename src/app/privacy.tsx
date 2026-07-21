@@ -98,14 +98,7 @@ export default function PrivacyScreen() {
 
         <Section title="第三者への提供・広告・解析">
           <Body>
-            本アプリは、広告の配信、アクセス解析、第三者への情報提供のいずれも行いません。外部の解析SDKや広告SDKは組み込んでいません。
-          </Body>
-        </Section>
-
-        <Section title="Cookie・キャッシュ（Web版）">
-          <Body>
-            Web版はオフラインでも利用できるよう、Service
-            Workerによるキャッシュ機能を利用しています。これは表示速度の向上とオフライン対応のためのものであり、利用者の行動を追跡する目的では使用しません。
+            本アプリは、広告の配信、アクセス解析、第三者への情報提供のいずれも行いません。外部の解析SDKや広告SDKは組み込んでいません。Cookieも使用していません。
           </Body>
         </Section>
 
