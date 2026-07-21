@@ -10,7 +10,7 @@ import { useFavoriteTeam } from "@/contexts/favorite-team";
 
 const NONE_VALUE = "";
 
-const OPTIONS = [{ code: NONE_VALUE, nickname: "特になし" }, ...TEAMS];
+const OPTIONS = [{ code: NONE_VALUE, nickname: "既定のデザイン" }, ...TEAMS];
 
 export function OnboardingScreen() {
   const { completeOnboarding } = useFavoriteTeam();
@@ -40,7 +40,7 @@ export function OnboardingScreen() {
             お気に入りのチームは？
           </Text>
           <Text style={[styles.note, { color: colors.textSecondary }]}>
-            選んだチームのイメージカラーに合わせて、アプリの配色が変わります。「特になし」を選ぶと既定のデザインになります。後ほど設定からいつでも変更できます。
+            選んだチームのイメージカラーに合わせて、アプリの配色が変わります。後ほど設定からいつでも変更できます。
           </Text>
         </View>
 

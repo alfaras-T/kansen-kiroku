@@ -18,7 +18,7 @@ import { confirmAsync, notify } from "@/utils/dialogs";
 import { useTheme } from "@/hooks/use-theme";
 
 const FAVORITE_TEAM_OPTIONS = [
-  { label: "特になし", value: "" },
+  { label: "既定のデザイン", value: "" },
   ...TEAMS.map((t) => ({ label: `${t.nickname}（${t.code}）`, value: t.code })),
 ];
 
@@ -100,7 +100,7 @@ export default function SettingsScreen() {
             themeColor="textSecondary"
             style={styles.hint}
           >
-            選んだチームのイメージカラーに合わせて、アプリの配色が変わります。「特になし」を選ぶと既定のデザインになります。
+            選んだチームのイメージカラーに合わせて、アプリの配色が変わります。
           </ThemedText>
         </View>
 
@@ -178,6 +178,33 @@ export default function SettingsScreen() {
             themeColor="textSecondary"
             style={styles.sectionLabel}
           >
+            ご要望・お問い合わせ
+          </ThemedText>
+          <Pressable
+            onPress={() => setContactOpen(true)}
+            style={[
+              styles.button,
+              {
+                backgroundColor: colors.backgroundElement,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <Text style={[styles.buttonText, { color: colors.text }]}>
+              ご要望・お問い合わせフォーム
+            </Text>
+          </Pressable>
+          <ThemedText type="small" themeColor="textSecondary" style={styles.hint}>
+            機能のご要望や不具合の報告をお送りいただけます。フォームから端末のメールアプリが開きます。いただいた内容は改善の参考にさせていただきます。
+          </ThemedText>
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText
+            type="small"
+            themeColor="textSecondary"
+            style={styles.sectionLabel}
+          >
             アプリについて
           </ThemedText>
           <View
@@ -214,40 +241,6 @@ export default function SettingsScreen() {
               </ThemedText>
             </Pressable>
           </View>
-          <ThemedText
-            type="small"
-            themeColor="textSecondary"
-            style={styles.hint}
-          >
-            観戦記録・写真・設定はすべてこの端末内にのみ保存され、サーバーには送信されません。
-          </ThemedText>
-        </View>
-
-        <View style={styles.section}>
-          <ThemedText
-            type="small"
-            themeColor="textSecondary"
-            style={styles.sectionLabel}
-          >
-            ご要望・お問い合わせ
-          </ThemedText>
-          <Pressable
-            onPress={() => setContactOpen(true)}
-            style={[
-              styles.button,
-              {
-                backgroundColor: colors.backgroundElement,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <Text style={[styles.buttonText, { color: colors.text }]}>
-              ご要望・お問い合わせフォーム
-            </Text>
-          </Pressable>
-          <ThemedText type="small" themeColor="textSecondary" style={styles.hint}>
-            機能のご要望や不具合の報告をお送りいただけます。フォームから端末のメールアプリが開きます。いただいた内容は改善の参考にさせていただきます。
-          </ThemedText>
         </View>
       </ScrollView>
 

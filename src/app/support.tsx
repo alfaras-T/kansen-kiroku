@@ -1,11 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Linking, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { CONTACT_EMAIL } from "@/constants/contact";
+import { CONTACT_EMAIL, WEB_BASE_URL } from "@/constants/contact";
 import { MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 
@@ -31,8 +30,15 @@ function QA({ q, children }: { q: string; children: React.ReactNode }) {
 export default function SupportScreen() {
   const colors = useTheme();
   const insets = useSafeAreaInsets();
-  const router = useRouter();
-  const canGoBack = router.canGoBack();
+  function backToApp() {
+    if (Platform.OS === "web") {
+      // 新規タブで開かれている場合が多く、ブラウザの戻る履歴に頼れないため、
+      // アプリのトップへ同じタブで直接遷移する。
+      window.location.href = `${WEB_BASE_URL}/`;
+    } else {
+      Linking.openURL(WEB_BASE_URL);
+    }
+  }
 
   return (
     <ThemedView style={[styles.screen, { paddingTop: insets.top }]}>
@@ -41,13 +47,11 @@ export default function SupportScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.header}>
-          {canGoBack && (
-            <Pressable onPress={() => router.back()} hitSlop={10}>
-              <ThemedText type="link" themeColor="accent">
-                ← 戻る
-              </ThemedText>
-            </Pressable>
-          )}
+          <Pressable onPress={backToApp} hitSlop={10}>
+            <ThemedText type="link" themeColor="accent">
+              ← Ball Filmsを開く
+            </ThemedText>
+          </Pressable>
           <ThemedText type="title" style={styles.title}>
             サポート
           </ThemedText>
