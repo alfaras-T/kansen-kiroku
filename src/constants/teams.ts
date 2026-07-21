@@ -6,6 +6,12 @@ export type TeamCode = 'G' | 'T' | 'D' | 'C' | 'S' | 'DB' | 'L' | 'M' | 'B' | 'F
 export interface TeamOption {
   code: TeamCode;
   nickname: string;
+  /**
+   * 選択後のコンパクトな表示（選択欄の閉じた状態など、横幅に余裕がない箇所）用の短縮表記。
+   * 省略時は nickname をそのまま使う。
+   * 年間まとめカードなど、正式な表記が必要な箇所では使わず nickname を使うこと。
+   */
+  shortNickname?: string;
 }
 
 // 表示順は前年(2025年)のNPB最終順位に準拠(セ・リーグ1〜6位、続けてパ・リーグ1〜6位)。
@@ -20,7 +26,7 @@ export const TEAMS: TeamOption[] = [
   { code: 'H', nickname: 'ホークス' }, // パ・リーグ 2025年 1位
   { code: 'F', nickname: 'ファイターズ' }, // パ・リーグ 2025年 2位
   { code: 'B', nickname: 'バファローズ' }, // パ・リーグ 2025年 3位
-  { code: 'E', nickname: 'ゴールデンイーグルス' }, // パ・リーグ 2025年 4位
+  { code: 'E', nickname: 'ゴールデンイーグルス', shortNickname: 'イーグルス' }, // パ・リーグ 2025年 4位
   { code: 'L', nickname: 'ライオンズ' }, // パ・リーグ 2025年 5位
   { code: 'M', nickname: 'マリーンズ' }, // パ・リーグ 2025年 6位
 ];
@@ -31,4 +37,10 @@ export const OTHER_TEAM = '__other__';
 export function teamLabel(code: string): string {
   const t = TEAMS.find((x) => x.code === code);
   return t ? `${t.nickname}（${t.code}）` : code;
+}
+
+/** 選択欄の閉じた状態など、コンパクトな表示向けのラベル（短縮表記があればそちらを使う） */
+export function teamCompactLabel(code: string): string {
+  const t = TEAMS.find((x) => x.code === code);
+  return t ? `${t.shortNickname ?? t.nickname}（${t.code}）` : code;
 }

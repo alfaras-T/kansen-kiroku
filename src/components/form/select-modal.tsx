@@ -14,6 +14,8 @@ import { useTheme } from "@/hooks/use-theme";
 export interface SelectOption {
   label: string;
   value: string;
+  /** 選択欄が閉じている状態でのみ使う短縮ラベル。省略時は label を使う。 */
+  compactLabel?: string;
 }
 
 export function SelectModal({
@@ -29,8 +31,10 @@ export function SelectModal({
 }) {
   const [open, setOpen] = useState(false);
   const colors = useTheme();
+  const selectedOption = options.find((o) => o.value === value);
   const selectedLabel =
-    options.find((o) => o.value === value)?.label ?? "選択してください";
+    (selectedOption?.compactLabel ?? selectedOption?.label) ??
+    "選択してください";
 
   return (
     <>

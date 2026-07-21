@@ -28,7 +28,7 @@ import { useTheme } from "@/hooks/use-theme";
 
 const MY_TEAM_OPTIONS = [
   { label: "指定しない", value: "" },
-  ...TEAMS.map((t) => ({ label: `${t.nickname}（${t.code}）`, value: t.code })),
+  ...TEAMS.map((t) => ({ label: `${t.nickname}（${t.code}）`, value: t.code, compactLabel: `${t.shortNickname ?? t.nickname}（${t.code}）` })),
 ];
 
 export default function HistoryScreen() {
