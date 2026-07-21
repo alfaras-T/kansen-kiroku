@@ -22,7 +22,7 @@ import { confirmAsync, notify } from "@/utils/dialogs";
 import { sanitizeScoreInput } from "@/utils/score";
 
 const TEAM_OPTIONS = [
-  ...TEAMS.map((t) => ({ label: `${t.nickname}（${t.code}）`, value: t.code, compactLabel: `${t.shortNickname ?? t.nickname}（${t.code}）` })),
+  ...TEAMS.map((t) => ({ label: `${t.nickname}（${t.code}）`, value: t.code })),
   { label: "その他（自由入力）", value: OTHER_TEAM },
 ];
 const STADIUM_OPTIONS = [
