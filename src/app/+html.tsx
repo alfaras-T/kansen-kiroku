@@ -1,9 +1,9 @@
 import { ScrollViewStyleReset } from 'expo-router/html';
 
 // Web版の <head> をカスタマイズする。
-// このアプリは「ホーム画面に追加して使うアプリ」としては配布しない
-// (配布はネイティブアプリ版のみ)。Web版は動作確認用のプレビューとして
-// ブラウザで開くだけなので、PWAのインストール可否に関わる設定は持たない。
+// 配布はネイティブアプリ版が中心だが、iOS Safariの「ホーム画面に追加」で
+// プレビューした際にアプリ名の頭文字ではなく正しいアイコンが表示されるよう、
+// apple-touch-iconのみ設定する(マニフェスト等のフルPWA対応は行わない)。
 export default function Root({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ja">
@@ -20,6 +20,7 @@ export default function Root({ children }: { children: React.ReactNode }) {
         />
         <meta name="theme-color" content="#0B1220" />
         <link rel="icon" href="/kansen-kiroku/favicon.ico" />
+        <link rel="apple-touch-icon" href="/kansen-kiroku/apple-touch-icon.png" />
 
         <title>Ball Films</title>
 
