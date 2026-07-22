@@ -1,0 +1,57 @@
+name: EAS Build
+
+# GitHubのWeb画面(Actionsタブ)から手動で実行できるワークフロー。
+# iPad/スマホのSafariからでも「Run workflow」ボタンを押すだけで
+# EASビルドをクラウド上で実行できる。
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: "ビルド対象のプラットフォーム"
+        required: true
+        default: "ios"
+        type: choice
+        options:
+          - ios
+          - android
+          - all
+      profile:
+        description: "ビルドプロファイル (eas.json内のプロファイル名)"
+        required: true
+        default: "development"
+        type: choice
+        options:
+          - development
+          - preview
+          - production
+
+jobs:
+  build:
+    name: EAS Build (${{ github.event.inputs.platform }} / ${{ github.event.inputs.profile }})
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Node.jsをセットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 依存パッケージをインストール
+        run: npm install
+
+      - name: EAS CLIをセットアップ
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: EASビルドを実行
+        run: |
+          eas build \
+            --platform ${{ github.event.inputs.platform }} \
+            --profile ${{ github.event.inputs.profile }} \
+            --non-interactive \
+            --no-wait
