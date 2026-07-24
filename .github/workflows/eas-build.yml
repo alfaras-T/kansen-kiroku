@@ -48,7 +48,17 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
+      - name: App Store Connect APIキーを準備 (iOS用)
+        if: ${{ github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'all' }}
+        run: |
+          echo "${{ secrets.ASC_API_KEY_P8 }}" > /tmp/asc-api-key.p8
+        shell: bash
+
       - name: EASビルドを実行
+        env:
+          EXPO_ASC_API_KEY_PATH: /tmp/asc-api-key.p8
+          EXPO_ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          EXPO_ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
           eas build \
             --platform ${{ github.event.inputs.platform }} \
