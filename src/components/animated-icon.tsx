@@ -7,6 +7,8 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 const INITIAL_SCALE_FACTOR = Dimensions.get('screen').height / 90;
 const DURATION = 600;
+// アニメーション完了を待たずにオーバーレイを強制解除するまでの時間。
+const SPLASH_FAILSAFE_MS = 2500;
 
 export function AnimatedSplashOverlay({ skipAnimation = false }: { skipAnimation?: boolean }) {
   const [animate, setAnimate] = useState(false);
@@ -18,6 +20,17 @@ export function AnimatedSplashOverlay({ skipAnimation = false }: { skipAnimation
     if (skipAnimation) {
       SplashScreen.hideAsync().finally(() => setVisible(false));
     }
+  }, [skipAnimation]);
+
+  // 保険。onLayout やアニメーション完了コールバック(worklet)は環境によって
+  // 発火しないことがあり、その場合オーバーレイが残り続けてアプリが起動不能に
+  // 見えてしまう。一定時間で必ずオーバーレイを解除する。
+  useEffect(() => {
+    if (skipAnimation) return;
+    const timer = setTimeout(() => {
+      SplashScreen.hideAsync().finally(() => setVisible(false));
+    }, SPLASH_FAILSAFE_MS);
+    return () => clearTimeout(timer);
   }, [skipAnimation]);
 
   if (!visible) return null;

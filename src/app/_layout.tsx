@@ -3,6 +3,7 @@ import { Montserrat_500Medium, Montserrat_600SemiBold } from '@expo-google-fonts
 import { useFonts } from 'expo-font';
 import { DarkTheme, ThemeProvider, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
@@ -15,19 +16,32 @@ import SupportScreen from './support';
 
 SplashScreen.preventAutoHideAsync();
 
+// フォント読み込みを待つ上限。これを超えたらシステムフォントで描画を続行する。
+const FONT_WAIT_TIMEOUT_MS = 2000;
+
 export default function TabLayout() {
   const [fontsLoaded, fontError] = useFonts({
     BebasNeue_400Regular,
     Montserrat_500Medium,
     Montserrat_600SemiBold,
   });
+  const [fontWaitElapsed, setFontWaitElapsed] = useState(false);
   const pathname = usePathname();
   const isLegalPage = pathname === '/privacy' || pathname === '/support';
+
+  useEffect(() => {
+    const timer = setTimeout(() => setFontWaitElapsed(true), FONT_WAIT_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, []);
 
   // ネイティブではフォント読み込み完了(または失敗)までスプラッシュを表示。
   // Webではフォントを待たずに描画する(読み込み後に自動適用される)。
   // フォント読み込みで画面全体をブロックすると、失敗時に永久に真っ白になるため。
-  if (!fontsLoaded && !fontError && Platform.OS !== 'web') return null;
+  //
+  // さらに、読み込みが「完了も失敗もしない」まま止まるとネイティブでは
+  // スプラッシュ画面から永久に進まなくなる。これを防ぐため、一定時間で
+  // 待機を打ち切って描画を続行する(フォントは読み込み後に自動適用される)。
+  if (!fontsLoaded && !fontError && !fontWaitElapsed && Platform.OS !== 'web') return null;
 
   return (
     <ThemeProvider value={DarkTheme}>
