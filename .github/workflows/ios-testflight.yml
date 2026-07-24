@@ -1,0 +1,48 @@
+name: iOS Build & TestFlight配信
+
+# 実機のUDID事前登録が不要な、TestFlight経由の配信ワークフロー。
+# 本番相当のビルドを作成し、そのままApp Store ConnectのTestFlightへ提出する。
+# 完了後、iPadのTestFlightアプリからインストールできるようになる。
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-submit:
+    name: iOS production build + TestFlight submit
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Node.jsをセットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 依存パッケージをインストール
+        run: npm install
+
+      - name: EAS CLIをセットアップ
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: App Store Connect APIキーを準備
+        run: echo "${{ secrets.ASC_API_KEY_P8 }}" > ./asc-api-key.p8
+
+      - name: ビルド + TestFlight提出
+        env:
+          EXPO_ASC_API_KEY_PATH: ./asc-api-key.p8
+          EXPO_ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          EXPO_ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          eas build \
+            --platform ios \
+            --profile production \
+            --non-interactive \
+            --auto-submit \
+            --no-wait
