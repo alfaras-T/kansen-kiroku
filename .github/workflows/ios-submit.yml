@@ -1,0 +1,40 @@
+name: iOS TestFlight提出のみ
+
+# すでに完了しているiOSビルドを、再ビルドせずにTestFlightへ提出する。
+# ビルド枠を消費しないので、提出だけやり直したいときはこちらを使う。
+
+on:
+  workflow_dispatch:
+
+jobs:
+  submit:
+    name: Submit latest iOS build to TestFlight
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Node.jsをセットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 依存パッケージをインストール
+        run: npm install
+
+      - name: EAS CLIをセットアップ
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: App Store Connect APIキーを準備
+        run: echo "${{ secrets.ASC_API_KEY_P8 }}" > ./asc-api-key.p8
+
+      - name: 最新ビルドをTestFlightへ提出
+        run: |
+          eas submit \
+            --platform ios \
+            --profile production \
+            --latest \
+            --non-interactive

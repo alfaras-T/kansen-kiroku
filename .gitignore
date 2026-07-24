@@ -41,3 +41,6 @@ example
 # generated native folders
 /ios
 /android
+
+# App Store Connect APIキー(CIが実行時に生成するため、コミット禁止)
+asc-api-key.p8
