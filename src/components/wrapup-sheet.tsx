@@ -251,6 +251,14 @@ export function WrapUpSheet({
         notify("画像の生成に失敗しました", "もう一度お試しください。");
         return;
       }
+      // captureRefはfile://スキームの付かない生のファイルパスを返すことがある。
+      if (
+        Platform.OS !== "web" &&
+        !uri.startsWith("file://") &&
+        !uri.startsWith("data:")
+      ) {
+        uri = `file://${uri}`;
+      }
       if (Platform.OS === "web") {
         await shareOnWeb(uri);
         return;

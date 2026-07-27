@@ -395,8 +395,14 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
   async function handleSaveAndShare() {
     setSaving(true);
     try {
-      const uri = Platform.OS === 'web' && preparedUri ? preparedUri : await capture();
-      if (!uri) return;
+      const rawUri = Platform.OS === 'web' && preparedUri ? preparedUri : await capture();
+      if (!rawUri) return;
+      // captureRefはfile://スキームの付かない生のファイルパスを返すことがある。
+      // expo-media-library / expo-sharing はfile:// URIを前提としているため補う。
+      const uri =
+        Platform.OS !== 'web' && !rawUri.startsWith('file://') && !rawUri.startsWith('data:')
+          ? `file://${rawUri}`
+          : rawUri;
 
       if (Platform.OS === 'web') {
         const completed = await shareOrDownloadOnWeb(uri);
@@ -425,7 +431,8 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
       }
     } catch (e) {
       console.warn('保存に失敗しました', e);
-      notify('保存に失敗しました', 'もう一度お試しください');
+      // 原因調査のため実際のエラー内容を表示する
+      notify('保存に失敗しました', String((e as any)?.message ?? e));
     } finally {
       setSaving(false);
     }
