@@ -55,7 +55,11 @@
           "savePhotosPermission": "作成した画像を写真アプリに保存するために使用します。",
           "isAccessMediaLocationEnabled": false
         }
-      ]
+      ],
+      "expo-font",
+      "expo-image",
+      "expo-sharing",
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true,
