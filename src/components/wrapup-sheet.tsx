@@ -264,7 +264,9 @@ export function WrapUpSheet({
         return;
       }
       // ネイティブ: 写真に保存してから共有シートを開く(既存の保存導線と同じ流れ)
-      const MediaLibrary = await import("expo-media-library");
+      // '/legacy' から読み込む理由は create-form.tsx のコメント参照
+      // (SDK 57でルートの saveToLibraryAsync は実行時に必ず投げるスタブになった)
+      const MediaLibrary = await import("expo-media-library/legacy");
       // 権限を確認し、未許可のときだけダイアログを出す(毎回出さない)
       let perm = await MediaLibrary.getPermissionsAsync();
       let prompted = false;
@@ -308,6 +310,16 @@ export function WrapUpSheet({
       if (!perm.granted) {
         notify("写真への保存はスキップしました", "権限が無いため共有のみ行いました。");
       }
+    } catch (e) {
+      // catchが無いと例外がそのまま握り潰され、「押しても何も起きない」
+      // 状態になって原因が分からなくなる。必ずユーザーに伝える。
+      console.warn("まとめ画像の保存に失敗しました", e);
+      notify(
+        "保存に失敗しました",
+        `時間をおいてもう一度お試しください。\n\n(詳細: ${String(
+          (e as any)?.message ?? e,
+        )})`,
+      );
     } finally {
       setBusy(false);
     }

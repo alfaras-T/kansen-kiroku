@@ -411,7 +411,15 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
       }
 
       // ネイティブのみ: expo-media-libraryを動的に読み込む(Webでは読み込むだけでエラーになるため)
-      const MediaLibrary = await import('expo-media-library');
+      //
+      // 重要: SDK 57で expo-media-library のルート('expo-media-library')は
+      // 新しいクラスベースAPI(Asset/Album/Query)に置き換わった。
+      // saveToLibraryAsync など従来の関数はルートからも「名前だけ」export
+      // されているが、中身は必ず例外を投げるスタブになっている
+      // (node_modules/expo-media-library/src/legacyWarnings.ts)。
+      // そのため型チェックもビルドも通るのに、実行時にだけ失敗する。
+      // 従来の関数を使い続ける場合は '/legacy' から読み込む必要がある。
+      const MediaLibrary = await import('expo-media-library/legacy');
       const perm = await MediaLibrary.requestPermissionsAsync();
       if (!perm.granted) {
         notify('権限が必要です', '写真アプリへの保存を許可してください');
@@ -431,8 +439,12 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
       }
     } catch (e) {
       console.warn('保存に失敗しました', e);
-      // 原因調査のため実際のエラー内容を表示する
-      notify('保存に失敗しました', String((e as any)?.message ?? e));
+      // 原因調査のため実際のエラー内容も添える。そのまま公開しても
+      // 差し支えない文面にしてあるので、無理に戻す必要はない。
+      notify(
+        '保存に失敗しました',
+        `時間をおいてもう一度お試しください。\n\n(詳細: ${String((e as any)?.message ?? e)})`
+      );
     } finally {
       setSaving(false);
     }
