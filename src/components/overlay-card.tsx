@@ -112,6 +112,47 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
   // カードサイズが変わってもプレビューと同じ見た目の比率になるようにする。
   const cornerInset = 20 * scaleFactor;
 
+  // テロップの拡大は transform: scale ではなく、実寸(フォントサイズ・行間・
+  // 字間・余白)を掛け算して行う。
+  //
+  // transform は「一度描画した結果を引き伸ばす」処理なので、書き出し用カード
+  // (プレビューの約8〜9倍の大きさ)では文字が小さいまま描かれてから拡大され、
+  // 輪郭がぼやける。写真は元から高解像度なので鮮明なままで、結果として
+  // 「テロップだけ解像度が低い」状態になっていた。
+  // 実寸を変えればその大きさで文字が描き直されるため、輪郭が保たれる。
+  const telopFactor = telopScale * scaleFactor;
+  const sc = (v: number) => v * telopFactor;
+  const telopStyles = {
+    scoreRow: { marginTop: sc(3) },
+    code: {
+      fontSize: sc(21),
+      lineHeight: sc(24),
+      letterSpacing: sc(1.5),
+      maxWidth: sc(120),
+    },
+    score: {
+      fontSize: sc(34),
+      lineHeight: sc(36),
+      letterSpacing: sc(1),
+      marginHorizontal: sc(7),
+    },
+    scoreDash: { fontSize: sc(22), lineHeight: sc(36) },
+    dateLine: { fontSize: sc(10.5), lineHeight: sc(14), letterSpacing: sc(3.5) },
+    divider: {
+      width: sc(30),
+      height: sc(StyleSheet.hairlineWidth * 2),
+      marginTop: sc(3),
+      marginBottom: sc(4),
+    },
+    stadiumLine: { fontSize: sc(12), lineHeight: sc(16), letterSpacing: sc(2.5) },
+    memo: {
+      fontSize: sc(10.5),
+      lineHeight: sc(14),
+      letterSpacing: sc(1),
+      marginTop: sc(3),
+    },
+  };
+
   const palette = OVERLAY_STYLES[styleKey];
   // 「元の写真のまま」の場合は写真自体の縦横比を使う。
   // 写真が無い/縦横比が未取得の場合のみ1:1にフォールバックする。
@@ -244,11 +285,13 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
     }
   }
 
+  // 影も実寸に合わせる。固定値のままだと、拡大された文字に対して
+  // 影だけが相対的に細くなり、輪郭の締まりが失われる。
   const textShadow = {
     textShadowColor: 'rgba(0,0,0,0.45)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 6,
-  } as const;
+    textShadowOffset: { width: 0, height: sc(1) },
+    textShadowRadius: sc(6),
+  };
 
   // 写真とテキストの間に敷くスクリム(グラデーション)。テロップのある側の端から
   // 透明に抜けていく。テキストの視認性を上げつつ写真の雰囲気を壊さない、
@@ -325,37 +368,50 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
           styles.overlayBlock,
           isBottom ? { bottom: cornerInset } : { top: cornerInset },
           isRight ? { right: cornerInset } : { left: cornerInset },
-          {
-            transform: [{ scale: telopScale * scaleFactor }],
-            // 表示位置の角(コーナー)を支点に拡大縮小することで、サイズを変えても
-            // テロップの基準位置(右下/左下/右上/左上)がずれないようにする。
-            transformOrigin: `${isRight ? 'right' : 'left'} ${isBottom ? 'bottom' : 'top'}`,
-          },
+          // 角(bottom/right など)を基準に絶対配置しているため、実寸が
+          // 大きくなってもテロップの基準位置はその角に固定されたままになる。
+          // transformOrigin による支点指定はもう不要。
         ]}>
-        <Text style={[styles.dateLine, textShadow, { color: palette.accent }]} numberOfLines={1}>
+        <Text
+          style={[styles.dateLine, telopStyles.dateLine, textShadow, { color: palette.accent }]}
+          numberOfLines={1}>
           {dateLabel}
         </Text>
 
-        <View style={styles.scoreRow}>
-          <Text style={[styles.code, textShadow, { color: palette.body }]} numberOfLines={1}>
+        <View style={[styles.scoreRow, telopStyles.scoreRow]}>
+          <Text
+            style={[styles.code, telopStyles.code, textShadow, { color: palette.body }]}
+            numberOfLines={1}>
             {visitorCode}
           </Text>
-          <Text style={[styles.score, textShadow, { color: vColor }]}>{visitorScore}</Text>
-          <Text style={[styles.scoreDash, textShadow, { color: palette.dim }]}>–</Text>
-          <Text style={[styles.score, textShadow, { color: hColor }]}>{homeScore}</Text>
-          <Text style={[styles.code, textShadow, { color: palette.body }]} numberOfLines={1}>
+          <Text style={[styles.score, telopStyles.score, textShadow, { color: vColor }]}>
+            {visitorScore}
+          </Text>
+          <Text style={[styles.scoreDash, telopStyles.scoreDash, textShadow, { color: palette.dim }]}>
+            –
+          </Text>
+          <Text style={[styles.score, telopStyles.score, textShadow, { color: hColor }]}>
+            {homeScore}
+          </Text>
+          <Text
+            style={[styles.code, telopStyles.code, textShadow, { color: palette.body }]}
+            numberOfLines={1}>
             {homeCode}
           </Text>
         </View>
 
-        <View style={[styles.divider, { backgroundColor: palette.divider }]} />
+        <View style={[styles.divider, telopStyles.divider, { backgroundColor: palette.divider }]} />
 
-        <Text style={[styles.stadiumLine, textShadow, { color: palette.caption }]} numberOfLines={1}>
+        <Text
+          style={[styles.stadiumLine, telopStyles.stadiumLine, textShadow, { color: palette.caption }]}
+          numberOfLines={1}>
           {stadium}
         </Text>
 
         {!!memo && (
-          <Text style={[styles.memo, textShadow, { color: palette.caption }]} numberOfLines={1}>
+          <Text
+            style={[styles.memo, telopStyles.memo, textShadow, { color: palette.caption }]}
+            numberOfLines={1}>
             {memo}
           </Text>
         )}

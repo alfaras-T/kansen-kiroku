@@ -60,17 +60,32 @@ export function WrapUpSheet({
   // "loading" の間は共有ボタンを読み込み中表示にし、キャプチャも行わない。
   const [bgStatus, setBgStatus] = useState<"none" | "loading" | "ready">("none");
   const bgReadyRef = useRef(true);
+  // 実際にキャプチャするのは「書き出し用カード」なので、その1枚が
+  // 読み込み終わったかを別に持つ。プレビュー用が先に読み終わっても、
+  // 書き出し用がまだなら撮ってはいけない。
+  const exportBgReadyRef = useRef(true);
   const bgWaitersRef = useRef<(() => void)[]>([]);
 
-  function markBackgroundLoaded() {
-    bgReadyRef.current = true;
-    setBgStatus("ready");
+  function resolveBackgroundWaiters() {
+    // 2枚とも読み込み終わって初めてキャプチャしてよい
+    if (!bgReadyRef.current || !exportBgReadyRef.current) return;
     bgWaitersRef.current.forEach((resolve) => resolve());
     bgWaitersRef.current = [];
   }
 
+  function markBackgroundLoaded() {
+    bgReadyRef.current = true;
+    setBgStatus("ready");
+    resolveBackgroundWaiters();
+  }
+
+  function markExportBackgroundLoaded() {
+    exportBgReadyRef.current = true;
+    resolveBackgroundWaiters();
+  }
+
   function waitForBackground(): Promise<void> {
-    if (bgReadyRef.current) return Promise.resolve();
+    if (bgReadyRef.current && exportBgReadyRef.current) return Promise.resolve();
     return new Promise<void>((resolve) => {
       bgWaitersRef.current.push(resolve);
       // 完了合図が来ない場合の最終保険(15秒)。ここまで来たら読み込みは
@@ -100,6 +115,7 @@ export function WrapUpSheet({
 
   function handleClose() {
     bgReadyRef.current = true;
+    exportBgReadyRef.current = true;
     setBgStatus("none");
     setBackgroundUri(null);
     onClose();
@@ -135,6 +151,7 @@ export function WrapUpSheet({
         console.warn("背景画像のprefetchに失敗しました(そのまま続行します)", e);
       }
       bgReadyRef.current = false;
+      exportBgReadyRef.current = false;
       setBgStatus("loading");
       setBackgroundUri(uri);
     } catch (e) {
@@ -190,21 +207,40 @@ export function WrapUpSheet({
         return dataUrl;
       }
 
-      // ネイティブ: 隠しステージではなく「画面に見えているプレビューカード」を
-      // そのままキャプチャする。背景写真がある場合は、onLoad完了後さらに
-      // ひと呼吸(300ms+1フレーム)おいて、描画が画面に反映しきってから撮る。
+      // ネイティブ: 書き出し専用ステージ(EXPORT_WIDTH=1080)をそのまま撮る。
+      //
+      // 以前はプレビューカード(260px)を width/height 指定で1080へ引き伸ばして
+      // いたが、captureRef の width/height はレイアウトし直しではなく
+      // 「描いた結果の拡大」なので、約4.2倍に引き伸ばされた文字がぼやけていた。
+      // 1080でレイアウトされたカードを撮れば、その大きさで文字が描かれる。
+      //
+      // 背景写真がある場合は、書き出し用カード側の onLoad 完了後さらに
+      // ひと呼吸(300ms+1フレーム)おいて、描画が反映しきってから撮る。
       if (backgroundUri) {
         await new Promise((resolve) => setTimeout(resolve, 300));
         await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
       }
-      // width/height指定で書き出し解像度(1080x1920 / 1080x1080)へ拡大する。
-      return await captureRef(previewRef, {
-        format: "png",
-        quality: 1,
-        result: "tmpfile",
-        width: EXPORT_WIDTH,
-        height: wrapCardHeight(ratio, EXPORT_WIDTH),
-      });
+      try {
+        return await captureRef(exportRef, {
+          format: "png",
+          quality: 1,
+          result: "tmpfile",
+        });
+      } catch (stageError) {
+        // 隠しステージが撮れなかった場合の保険。画質は落ちるが、
+        // 従来どおりプレビューの拡大で書き出して処理は完了させる。
+        console.warn(
+          "書き出しステージのキャプチャに失敗。プレビューから生成します",
+          stageError,
+        );
+        return await captureRef(previewRef, {
+          format: "png",
+          quality: 1,
+          result: "tmpfile",
+          width: EXPORT_WIDTH,
+          height: wrapCardHeight(ratio, EXPORT_WIDTH),
+        });
+      }
     } catch (e) {
       console.warn("まとめ画像の生成に失敗しました", e);
       return null;
@@ -438,6 +474,7 @@ export function WrapUpSheet({
             <Pressable
               onPress={() => {
                 bgReadyRef.current = true;
+                exportBgReadyRef.current = true;
                 setBgStatus("none");
                 setBackgroundUri(null);
               }}
@@ -523,32 +560,35 @@ export function WrapUpSheet({
         </ScrollView>
 
         {/*
-          書き出し専用ステージ(Web専用)。
-          Webのhtml-to-imageはopacity:0のDOMも直接描画できるため、
-          高解像度の隠しステージ方式が使える。
-          ネイティブはこの方式だと写真が写らないため使わず、
-          画面に見えているプレビューカードをwidth/height指定で
-          拡大キャプチャする(capture()参照)。
+          書き出し専用の隠しステージ(EXPORT_WIDTH=1080)。Web・ネイティブ共通。
+
+          以前ネイティブでこの方式が使えなかったのは、背景写真の読み込み完了を
+          プレビューカードの onLoad だけで判定しており、書き出し用カードの
+          写真がまだ読み込めていないうちに撮ってしまっていたため。
+          書き出し用カード自身の onLoad を待つようにして解消した。
+
+          なお opacity:0 なのはこのラッパーViewで、キャプチャ対象は中の
+          WrapUpCard 自身なので、透明度は書き出し結果に影響しない
+          (観戦カード側 adjust.tsx と同じ構造)。
         */}
-        {Platform.OS === "web" && (
-          <View
-            pointerEvents="none"
-            style={[
-              styles.exportStage,
-              { width: EXPORT_WIDTH, height: exportHeight },
-            ]}
-          >
-            <WrapUpCard
-              ref={exportRef}
-              summary={summary}
-              myTeam={myTeam}
-              ratio={ratio}
-              width={EXPORT_WIDTH}
-              colors={colors}
-              backgroundUri={backgroundUri}
-            />
-          </View>
-        )}
+        <View
+          pointerEvents="none"
+          style={[
+            styles.exportStage,
+            { width: EXPORT_WIDTH, height: exportHeight },
+          ]}
+        >
+          <WrapUpCard
+            ref={exportRef}
+            summary={summary}
+            myTeam={myTeam}
+            ratio={ratio}
+            width={EXPORT_WIDTH}
+            colors={colors}
+            backgroundUri={backgroundUri}
+            onBackgroundLoad={markExportBackgroundLoaded}
+          />
+        </View>
 
         {/* 保存/共有中の表示。観戦記録作成時(adjust.tsx)と同じ見た目に揃えている */}
         {busy && (

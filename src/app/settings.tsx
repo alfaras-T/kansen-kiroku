@@ -1,6 +1,6 @@
 import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -32,6 +32,11 @@ export default function SettingsScreen() {
   const [importing, setImporting] = useState(false);
 
   const [legalPage, setLegalPage] = useState<"privacy" | "support" | null>(null);
+  // 閉じるアニメーションの最中も中身を描画し続けるために直前の値を覚えておく。
+  // legalPage を null にした瞬間に children も消すと、スライドアウトしている
+  // 間だけ空のモーダル（既定では白）が見えてしまうため。
+  const lastLegalPage = useRef<"privacy" | "support">("privacy");
+  if (legalPage) lastLegalPage.current = legalPage;
 
   // Web: Linking.openURLは既定でwindow.open(url, '_blank')を呼ぶため、
   // 中身が届くまで真っ白な新規タブが必ず一瞬表示されてしまう。
@@ -294,11 +299,14 @@ export default function SettingsScreen() {
         animationType="slide"
         onRequestClose={() => setLegalPage(null)}
       >
-        {legalPage === "privacy" ? (
-          <PrivacyScreen onClose={() => setLegalPage(null)} />
-        ) : legalPage === "support" ? (
-          <SupportScreen onClose={() => setLegalPage(null)} />
-        ) : null}
+        {/* 背景色を明示しないと、閉じる途中でモーダル既定の白が透けて見える */}
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
+          {lastLegalPage.current === "privacy" ? (
+            <PrivacyScreen onClose={() => setLegalPage(null)} />
+          ) : (
+            <SupportScreen onClose={() => setLegalPage(null)} />
+          )}
+        </View>
       </Modal>
     </ThemedView>
   );

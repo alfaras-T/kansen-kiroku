@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Ball Films",
+    "NSPhotoLibraryUsageDescription": "観戦写真を選んでスコアを重ねるために使用します。",
+    "NSPhotoLibraryAddUsageDescription": "作成した画像を写真アプリに保存するために使用します。"
+  }
+}

@@ -211,7 +211,7 @@ export default function CreateScreen() {
             )}
           </LabeledField>
 
-          <LabeledField label="📍 球場">
+          <LabeledField label="球場">
             <SelectModal
               title="球場を選択"
               options={STADIUM_OPTIONS}

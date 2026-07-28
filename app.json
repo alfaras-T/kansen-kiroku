@@ -15,7 +15,11 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSPhotoLibraryUsageDescription": "観戦写真を選んでスコアを重ねるために使用します。",
-        "NSPhotoLibraryAddUsageDescription": "作成した画像を写真アプリに保存するために使用します。"
+        "NSPhotoLibraryAddUsageDescription": "作成した画像を写真アプリに保存するために使用します。",
+        "CFBundleDevelopmentRegion": "ja",
+        "CFBundleLocalizations": [
+          "ja"
+        ]
       }
     },
     "android": {
@@ -70,6 +74,9 @@
       "eas": {
         "projectId": "8adc43f8-527a-4874-bdd5-a1e1d553d6b3"
       }
+    },
+    "locales": {
+      "ja": "./locales/ja.json"
     }
   }
 }
