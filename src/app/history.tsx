@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useMemo, useState } from "react";
 import { useFocusEffect } from "expo-router";
+
+import { useFavoriteTeam } from "@/contexts/favorite-team";
 import { Pressable, SectionList, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -15,8 +17,6 @@ import {
   deleteHistoryEntry,
   groupHistoryByYear,
   loadHistory,
-  loadMyTeam,
-  saveMyTeam,
   updateHistoryEntry,
 } from "@/storage/history";
 import { HistoryEntry } from "@/types/history";
@@ -35,16 +35,16 @@ export default function HistoryScreen() {
   const colors = useTheme();
   const insets = useSafeAreaInsets();
   const [entries, setEntries] = useState<HistoryEntry[]>([]);
-  const [myTeam, setMyTeam] = useState("");
+  // マイチームは FavoriteTeamProvider が単一の保持元。ここで個別にstateを
+  // 持つと、テロップの球団カラー判定など他の画面と値がずれる。
+  const { myTeam, setMyTeam } = useFavoriteTeam();
   const [loaded, setLoaded] = useState(false);
   const [selectedYear, setSelectedYear] = useState("");
   const [wrapOpen, setWrapOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<HistoryEntry | null>(null);
 
   const refresh = useCallback(async () => {
-    const [h, mt] = await Promise.all([loadHistory(), loadMyTeam()]);
-    setEntries(h);
-    setMyTeam(mt);
+    setEntries(await loadHistory());
     setLoaded(true);
   }, []);
 
@@ -55,8 +55,7 @@ export default function HistoryScreen() {
   );
 
   async function handleMyTeamChange(v: string) {
-    setMyTeam(v);
-    await saveMyTeam(v);
+    await setMyTeam(v);
   }
 
   async function handleDelete(entry: HistoryEntry) {

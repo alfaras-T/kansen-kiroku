@@ -27,7 +27,7 @@ const FAVORITE_TEAM_OPTIONS = [
 export default function SettingsScreen() {
   const colors = useTheme();
   const insets = useSafeAreaInsets();
-  const { favoriteTeam, setFavoriteTeam } = useFavoriteTeam();
+  const { favoriteTeam, setFavoriteTeam, reload } = useFavoriteTeam();
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
 
@@ -85,6 +85,10 @@ export default function SettingsScreen() {
     try {
       const payload = await importBackup();
       if (payload) {
+        // 復元はストレージを直接書き換えるため、Provider が持っている
+        // お気に入りチーム/マイチームは古いままになる。読み直して
+        // アプリの配色とテロップの球団カラーを復元後の値に合わせる。
+        await reload();
         notify(
           "読み込みました",
           `${payload.history.length}件の観戦記録を復元しました。`,

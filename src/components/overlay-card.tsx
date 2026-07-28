@@ -159,6 +159,14 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
 
   // 日付と区切り線だけを自チームカラーにする。
   //
+  // 色を付けるのはマイチームが出場している試合のみ。他球団同士の試合を
+  // 観に行くことは珍しくなく、そこで自分の色を着ていると場違いに見える。
+  // 出場時だけ色づくようにすると、色が「自分のチームの試合だった」という
+  // 情報を持つようになり、ただの装飾ではなくなる。
+  //
+  // 判定は favoriteTeam(配色用)ではなく myTeam(成績集計用)で行う。
+  // 「自分の試合か」の定義は勝率集計と揃っている必要があるため。
+  //
   // プレビューと書き出しで色が食い違うと事故になるため、呼び出し側から
   // propsで渡すのではなく、この中で解決して全ての描画箇所を一致させる。
   //
@@ -166,10 +174,15 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
   // プリセットなので対象外。球団色を使いたくない人はこれを選べばよく、
   // 設定項目を増やさずに済む。
   const favoriteTeamCtx = useFavoriteTeamOptional();
+  const myTeam = favoriteTeamCtx?.myTeam ?? '';
+  // 自由入力のチーム名は球団コードと一致しないため、自然と対象外になる
+  // (アマチュアの試合などを記録した場合)。
+  const myTeamIsPlaying =
+    !!myTeam && (visitorCode === myTeam || homeCode === myTeam);
   const telopTeamColor =
-    styleKey === 'minimal'
+    styleKey === 'minimal' || !myTeamIsPlaying
       ? null
-      : resolveTelopTeamColor(favoriteTeamCtx?.favoriteTeam ?? '');
+      : resolveTelopTeamColor(myTeam);
   // 「元の写真のまま」の場合は写真自体の縦横比を使う。
   // 写真が無い/縦横比が未取得の場合のみ1:1にフォールバックする。
   const frameAspect = resolveOverlayAspect(ratio, photoAspectRatio);
