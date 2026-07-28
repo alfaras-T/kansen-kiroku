@@ -137,14 +137,22 @@ export default function AdjustScreen() {
   return (
     <View style={[styles.screen, { backgroundColor: "#000" }]}>
       <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
+        {/*
+          戻る導線は「＜ 戻る」に統一する。✕ は「破棄する」とも読めて、
+          編集内容が消えるのではと不安にさせるため。実際には記録画面へ
+          戻るだけなので、矢印と言葉で行き先を示す。
+          右側にあった空の View は、中央揃えのための余白のつもりが
+          roundBtn の背景色を継いで「押せそうな丸」に見えていたので削除。
+          タイトルは絶対配置にして中央を保つ。
+        */}
         <View style={styles.topBar}>
-          <Pressable onPress={goBack} hitSlop={10} style={styles.roundBtn}>
-            <Ionicons name="close" size={22} color="#fff" />
+          <Pressable onPress={goBack} hitSlop={10} style={styles.backBtn}>
+            <Ionicons name="chevron-back" size={22} color="#fff" />
+            <Text style={styles.backLabel}>戻る</Text>
           </Pressable>
           <ThemedText type="small" style={styles.topTitle}>
             写真を調整
           </ThemedText>
-          <View style={styles.roundBtn} />
         </View>
 
         {!photoUri ? (
@@ -453,19 +461,28 @@ const styles = StyleSheet.create({
   topBar: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     paddingVertical: 8,
+    minHeight: 44,
   },
-  roundBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  backBtn: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.12)",
+    gap: 1,
+    paddingVertical: 4,
+    paddingRight: 12,
   },
-  topTitle: { color: "#fff" },
+  backLabel: { color: "#fff", fontSize: 15.5 },
+  // タイトルは絶対配置で中央に置く。左の戻るボタンの幅に影響されず、
+  // 右側にダミーの余白を置かずに済む。
+  topTitle: {
+    color: "#fff",
+    position: "absolute",
+    left: 0,
+    right: 0,
+    textAlign: "center",
+    zIndex: -1,
+  },
   emptyState: {
     flex: 1,
     alignItems: "center",

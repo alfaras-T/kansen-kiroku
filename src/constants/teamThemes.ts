@@ -104,23 +104,16 @@ export const TEAM_BRAND_COLORS: Record<TeamCode, TeamBrandColors> = {
 };
 
 /**
- * 球団ごとのUIパレット。TEAM_BRAND_COLORS から機械的に導出したもので、
- * 手で色を足していない。導出の規則は次のとおり。
+ * 球団ごとのUIパレット。
  *
- * - 土台(background): メインとセカンドのうち暗い方。両方明るい球団
- *   (ホークスの黄+白)だけは中立の黒 #0A0A0A を土台にする
- * - 差し色(accent): もう一方の明るい色
- * - text / textSecondary / danger: 土台に対して WCAG AA(4.5:1)以上に
- *   なるまで白側へ寄せて決定
- * - onAccent: 差し色に対してコントラストが大きい方(黒か白)
- *
- * 全球団で contrast を実測済み。text は最低 5.68:1、textSecondary は
- * 最低 4.53:1、danger は最低 4.50:1。差し色は
- * ベイスターズのみ 3.02:1 で、これは WCAG のUI部品基準(3:1)は満たすが
- * 本文基準には届かない。文字色には使わず、枠線・選択状態の表現に留めること。
+ * タイガースとライオンズのみ、TEAM_BRAND_COLORS の公式カラーから導出した
+ * 配色を使う。残る10球団は、公式カラーをそのまま画面全体に敷くと視認性が
+ * 落ちたため、以前の独自調整カラーに戻している。
+ * (テロップの色は全球団とも公式カラーを使う。面で使う配色と、写真の上に
+ *  細く載せる色とでは、成立する条件が違うため揃える必要はない)
  */
 export const TEAM_THEMES: Record<TeamCode, Palette> = {
-  // タイガース: 土台=セカンド(#000000) / 差し色=メイン(#FFE200)
+  // タイガース: 公式カラー / 土台=セカンド(#000000) / 差し色=メイン(#FFE200)
   T: {
     text: '#F0F0F0',
     background: '#000000',
@@ -133,124 +126,7 @@ export const TEAM_THEMES: Record<TeamCode, Palette> = {
     border: '#FFE200',
     danger: '#FF6B6B',
   },
-  // ベイスターズ: 土台=メイン(#00468B) / 差し色=セカンド(#009BE3)
-  DB: {
-    text: '#F7F7F8',
-    background: '#00468B',
-    backgroundElement: '#175795',
-    backgroundSelected: '#2E67A0',
-    textSecondary: '#A2BBD3',
-    accent: '#009BE3',
-    accentDim: '#006CB3',
-    onAccent: '#0A0A0A',
-    border: '#009BE3',
-    danger: '#FF9999',
-  },
-  // ジャイアンツ: 土台=セカンド(#000000) / 差し色=メイン(#F36E21)
-  G: {
-    text: '#F0F0F0',
-    background: '#000000',
-    backgroundElement: '#171717',
-    backgroundSelected: '#2E2E2E',
-    textSecondary: '#8B8B8B',
-    accent: '#F36E21',
-    accentDim: '#6D310F',
-    onAccent: '#0A0A0A',
-    border: '#F36E21',
-    danger: '#FF6B6B',
-  },
-  // ドラゴンズ: 土台=メイン(#002D62) / 差し色=セカンド(#FFFFFF)
-  D: {
-    text: '#F0F2F6',
-    background: '#002D62',
-    backgroundElement: '#174070',
-    backgroundSelected: '#2E537E',
-    textSecondary: '#8B9FB8',
-    accent: '#FFFFFF',
-    accentDim: '#738CA9',
-    onAccent: '#0A0A0A',
-    border: '#FFFFFF',
-    danger: '#FF6B6B',
-  },
-  // カープ: 土台=メイン(#C41230) / 差し色=セカンド(#FFFFFF)
-  C: {
-    text: '#FBF7F7',
-    background: '#C41230',
-    backgroundElement: '#C92743',
-    backgroundSelected: '#CF3D55',
-    textSecondary: '#F6D9DD',
-    accent: '#FFFFFF',
-    accentDim: '#DF7D8D',
-    onAccent: '#0A0A0A',
-    border: '#FFFFFF',
-    danger: '#FFD7D7',
-  },
-  // スワローズ: 土台=メイン(#001C41) / 差し色=セカンド(#83C35C)
-  S: {
-    text: '#F0F1F4',
-    background: '#001C41',
-    backgroundElement: '#173052',
-    backgroundSelected: '#2E4563',
-    textSecondary: '#8B98A9',
-    accent: '#83C35C',
-    accentDim: '#3B674D',
-    onAccent: '#0A0A0A',
-    border: '#83C35C',
-    danger: '#FF6B6B',
-  },
-  // ホークス: 土台=中立色(#0A0A0A) / 差し色=メイン(#FFF100)
-  H: {
-    text: '#F0F0F0',
-    background: '#0A0A0A',
-    backgroundElement: '#202020',
-    backgroundSelected: '#363636',
-    textSecondary: '#8F8F8F',
-    accent: '#FFF100',
-    accentDim: '#787206',
-    onAccent: '#0A0A0A',
-    border: '#FFF100',
-    danger: '#FF6B6B',
-  },
-  // ファイターズ: 土台=メイン(#00549E) / 差し色=セカンド(#EAE0A4)
-  F: {
-    text: '#F7F7F9',
-    background: '#00549E',
-    backgroundElement: '#1763A7',
-    backgroundSelected: '#2E73AF',
-    textSecondary: '#B2CBE0',
-    accent: '#EAE0A4',
-    accentDim: '#6993A1',
-    onAccent: '#0A0A0A',
-    border: '#EAE0A4',
-    danger: '#FFB4B4',
-  },
-  // バファローズ: 土台=メイン(#00143F) / 差し色=セカンド(#B19452)
-  B: {
-    text: '#F0F1F3',
-    background: '#00143F',
-    backgroundElement: '#172950',
-    backgroundSelected: '#2E3E62',
-    textSecondary: '#8B94A7',
-    accent: '#B19452',
-    accentDim: '#504E48',
-    onAccent: '#0A0A0A',
-    border: '#B19452',
-    danger: '#FF6B6B',
-  },
-  // ゴールデンイーグルス: 土台=メイン(#860018) / 差し色=セカンド(#E2C481)
-  E: {
-    text: '#F8F7F7',
-    background: '#860018',
-    backgroundElement: '#91172D',
-    backgroundSelected: '#9C2E42',
-    textSecondary: '#D1A2AA',
-    accent: '#E2C481',
-    accentDim: '#AF5847',
-    onAccent: '#0A0A0A',
-    border: '#E2C481',
-    danger: '#FF8B8B',
-  },
-  // ライオンズ: 土台=メイン(#03224C) / 差し色=セカンド(#FFFFFF)
+  // ライオンズ: 公式カラー / 土台=メイン(#03224C) / 差し色=セカンド(#FFFFFF)
   L: {
     text: '#F0F2F4',
     background: '#03224C',
@@ -263,18 +139,135 @@ export const TEAM_THEMES: Record<TeamCode, Palette> = {
     border: '#FFFFFF',
     danger: '#FF6B6B',
   },
-  // マリーンズ: 土台=メイン(#000000) / 差し色=セカンド(#FFFFFF)
+  // ジャイアンツ: 黒ベース + オレンジアクセント
+  G: {
+    text: "#F5F2EC",
+    background: "#0C0C0E",
+    backgroundElement: "#1C1C20",
+    backgroundSelected: "#2E2E34",
+    textSecondary: "#A3A3A8",
+    accent: "#FF7A14",
+    accentDim: "#B35410",
+    onAccent: "#1F0D02",
+    border: "#FF7A14",
+    danger: "#FF7A6E",
+  },
+  // カープ: 赤ベース + 白アクセント
+  C: {
+    text: "#FFF0F1",
+    background: "#330309",
+    backgroundElement: "#7E0A1B",
+    backgroundSelected: "#AC1226",
+    textSecondary: "#D69CA4",
+    accent: "#FFF2F2",
+    accentDim: "#C09098",
+    onAccent: "#3A0A10",
+    border: "#FFF2F2",
+    danger: "#FFB0A6",
+  },
+  // ドラゴンズ: 青ベース + 白アクセント
+  D: {
+    text: "#EFF4FF",
+    background: "#04102E",
+    backgroundElement: "#0B255E",
+    backgroundSelected: "#143A89",
+    textSecondary: "#97A8CC",
+    accent: "#F2F6FF",
+    accentDim: "#8FA3C4",
+    onAccent: "#0A1B3A",
+    border: "#F2F6FF",
+    danger: "#FF8A80",
+  },
+  // ベイスターズ: 青ベース + ゴールドアクセント
+  DB: {
+    text: "#EFF6FC",
+    background: "#031B40",
+    backgroundElement: "#0A3F82",
+    backgroundSelected: "#0F5DBB",
+    textSecondary: "#93BCE4",
+    accent: "#F5C542",
+    accentDim: "#A8842E",
+    onAccent: "#1A1204",
+    border: "#F5C542",
+    danger: "#FF8A80",
+  },
+  // スワローズ: 紺ベース + 緑アクセント
+  S: {
+    text: "#EFF4FA",
+    background: "#051124",
+    backgroundElement: "#0C284B",
+    backgroundSelected: "#153E6E",
+    textSecondary: "#97A9C4",
+    accent: "#35D687",
+    accentDim: "#1F8A55",
+    onAccent: "#04170D",
+    border: "#35D687",
+    danger: "#FF8A80",
+  },
+  // ホークス: 黒ベース + 黄色アクセント
+  H: {
+    text: "#F7F4E4",
+    background: "#0B0B08",
+    backgroundElement: "#1D1D16",
+    backgroundSelected: "#31311F",
+    textSecondary: "#A6A48F",
+    accent: "#FFE83D",
+    accentDim: "#ABA020",
+    onAccent: "#1D1B03",
+    border: "#FFE83D",
+    danger: "#FF7A6E",
+  },
+  // バファローズ: 紺ベース + ゴールドアクセント
+  B: {
+    text: "#EFF0FA",
+    background: "#050B26",
+    backgroundElement: "#0E1B52",
+    backgroundSelected: "#172A78",
+    textSecondary: "#9AA0C9",
+    accent: "#F0C25E",
+    accentDim: "#A8842E",
+    onAccent: "#1A1204",
+    border: "#F0C25E",
+    danger: "#FF8A80",
+  },
+  // ファイターズ: 水色ベース + 白アクセント
+  F: {
+    text: "#EFF8FC",
+    background: "#041B26",
+    backgroundElement: "#0A3C52",
+    backgroundSelected: "#125877",
+    textSecondary: "#90BCCC",
+    accent: "#F3FBFF",
+    accentDim: "#9CC4D4",
+    onAccent: "#0A2530",
+    border: "#F3FBFF",
+    danger: "#FF8A80",
+  },
+  // マリーンズ: 黒ベース + 白アクセント
   M: {
-    text: '#F0F0F0',
-    background: '#000000',
-    backgroundElement: '#171717',
-    backgroundSelected: '#2E2E2E',
-    textSecondary: '#8B8B8B',
-    accent: '#FFFFFF',
-    accentDim: '#737373',
-    onAccent: '#0A0A0A',
-    border: '#FFFFFF',
-    danger: '#FF6B6B',
+    text: "#F4F5F7",
+    background: "#0B0C0E",
+    backgroundElement: "#26282C",
+    backgroundSelected: "#3F434A",
+    textSecondary: "#A9ACB2",
+    accent: "#F2F3F5",
+    accentDim: "#85888E",
+    onAccent: "#0A0B0C",
+    border: "#F2F3F5",
+    danger: "#FF8A80",
+  },
+  // ゴールデンイーグルス: エンジベース + ゴールドアクセント
+  E: {
+    text: "#FCEFF2",
+    background: "#240610",
+    backgroundElement: "#4F1122",
+    backgroundSelected: "#721E33",
+    textSecondary: "#C795A2",
+    accent: "#E9BA2E",
+    accentDim: "#A5821E",
+    onAccent: "#191002",
+    border: "#E9BA2E",
+    danger: "#FFB0A6",
   },
 };
 
@@ -286,38 +279,14 @@ export function resolveTheme(favoriteTeam: string): Palette {
   return TEAM_THEMES[favoriteTeam as TeamCode] ?? DEFAULT_PALETTE;
 }
 
-/** #RRGGBB から sRGB の相対輝度(0=黒, 1=白)を求める。WCAG の定義に沿う。 */
-function relativeLuminance(hex: string): number {
-  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
-  if (!m) return 1;
-  const int = parseInt(m[1], 16);
-  const channels = [(int >> 16) & 255, (int >> 8) & 255, int & 255].map((v) => {
-    const c = v / 255;
-    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-  });
-  return (
-    0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2]
-  );
-}
-
-// テロップは写真の上に暗いスクリム(おおよそ輝度0.005相当)を敷いた上に載る。
-// そこでコントラスト比 3:1 ——WCAG が大きめの文字・図形に求める下限——を
-// 確保できる輝度を閾値にする。(L + 0.05) / (0.005 + 0.05) >= 3 を解くと
-// L >= 0.115 となる。
-const MIN_TELOP_LUMINANCE = 0.115;
-
 /**
  * テロップの日付・区切り線に使う球団カラーを返す。未選択や該当なしは null。
  *
- * まずメインカラーを試し、暗すぎて写真の上で沈む場合はセカンドカラーを使う。
- * ドラゴンズやライオンズのような濃紺は単体では読めないため、公式に
- * 対になっている白やゴールドへ自然に落ちる。
+ * 明るさによる振り替えはせず、公式のメインカラーをそのまま使う。
+ * 濃紺や黒のメインカラーは写真の上で沈みやすいが、球団の色として
+ * 正しいことを優先する。
  */
 export function resolveTelopTeamColor(favoriteTeam: string): string | null {
   const brand = TEAM_BRAND_COLORS[favoriteTeam as TeamCode];
-  if (!brand) return null;
-  for (const candidate of [brand.main, brand.second]) {
-    if (relativeLuminance(candidate) >= MIN_TELOP_LUMINANCE) return candidate;
-  }
-  return null;
+  return brand ? brand.main : null;
 }
