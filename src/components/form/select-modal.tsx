@@ -32,6 +32,7 @@ export function SelectModal({
   const [open, setOpen] = useState(false);
   const colors = useTheme();
   const selectedOption = options.find((o) => o.value === value);
+  const hasSelection = !!selectedOption;
   const selectedLabel =
     (selectedOption?.compactLabel ?? selectedOption?.label) ??
     "選択してください";
@@ -49,7 +50,12 @@ export function SelectModal({
         ]}
       >
         <Text
-          style={[styles.fieldText, { color: colors.text }]}
+          style={[
+            styles.fieldText,
+            // 未選択のときは入力済みの値と同じ明るさで出さない。
+            // 「選択してください」が選択済みの値に見えてしまうため。
+            { color: hasSelection ? colors.text : colors.textSecondary },
+          ]}
           numberOfLines={1}
         >
           {selectedLabel}

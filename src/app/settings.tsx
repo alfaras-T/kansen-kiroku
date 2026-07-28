@@ -107,7 +107,13 @@ export default function SettingsScreen() {
         </ThemedText>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      {/* スクロールを見せない理由は index.tsx のコメント参照 */}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        alwaysBounceVertical={false}
+        overScrollMode="never"
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.section}>
           <ThemedText
             type="small"

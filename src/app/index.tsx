@@ -93,9 +93,19 @@ export default function CreateScreen() {
 
   return (
     <ThemedView style={[styles.screen, { paddingTop: insets.top }]}>
+      {/*
+        内容が画面に収まっている間はスクロールしているように見せない。
+        alwaysBounceVertical={false} でiOSのラバーバンドを止め、
+        overScrollMode="never" でAndroidの端の光を止める。
+        ScrollView自体は残す。小さい端末・文字サイズを大きくしている場合・
+        キーボードが出て入力欄が隠れる場合には、実際にスクロールが必要になるため。
+      */}
       <ScrollView
         style={[styles.scroll, { flex: 1 }]}
         contentContainerStyle={styles.scrollContent}
+        alwaysBounceVertical={false}
+        overScrollMode="never"
+        showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
           <ThemedText type="title" style={styles.title}>

@@ -120,10 +120,14 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
   const recordSavedForDraft = useRef(false);
 
   const [date, setDate] = useState(todayISO());
-  const [stadium, setStadium] = useState<string>('東京ドーム');
+  // 初期値は未選択。実在するチーム・球場を初期値にしておくと、
+  // 選び忘れたまま保存された場合に「本人が選んだ値」と区別が付かない。
+  // 空文字はどの選択肢にも一致しないため、SelectModal 側は
+  // 「選択してください」を表示する。
+  const [stadium, setStadium] = useState<string>('');
   const [stadiumOther, setStadiumOther] = useState('');
-  const [visitorCode, setVisitorCode] = useState<string>('T');
-  const [homeCode, setHomeCode] = useState<string>('G');
+  const [visitorCode, setVisitorCode] = useState<string>('');
+  const [homeCode, setHomeCode] = useState<string>('');
   const [visitorTeamOther, setVisitorTeamOther] = useState('');
   const [homeTeamOther, setHomeTeamOther] = useState('');
   const [visitorScore, setVisitorScore] = useState('3');
