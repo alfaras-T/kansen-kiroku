@@ -295,10 +295,25 @@ export interface TelopTeamColors {
  * 白やゴールドで囲むことで、色を変えずに読めるようになる。
  * 全球団で同じ規則(メインをセカンドで縁取る)なので見た目に統一感が出る。
  */
+/**
+ * 縁取り色の例外。
+ *
+ * ホークスは公式のメイン(レモンイエロー #FFF100)とセカンド(ホワイト)の
+ * コントラストが 1.18:1 しかなく、白の縁が黄に埋もれて縁として機能しない。
+ * ユニフォームで使われている黒に差し替える(黒との比は 17.82:1)。
+ */
+const TELOP_OUTLINE_OVERRIDES: Partial<Record<TeamCode, string>> = {
+  H: '#000000',
+};
+
 export function resolveTelopTeamColors(
   favoriteTeam: string,
 ): TelopTeamColors | null {
-  const brand = TEAM_BRAND_COLORS[favoriteTeam as TeamCode];
+  const code = favoriteTeam as TeamCode;
+  const brand = TEAM_BRAND_COLORS[code];
   if (!brand) return null;
-  return { fill: brand.main, outline: brand.second };
+  return {
+    fill: brand.main,
+    outline: TELOP_OUTLINE_OVERRIDES[code] ?? brand.second,
+  };
 }
