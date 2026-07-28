@@ -185,3 +185,39 @@ export const TEAM_THEMES: Record<TeamCode, Palette> = {
 export function resolveTheme(favoriteTeam: string): Palette {
   return TEAM_THEMES[favoriteTeam as TeamCode] ?? DEFAULT_PALETTE;
 }
+
+/** #RRGGBB から sRGB の相対輝度(0=黒, 1=白)を求める。WCAG の定義に沿う。 */
+function relativeLuminance(hex: string): number {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return 1;
+  const int = parseInt(m[1], 16);
+  const channels = [(int >> 16) & 255, (int >> 8) & 255, int & 255].map((v) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  });
+  return (
+    0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2]
+  );
+}
+
+// テロップは写真の上に暗いスクリムを敷いた上に載るため、これより暗い色は
+// 沈んで読めなくなる。実測ではなく、既存12球団の色を通して決めた閾値。
+const MIN_TELOP_LUMINANCE = 0.22;
+
+/**
+ * テロップの日付・区切り線に使う球団カラーを返す。未選択や該当なしは null。
+ *
+ * accent をそのまま使えない球団がある。タイガースは「黄色ベース+黒アクセント」
+ * という構成のため accent が #151515(ほぼ黒)で、暗い写真の上では消えてしまう。
+ * そこで accent が暗すぎる場合は、同じ球団テーマの中で明るい側の色
+ * (onAccent → background の順)へ振り替える。タイガースなら黄色が選ばれ、
+ * かえって球団らしい色になる。
+ */
+export function resolveTelopTeamColor(favoriteTeam: string): string | null {
+  const theme = TEAM_THEMES[favoriteTeam as TeamCode];
+  if (!theme) return null;
+  for (const candidate of [theme.accent, theme.onAccent, theme.background]) {
+    if (relativeLuminance(candidate) >= MIN_TELOP_LUMINANCE) return candidate;
+  }
+  return null;
+}

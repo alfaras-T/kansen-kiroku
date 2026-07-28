@@ -11,6 +11,8 @@ import {
   ViewStyle,
 } from 'react-native';
 
+import { resolveTelopTeamColor } from '@/constants/teamThemes';
+import { useFavoriteTeamOptional } from '@/contexts/favorite-team';
 import {
   DEFAULT_PHOTO_OFFSET,
   DEFAULT_PHOTO_SCALE,
@@ -154,6 +156,20 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
   };
 
   const palette = OVERLAY_STYLES[styleKey];
+
+  // 日付と区切り線だけを自チームカラーにする。
+  //
+  // プレビューと書き出しで色が食い違うと事故になるため、呼び出し側から
+  // propsで渡すのではなく、この中で解決して全ての描画箇所を一致させる。
+  //
+  // ミニマルは「色を一切足さず、どんな写真も邪魔しない」ことが主旨の
+  // プリセットなので対象外。球団色を使いたくない人はこれを選べばよく、
+  // 設定項目を増やさずに済む。
+  const favoriteTeamCtx = useFavoriteTeamOptional();
+  const telopTeamColor =
+    styleKey === 'minimal'
+      ? null
+      : resolveTelopTeamColor(favoriteTeamCtx?.favoriteTeam ?? '');
   // 「元の写真のまま」の場合は写真自体の縦横比を使う。
   // 写真が無い/縦横比が未取得の場合のみ1:1にフォールバックする。
   const frameAspect = resolveOverlayAspect(ratio, photoAspectRatio);
@@ -373,7 +389,12 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
           // transformOrigin による支点指定はもう不要。
         ]}>
         <Text
-          style={[styles.dateLine, telopStyles.dateLine, textShadow, { color: palette.accent }]}
+          style={[
+            styles.dateLine,
+            telopStyles.dateLine,
+            textShadow,
+            { color: telopTeamColor ?? palette.accent },
+          ]}
           numberOfLines={1}>
           {dateLabel}
         </Text>
@@ -400,7 +421,13 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
           </Text>
         </View>
 
-        <View style={[styles.divider, telopStyles.divider, { backgroundColor: palette.divider }]} />
+        <View
+          style={[
+            styles.divider,
+            telopStyles.divider,
+            { backgroundColor: telopTeamColor ?? palette.divider },
+          ]}
+        />
 
         <Text
           style={[styles.stadiumLine, telopStyles.stadiumLine, textShadow, { color: palette.caption }]}
