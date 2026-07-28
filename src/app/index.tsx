@@ -13,10 +13,13 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DateField } from "@/components/form/date-field";
+import { formatDateOverlay } from "@/components/form/date-field";
 import { LabeledField } from "@/components/form/labeled-field";
 import { SelectModal, SelectOption } from "@/components/form/select-modal";
+import { OverlayCard } from "@/components/overlay-card";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { resolveOverlayAspect } from "@/constants/overlayStyles";
 import { OTHER_STADIUM, STADIUMS } from "@/constants/stadiums";
 import { OTHER_TEAM, TEAMS } from "@/constants/teams";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
@@ -133,7 +136,21 @@ export default function CreateScreen() {
     handleSaveRecord,
     visitorTeamName,
     homeTeamName,
+    stadiumName,
+    photoAspectRatio,
+    ratio,
+    position,
+    styleKey,
+    winHighlight,
+    photoOffset,
+    photoScale,
+    telopScale,
   } = form;
+
+  // 入力しながら仕上がりを確認できるよう、記録画面にもプレビューを置く。
+  // 幅は実測しないと比率から高さを出せないため onLayout で取る。
+  const [previewWidth, setPreviewWidth] = useState(0);
+  const previewAspect = resolveOverlayAspect(ratio, photoAspectRatio);
 
   async function handleSaveRecordWithChecks() {
     // 「同じチーム同士」は入力ミスの可能性が高いため、保存前に一声かける。
@@ -188,6 +205,115 @@ export default function CreateScreen() {
             />
           </View>
         </View>
+
+        {/*
+          写真を先頭に置く。以前は入力欄を全部埋めた先に写真ボタンがあり、
+          手を動かしている間ずっと何も得られない導線だった。
+          先に写真を選んでもらい、入力するそばからプレビューが変わることで
+          「フォームを埋める作業」ではなく「仕上げていく作業」にする。
+        */}
+        {!recordOnly && (
+          <View style={styles.card}>
+            <ThemedText type="smallBold" style={styles.sectionTitle}>
+              写真
+            </ThemedText>
+
+            {photoUri ? (
+              <>
+                {/*
+                  プレビューは見るだけ。pointerEvents="none" で
+                  OverlayCard 内のドラッグ/ピンチ操作を無効にしておく。
+                  有効なままだと画面のスクロールを奪ってしまう。
+                  写真の位置や拡大は「写真を調整する」で行う。
+                */}
+                <View
+                  pointerEvents="none"
+                  style={styles.previewStage}
+                  onLayout={(e) =>
+                    setPreviewWidth(e.nativeEvent.layout.width)
+                  }
+                >
+                  {previewWidth > 0 && (
+                    <OverlayCard
+                      photoUri={photoUri}
+                      photoAspectRatio={photoAspectRatio}
+                      ratio={ratio}
+                      position={position}
+                      styleKey={styleKey}
+                      visitorCode={visitorTeamName}
+                      homeCode={homeTeamName}
+                      visitorScore={visitorScore || "0"}
+                      homeScore={homeScore || "0"}
+                      dateLabel={formatDateOverlay(date)}
+                      stadium={stadiumName}
+                      memo={memo}
+                      winHighlight={winHighlight}
+                      photoOffset={photoOffset}
+                      photoScale={photoScale}
+                      telopScale={telopScale}
+                      style={{
+                        width: previewWidth,
+                        height: previewWidth / previewAspect,
+                        aspectRatio: undefined,
+                      }}
+                    />
+                  )}
+                </View>
+
+                <Pressable
+                  onPress={() => router.push("/adjust")}
+                  style={[
+                    styles.adjustBtn,
+                    { borderColor: colors.accent, marginTop: 12 },
+                  ]}
+                >
+                  <Ionicons name="crop" size={17} color={colors.accent} />
+                  <Text
+                    style={{
+                      color: colors.accent,
+                      fontSize: 14,
+                      fontWeight: "600",
+                    }}
+                  >
+                    写真を調整して保存する
+                  </Text>
+                </Pressable>
+
+                <View style={styles.photoActions}>
+                  <Pressable onPress={pickPhoto} hitSlop={8}>
+                    <ThemedText type="small" themeColor="textSecondary">
+                      写真を変更
+                    </ThemedText>
+                  </Pressable>
+                  <Pressable onPress={clearPhoto} hitSlop={8}>
+                    <ThemedText type="small" themeColor="danger">
+                      写真をクリア
+                    </ThemedText>
+                  </Pressable>
+                </View>
+              </>
+            ) : (
+              <Pressable
+                onPress={pickPhoto}
+                style={[
+                  styles.photoPlaceholder,
+                  {
+                    borderColor: colors.border,
+                    backgroundColor: colors.backgroundElement,
+                  },
+                ]}
+              >
+                <Ionicons name="image-outline" size={30} color={colors.accent} />
+                <Text style={{ color: colors.text, fontSize: 14.5, fontWeight: "600" }}>
+                  写真を選ぶ
+                </Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
+                  選ぶとここに仕上がりが表示されます
+                </Text>
+              </Pressable>
+            )}
+          </View>
+        )}
 
         <View style={styles.card}>
           <ThemedText type="smallBold" style={styles.sectionTitle}>
@@ -359,52 +485,6 @@ export default function CreateScreen() {
           </Pressable>
         )}
 
-        <View
-          style={recordOnly ? styles.disabledSection : undefined}
-          pointerEvents={recordOnly ? "none" : "auto"}
-        >
-          <Pressable
-            onPress={pickPhoto}
-            style={[
-              styles.photoBtn,
-              {
-                borderColor: colors.border,
-                backgroundColor: colors.backgroundElement,
-              },
-            ]}
-          >
-            <Ionicons name="image" size={17} color={colors.accent} />
-            <Text style={{ color: colors.text, fontSize: 14 }}>
-              {photoUri ? "写真を変更" : "写真を選ぶ"}
-            </Text>
-          </Pressable>
-
-          {photoUri && (
-            <Pressable
-              onPress={() => router.push("/adjust")}
-              style={[styles.adjustBtn, { borderColor: colors.accent }]}
-            >
-              <Ionicons name="crop" size={17} color={colors.accent} />
-              <Text
-                style={{
-                  color: colors.accent,
-                  fontSize: 14,
-                  fontWeight: "600",
-                }}
-              >
-                写真を調整する
-              </Text>
-            </Pressable>
-          )}
-
-          {photoUri && (
-            <Pressable onPress={clearPhoto} style={styles.clearPhoto}>
-              <ThemedText type="small" themeColor="danger">
-                写真をクリア
-              </ThemedText>
-            </Pressable>
-          )}
-        </View>
       </ScrollView>
     </ThemedView>
   );
@@ -425,16 +505,28 @@ const styles = StyleSheet.create({
   },
   header: { marginBottom: Spacing.three },
   title: { fontSize: 26, lineHeight: 32 },
-  disabledSection: { opacity: 0.35 },
-  photoBtn: {
-    flexDirection: "row",
+  card: {
+    marginBottom: Spacing.three,
+  },
+  previewStage: {
+    width: "100%",
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  photoPlaceholder: {
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: 6,
     borderWidth: 1,
+    borderStyle: "dashed",
     borderRadius: 8,
-    paddingVertical: 12,
-    marginBottom: 8,
+    paddingVertical: 34,
+  },
+  photoActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 12,
+    paddingHorizontal: 4,
   },
   adjustBtn: {
     flexDirection: "row",
@@ -445,10 +537,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 12,
     marginBottom: 8,
-  },
-  clearPhoto: { alignSelf: "center", marginBottom: Spacing.two, padding: 4 },
-  card: {
-    marginBottom: Spacing.three,
   },
   sectionTitle: {
     marginBottom: 10,
