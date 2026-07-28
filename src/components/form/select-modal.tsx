@@ -16,6 +16,11 @@ export interface SelectOption {
   value: string;
   /** 選択欄が閉じている状態でのみ使う短縮ラベル。省略時は label を使う。 */
   compactLabel?: string;
+  /**
+   * 一覧の先頭に並べ替えた項目に付ける小さな見出し（「マイチーム」「前回」など）。
+   * 並び順が変わった理由が分からないと戸惑うため、理由を明示するために使う。
+   */
+  badge?: string;
 }
 
 export function SelectModal({
@@ -98,14 +103,36 @@ export function SelectModal({
                   }}
                   style={[styles.row, { borderBottomColor: colors.border }]}
                 >
-                  <Text
-                    style={[
-                      styles.rowText,
-                      { color: selected ? colors.accent : colors.text },
-                    ]}
-                  >
-                    {item.label}
-                  </Text>
+                  <View style={styles.rowMain}>
+                    <Text
+                      style={[
+                        styles.rowText,
+                        { color: selected ? colors.accent : colors.text },
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                    {!!item.badge && (
+                      <View
+                        style={[
+                          styles.badge,
+                          {
+                            borderColor: colors.border,
+                            backgroundColor: colors.background,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.badgeText,
+                            { color: colors.textSecondary },
+                          ]}
+                        >
+                          {item.badge}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
                   {selected && (
                     <Ionicons
                       name="checkmark"
@@ -134,6 +161,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   fieldText: { fontSize: 14, flexShrink: 1, marginRight: 8 },
+  rowMain: { flexDirection: "row", alignItems: "center", gap: 8, flexShrink: 1 },
+  badge: {
+    borderWidth: 1,
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  badgeText: { fontSize: 10, fontWeight: "700" },
   backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)" },
   sheet: {
     maxHeight: "70%",
@@ -157,5 +192,5 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderBottomWidth: 1,
   },
-  rowText: { fontSize: 14.5 },
+  rowText: { fontSize: 14.5, flexShrink: 1 },
 });

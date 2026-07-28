@@ -6,6 +6,9 @@ import { HistoryEntry } from '@/types/history';
 // サーバー送信・アカウント連携は行わない。
 const HISTORY_KEY = 'kansen-kiroku:history';
 const MY_TEAM_KEY = 'kansen-kiroku:myTeam';
+// 前回選んだ球場。入力の手間を減らすための補助情報でしかないため、
+// バックアップ(backup.ts)の対象には含めていない。消えても記録自体は失われない。
+const LAST_STADIUM_KEY = 'kansen-kiroku:lastStadium';
 
 export async function loadHistory(): Promise<HistoryEntry[]> {
   try {
@@ -123,4 +126,21 @@ export function groupHistoryByYear(entries: HistoryEntry[]): { year: string; ent
       year,
       entries: list.sort(compareByDateDesc),
     }));
+}
+
+export async function loadLastStadium(): Promise<string> {
+  try {
+    const raw = await AsyncStorage.getItem(LAST_STADIUM_KEY);
+    return raw ?? '';
+  } catch {
+    return '';
+  }
+}
+
+export async function saveLastStadium(stadium: string): Promise<void> {
+  try {
+    await AsyncStorage.setItem(LAST_STADIUM_KEY, stadium);
+  } catch (e) {
+    console.warn('前回の球場の保存に失敗しました', e);
+  }
 }

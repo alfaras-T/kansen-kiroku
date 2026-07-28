@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useMemo, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -13,7 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DateField } from "@/components/form/date-field";
 import { LabeledField } from "@/components/form/labeled-field";
-import { SelectModal } from "@/components/form/select-modal";
+import { SelectModal, SelectOption } from "@/components/form/select-modal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { OTHER_STADIUM, STADIUMS } from "@/constants/stadiums";
@@ -21,23 +22,87 @@ import { OTHER_TEAM, TEAMS } from "@/constants/teams";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { useCreateForm } from "@/contexts/create-form";
 import { useTheme } from "@/hooks/use-theme";
+import {
+  loadLastStadium,
+  loadMyTeam,
+  saveLastStadium,
+} from "@/storage/history";
 import { confirmAsync } from "@/utils/dialogs";
 import { sanitizeScoreInput } from "@/utils/score";
 
-const TEAM_OPTIONS = [
+const BASE_TEAM_OPTIONS: SelectOption[] = [
   ...TEAMS.map((t) => ({ label: `${t.nickname}（${t.code}）`, value: t.code })),
   { label: "その他（自由入力）", value: OTHER_TEAM },
 ];
-const STADIUM_OPTIONS = [
+const BASE_STADIUM_OPTIONS: SelectOption[] = [
   ...STADIUMS.map((s) => ({ label: s, value: s })),
   { label: "その他（直接入力）", value: OTHER_STADIUM },
 ];
+
+/**
+ * 指定した値を一覧の先頭へ移動し、理由を示すバッジを付ける。
+ * 該当が無ければ元の並びをそのまま返す(マイチーム未設定・初回起動など)。
+ *
+ * 「初期値として選択済みにする」のではなく「一覧の先頭に出す」に留めている。
+ * 勝手に選択されていると、入力し忘れなのか自分で選んだのかが分からなくなるため。
+ */
+function withPinnedOption(
+  options: SelectOption[],
+  pinnedValue: string,
+  badge: string,
+): SelectOption[] {
+  if (!pinnedValue) return options;
+  const index = options.findIndex((o) => o.value === pinnedValue);
+  if (index < 0) return options;
+  return [
+    { ...options[index], badge },
+    ...options.slice(0, index),
+    ...options.slice(index + 1),
+  ];
+}
 
 export default function CreateScreen() {
   const colors = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const form = useCreateForm();
+
+  // マイチームと前回の球場は設定画面や前回の記録から来るため、
+  // 画面に戻るたびに読み直す(履歴画面と同じ useFocusEffect の使い方)。
+  const [myTeam, setMyTeam] = useState("");
+  const [lastStadium, setLastStadium] = useState("");
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      (async () => {
+        const [mt, ls] = await Promise.all([loadMyTeam(), loadLastStadium()]);
+        if (!alive) return;
+        setMyTeam(mt);
+        setLastStadium(ls);
+      })();
+      return () => {
+        alive = false;
+      };
+    }, []),
+  );
+
+  const teamOptions = useMemo(
+    () => withPinnedOption(BASE_TEAM_OPTIONS, myTeam, "マイチーム"),
+    [myTeam],
+  );
+  const stadiumOptions = useMemo(
+    () => withPinnedOption(BASE_STADIUM_OPTIONS, lastStadium, "前回"),
+    [lastStadium],
+  );
+
+  /** 球場を選んだら次回のために覚えておく(「その他」は対象外) */
+  function handleStadiumChange(value: string) {
+    setStadium(value);
+    if (value && value !== OTHER_STADIUM) {
+      setLastStadium(value);
+      saveLastStadium(value);
+    }
+  }
   const {
     photoUri,
     recordOnly,
@@ -138,7 +203,7 @@ export default function CreateScreen() {
               <View style={{ flex: 1 }}>
                 <SelectModal
                   title="先攻チームを選択"
-                  options={TEAM_OPTIONS}
+                  options={teamOptions}
                   value={visitorCode}
                   onChange={setVisitorCode}
                 />
@@ -191,7 +256,7 @@ export default function CreateScreen() {
               <View style={{ flex: 1 }}>
                 <SelectModal
                   title="後攻チームを選択"
-                  options={TEAM_OPTIONS}
+                  options={teamOptions}
                   value={homeCode}
                   onChange={setHomeCode}
                 />
@@ -242,9 +307,9 @@ export default function CreateScreen() {
           <LabeledField label="球場">
             <SelectModal
               title="球場を選択"
-              options={STADIUM_OPTIONS}
+              options={stadiumOptions}
               value={stadium}
-              onChange={setStadium}
+              onChange={handleStadiumChange}
             />
             {stadium === OTHER_STADIUM && (
               <TextInput
