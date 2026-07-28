@@ -34,6 +34,11 @@ jobs:
 
       - name: ビルド + TestFlight提出
         env:
+          # Apple Team ID を渡さないと、証明書の検証時に対話プロンプトが
+          # 出ようとして「Failed to authenticate ... Failed to display prompt:
+          # Apple Team ID:」というエラー行がログに残る。検証がスキップされる
+          # だけで致命的ではないが、本当の失敗を見落とす原因になるため明示する。
+          EXPO_APPLE_TEAM_ID: J3SSSXWS2X
           EXPO_ASC_API_KEY_PATH: ./asc-api-key.p8
           EXPO_ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           EXPO_ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
