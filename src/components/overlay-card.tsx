@@ -11,7 +11,7 @@ import {
   ViewStyle,
 } from 'react-native';
 
-import { resolveTelopTeamColor } from '@/constants/teamThemes';
+import { resolveTelopTeamColors } from '@/constants/teamThemes';
 import { useFavoriteTeamOptional } from '@/contexts/favorite-team';
 import {
   DEFAULT_PHOTO_OFFSET,
@@ -142,7 +142,7 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
     dateLine: { fontSize: sc(10.5), lineHeight: sc(14), letterSpacing: sc(3.5) },
     divider: {
       width: sc(30),
-      height: sc(StyleSheet.hairlineWidth * 2),
+      height: sc(StyleSheet.hairlineWidth * 4),
       marginTop: sc(3),
       marginBottom: sc(4),
     },
@@ -179,10 +179,10 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
   // (アマチュアの試合などを記録した場合)。
   const myTeamIsPlaying =
     !!myTeam && (visitorCode === myTeam || homeCode === myTeam);
-  const telopTeamColor =
+  const telopTeamColors =
     styleKey === 'minimal' || !myTeamIsPlaying
       ? null
-      : resolveTelopTeamColor(myTeam);
+      : resolveTelopTeamColors(myTeam);
   // 「元の写真のまま」の場合は写真自体の縦横比を使う。
   // 写真が無い/縦横比が未取得の場合のみ1:1にフォールバックする。
   const frameAspect = resolveOverlayAspect(ratio, photoAspectRatio);
@@ -322,6 +322,24 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
     textShadowRadius: sc(6),
   };
 
+  // 球団カラーの文字は、セカンドカラーで縁取って可読性を確保する。
+  //
+  // オフセットを0にして四方に均等ににじませることで、落ち影ではなく
+  // 「縁」として読ませる。半径は文字の大きさに対する比率で決めるので、
+  // プレビューでも書き出しでも縁の太さの見え方が変わらない。
+  //
+  // React Native の Text は影を1つしか持てず、本当の意味での線の縁取り
+  // (text-stroke)は使えない。文字を複数枚重ねれば実現できるが、
+  // scoreRow の折り返しや maxWidth の効き方が変わってレイアウトが崩れる
+  // 危険があるため、影による縁取りで代用している。
+  const outlinedTextShadow = telopTeamColors
+    ? {
+        textShadowColor: telopTeamColors.outline,
+        textShadowOffset: { width: 0, height: 0 },
+        textShadowRadius: sc(2.5),
+      }
+    : textShadow;
+
   // 写真とテキストの間に敷くスクリム(グラデーション)。テロップのある側の端から
   // 透明に抜けていく。テキストの視認性を上げつつ写真の雰囲気を壊さない、
   // ポスターや映画の字幕帯と同じ手法。
@@ -405,8 +423,8 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
           style={[
             styles.dateLine,
             telopStyles.dateLine,
-            textShadow,
-            { color: telopTeamColor ?? palette.accent },
+            outlinedTextShadow,
+            { color: telopTeamColors?.fill ?? palette.accent },
           ]}
           numberOfLines={1}>
           {dateLabel}
@@ -438,9 +456,26 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
           style={[
             styles.divider,
             telopStyles.divider,
-            { backgroundColor: telopTeamColor ?? palette.divider },
+            {
+              backgroundColor:
+                telopTeamColors?.outline ?? palette.divider,
+            },
           ]}
-        />
+        >
+          {/*
+            区切り線も同じ規則で縁取る。線が細いので影ではなく、外側の
+            Viewをセカンドカラー、内側をメインカラーにした二重構造にする。
+            内側を上下に食い込ませることで、上下だけに縁が出る。
+          */}
+          {!!telopTeamColors && (
+            <View
+              style={[
+                styles.dividerInner,
+                { backgroundColor: telopTeamColors.fill },
+              ]}
+            />
+          )}
+        </View>
 
         <Text
           style={[styles.stadiumLine, telopStyles.stadiumLine, textShadow, { color: palette.caption }]}
@@ -512,9 +547,15 @@ const styles = StyleSheet.create({
   },
   divider: {
     width: 30,
-    height: StyleSheet.hairlineWidth * 2,
+    // 縁取りの分だけ厚みを持たせる(内側の線 + 上下の縁)
+    height: StyleSheet.hairlineWidth * 4,
     marginTop: 3,
     marginBottom: 4,
+    justifyContent: "center",
+  },
+  dividerInner: {
+    width: "100%",
+    height: "50%",
   },
   stadiumLine: {
     fontSize: 12,

@@ -279,14 +279,26 @@ export function resolveTheme(favoriteTeam: string): Palette {
   return TEAM_THEMES[favoriteTeam as TeamCode] ?? DEFAULT_PALETTE;
 }
 
+/** テロップで使う球団カラーの組。fill を outline で縁取る。 */
+export interface TelopTeamColors {
+  /** 文字・線の色。公式メインカラー */
+  fill: string;
+  /** 縁取りの色。公式セカンドカラー */
+  outline: string;
+}
+
 /**
- * テロップの日付・区切り線に使う球団カラーを返す。未選択や該当なしは null。
+ * テロップの日付・区切り線に使う色の組を返す。未選択や該当なしは null。
  *
- * 明るさによる振り替えはせず、公式のメインカラーをそのまま使う。
- * 濃紺や黒のメインカラーは写真の上で沈みやすいが、球団の色として
- * 正しいことを優先する。
+ * メインカラーをそのまま使い、可読性はセカンドカラーの縁取りで確保する。
+ * 濃紺や黒のメインカラーは単体では写真の上で沈むが、公式に対をなす
+ * 白やゴールドで囲むことで、色を変えずに読めるようになる。
+ * 全球団で同じ規則(メインをセカンドで縁取る)なので見た目に統一感が出る。
  */
-export function resolveTelopTeamColor(favoriteTeam: string): string | null {
+export function resolveTelopTeamColors(
+  favoriteTeam: string,
+): TelopTeamColors | null {
   const brand = TEAM_BRAND_COLORS[favoriteTeam as TeamCode];
-  return brand ? brand.main : null;
+  if (!brand) return null;
+  return { fill: brand.main, outline: brand.second };
 }
