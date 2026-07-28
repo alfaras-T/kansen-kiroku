@@ -130,8 +130,13 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
   const [homeCode, setHomeCode] = useState<string>('');
   const [visitorTeamOther, setVisitorTeamOther] = useState('');
   const [homeTeamOther, setHomeTeamOther] = useState('');
-  const [visitorScore, setVisitorScore] = useState('3');
-  const [homeScore, setHomeScore] = useState('1');
+  // 得点も初期値は空。「3 - 1」のような、それらしい試合結果が最初から
+  // 入っていると、入力し忘れたのか本人が入れた値なのか区別が付かない。
+  // 空のままでも履歴保存時(handleSaveRecord)とテロップ描画時(adjust.tsx)に
+  // '0' へ読み替えるので、未入力で書き出しても破綻しない。
+  // 何を入れる欄かは、入力欄の上の「得点」ラベルとプレースホルダの0で示す。
+  const [visitorScore, setVisitorScore] = useState('');
+  const [homeScore, setHomeScore] = useState('');
   const [memo, setMemo] = useState('');
 
   const [saving, setSaving] = useState(false);

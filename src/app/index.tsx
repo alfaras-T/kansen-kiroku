@@ -143,20 +143,29 @@ export default function CreateScreen() {
                   onChange={setVisitorCode}
                 />
               </View>
-              <TextInput
-                value={visitorScore}
-                onChangeText={(t) => setVisitorScore(sanitizeScoreInput(t))}
-                keyboardType="number-pad"
-                accessibilityLabel="先攻チームの得点"
-                style={[
-                  styles.scoreInput,
-                  {
-                    borderColor: colors.border,
-                    backgroundColor: colors.backgroundElement,
-                    color: colors.text,
-                  },
-                ]}
-              />
+              <View style={styles.scoreField}>
+                <Text
+                  style={[styles.scoreCaption, { color: colors.textSecondary }]}
+                >
+                  得点
+                </Text>
+                <TextInput
+                  value={visitorScore}
+                  onChangeText={(t) => setVisitorScore(sanitizeScoreInput(t))}
+                  keyboardType="number-pad"
+                  accessibilityLabel="先攻チームの得点"
+                  placeholder="0"
+                  placeholderTextColor={colors.textSecondary}
+                  style={[
+                    styles.scoreInput,
+                    {
+                      borderColor: colors.border,
+                      backgroundColor: colors.backgroundElement,
+                      color: colors.text,
+                    },
+                  ]}
+                />
+              </View>
             </View>
             {visitorCode === OTHER_TEAM && (
               <TextInput
@@ -187,20 +196,29 @@ export default function CreateScreen() {
                   onChange={setHomeCode}
                 />
               </View>
-              <TextInput
-                value={homeScore}
-                onChangeText={(t) => setHomeScore(sanitizeScoreInput(t))}
-                keyboardType="number-pad"
-                accessibilityLabel="後攻チームの得点"
-                style={[
-                  styles.scoreInput,
-                  {
-                    borderColor: colors.border,
-                    backgroundColor: colors.backgroundElement,
-                    color: colors.text,
-                  },
-                ]}
-              />
+              <View style={styles.scoreField}>
+                <Text
+                  style={[styles.scoreCaption, { color: colors.textSecondary }]}
+                >
+                  得点
+                </Text>
+                <TextInput
+                  value={homeScore}
+                  onChangeText={(t) => setHomeScore(sanitizeScoreInput(t))}
+                  keyboardType="number-pad"
+                  accessibilityLabel="後攻チームの得点"
+                  placeholder="0"
+                  placeholderTextColor={colors.textSecondary}
+                  style={[
+                    styles.scoreInput,
+                    {
+                      borderColor: colors.border,
+                      backgroundColor: colors.backgroundElement,
+                      color: colors.text,
+                    },
+                  ]}
+                />
+              </View>
             </View>
             {homeCode === OTHER_TEAM && (
               <TextInput
@@ -371,9 +389,18 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     letterSpacing: 0.5,
   },
-  teamRow: { flexDirection: "row", gap: 8, alignItems: "center" },
+  // alignItems は flex-end。得点欄の上に「得点」ラベルが乗るため、
+  // 中央揃えだと入力欄だけが下にずれてチーム選択欄と揃わなくなる。
+  // 下端で揃えることで、選択欄と入力欄が同じ行に並んで見える。
+  teamRow: { flexDirection: "row", gap: 8, alignItems: "flex-end" },
+  scoreField: { width: 64 },
+  scoreCaption: {
+    fontSize: 10,
+    textAlign: "center",
+    marginBottom: 3,
+  },
   scoreInput: {
-    width: 64,
+    width: "100%",
     borderWidth: 1,
     borderRadius: 6,
     paddingVertical: 9,
