@@ -23,6 +23,7 @@ import {
   OutputRatio,
   OverlayPosition,
   OverlayStyleKey,
+  OverlayTelopSizes,
   PhotoOffset,
   resolveOverlayAspect,
 } from '@/constants/overlayStyles';
@@ -124,34 +125,49 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
   // 実寸を変えればその大きさで文字が描き直されるため、輪郭が保たれる。
   const telopFactor = telopScale * scaleFactor;
   const sc = (v: number) => v * telopFactor;
+  // プリセットごとのテロップの階層。既定はスコアが最大だが、'スタンプ'のように
+  // 日付を主役に据える構成も選べるようにしている。
+  const telopSizes: OverlayTelopSizes = OVERLAY_STYLES[styleKey].sizes ?? {};
+  /** 要素ごとの倍率を掛けた上で、書き出し用の拡大率を掛ける */
+  const scOf = (key: keyof OverlayTelopSizes, v: number) =>
+    sc(v * (telopSizes[key] ?? 1));
+
   const telopStyles = {
-    scoreRow: { marginTop: sc(3) },
+    scoreRow: { marginTop: scOf('score', 3) },
     code: {
-      fontSize: sc(21),
-      lineHeight: sc(24),
-      letterSpacing: sc(1.5),
-      maxWidth: sc(120),
+      fontSize: scOf('code', 21),
+      lineHeight: scOf('code', 24),
+      letterSpacing: scOf('code', 1.5),
+      maxWidth: scOf('code', 120),
     },
     score: {
-      fontSize: sc(34),
-      lineHeight: sc(36),
-      letterSpacing: sc(1),
-      marginHorizontal: sc(7),
+      fontSize: scOf('score', 34),
+      lineHeight: scOf('score', 36),
+      letterSpacing: scOf('score', 1),
+      marginHorizontal: scOf('score', 7),
     },
-    scoreDash: { fontSize: sc(22), lineHeight: sc(36) },
-    dateLine: { fontSize: sc(10.5), lineHeight: sc(14), letterSpacing: sc(3.5) },
+    scoreDash: { fontSize: scOf('score', 22), lineHeight: scOf('score', 36) },
+    dateLine: {
+      fontSize: scOf('date', 10.5),
+      lineHeight: scOf('date', 14),
+      letterSpacing: scOf('date', 3.5),
+    },
     divider: {
       width: sc(30),
       height: sc(StyleSheet.hairlineWidth * 4),
       marginTop: sc(3),
       marginBottom: sc(4),
     },
-    stadiumLine: { fontSize: sc(12), lineHeight: sc(16), letterSpacing: sc(2.5) },
+    stadiumLine: {
+      fontSize: scOf('stadium', 12),
+      lineHeight: scOf('stadium', 16),
+      letterSpacing: scOf('stadium', 2.5),
+    },
     memo: {
-      fontSize: sc(10.5),
-      lineHeight: sc(14),
-      letterSpacing: sc(1),
-      marginTop: sc(3),
+      fontSize: scOf('memo', 10.5),
+      lineHeight: scOf('memo', 14),
+      letterSpacing: scOf('memo', 1),
+      marginTop: scOf('memo', 3),
     },
   };
 

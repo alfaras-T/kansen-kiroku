@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-export type OverlayStyleKey = 'classic' | 'minimal' | 'film' | 'night';
+export type OverlayStyleKey = 'classic' | 'minimal' | 'film' | 'night' | 'stamp';
 export type OverlayPosition = 'br' | 'bl' | 'tr' | 'tl';
 export type OutputRatio = 'original' | 'square' | 'portrait' | 'story';
 
@@ -20,6 +20,21 @@ export const MAX_TELOP_SCALE = 1.6;
 // テロップ(日付・スコア・球場等のテキストブロック)のデフォルトは等倍(=今のサイズ)のまま挿入する
 export const DEFAULT_TELOP_SCALE = 1.0;
 
+/**
+ * テロップ各要素の大きさの倍率。省略時は 1(既定の階層)。
+ *
+ * 既定のテロップはスコアが最大(34pt)で視線を独占するが、写真を見返した
+ * ときに記憶を呼び起こすのはスコアではなく「その日であったこと」の方が
+ * 多い。倍率を差し替えられるようにして、日付を主役にした構成も選べるようにする。
+ */
+export interface OverlayTelopSizes {
+  date?: number;
+  code?: number;
+  score?: number;
+  stadium?: number;
+  memo?: number;
+}
+
 export interface OverlayPalette {
   label: string;
   /** チームコードなど本文の色 */
@@ -36,6 +51,8 @@ export interface OverlayPalette {
   scrim: string;
   gradientFrom: string;
   gradientTo: string;
+  /** テロップの大きさの階層。省略時はスコアを主役にした既定の階層 */
+  sizes?: OverlayTelopSizes;
 }
 
 export const OVERLAY_STYLES: Record<OverlayStyleKey, OverlayPalette> = {
@@ -74,6 +91,24 @@ export const OVERLAY_STYLES: Record<OverlayStyleKey, OverlayPalette> = {
     scrim: 'rgba(24,14,6,0.45)',
     gradientFrom: '#1a120a',
     gradientTo: '#33210f',
+  },
+  // スコアを主役から降ろし、日付を大きく据えた構成。
+  // 「3対1だった」ことよりも「その日に行った」ことを残したい人向け。
+  // 色は控えめな温白色にしている。日付が大きくなる分、色まで強いと
+  // うるさくなるため。
+  stamp: {
+    label: 'スタンプ',
+    body: '#F4EFE6',
+    accent: '#EBD9BC',
+    dim: 'rgba(244,239,230,0.4)',
+    caption: 'rgba(244,239,230,0.92)',
+    divider: 'rgba(244,239,230,0.45)',
+    scrim: 'rgba(18,14,10,0.42)',
+    gradientFrom: '#17130d',
+    gradientTo: '#2c2418',
+    // 日付を最大にし、スコアを添え物の大きさまで落とす。
+    // 既定値(日付10.5/コード21/スコア34/球場12)に対する倍率。
+    sizes: { date: 1.7, code: 0.8, score: 0.45, stadium: 1.15 },
   },
   // ナイトゲームの空気。氷のようなブルーで涼しく締める
   night: {
