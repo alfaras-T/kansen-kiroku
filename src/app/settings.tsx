@@ -1,12 +1,14 @@
 import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SelectModal } from "@/components/form/select-modal";
 import { InfoNote, InfoSheet, InfoStep } from "@/components/info-sheet";
 import { ContactSheet } from "@/components/contact-sheet";
+import PrivacyScreen from "./privacy";
+import SupportScreen from "./support";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { WEB_BASE_URL } from "@/constants/contact";
@@ -29,16 +31,24 @@ export default function SettingsScreen() {
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
 
+  const [legalPage, setLegalPage] = useState<"privacy" | "support" | null>(null);
+
   // Web: Linking.openURLは既定でwindow.open(url, '_blank')を呼ぶため、
   // 中身が届くまで真っ白な新規タブが必ず一瞬表示されてしまう。
   // 同一タブでの通常遷移(window.location.href)にすることでこれを避ける。
-  // ネイティブでは引き続き外部ブラウザで開く。
+  //
+  // ネイティブ: 以前は同じURLを外部ブラウザで開いていたが、アプリから
+  // Safariに飛ばされる体験になってしまうため、アプリ内のモーダルで表示する。
+  // ここで router.push("/privacy") を使わないのは、この app が _layout.tsx の
+  // RootGate による pathname 分岐で画面を出しており、Stack/Slot を持たないため。
+  // クライアント側の遷移は当てにできないので、ルーティングを介さず
+  // コンポーネントを直接モーダルに描画する。
   function openLegalPage(path: "/privacy" | "/support") {
     if (Platform.OS === "web") {
       window.location.href = `${WEB_BASE_URL}${path}`;
-    } else {
-      Linking.openURL(`${WEB_BASE_URL}${path}`);
+      return;
     }
+    setLegalPage(path === "/privacy" ? "privacy" : "support");
   }
   const [backupHelpOpen, setBackupHelpOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
@@ -277,6 +287,19 @@ export default function SettingsScreen() {
       </InfoSheet>
 
       <ContactSheet visible={contactOpen} onClose={() => setContactOpen(false)} />
+
+      {/* プライバシーポリシー / サポートをアプリ内で表示する（ネイティブのみ） */}
+      <Modal
+        visible={legalPage !== null}
+        animationType="slide"
+        onRequestClose={() => setLegalPage(null)}
+      >
+        {legalPage === "privacy" ? (
+          <PrivacyScreen onClose={() => setLegalPage(null)} />
+        ) : legalPage === "support" ? (
+          <SupportScreen onClose={() => setLegalPage(null)} />
+        ) : null}
+      </Modal>
     </ThemedView>
   );
 }

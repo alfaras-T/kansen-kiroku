@@ -86,7 +86,9 @@ export default function AdjustScreen() {
     stadiumName,
     memo,
     saving,
-    handleSaveAndShare,
+    savingMode,
+    handleSave,
+    handleShare,
   } = form;
 
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
@@ -366,24 +368,47 @@ export default function AdjustScreen() {
               />
             </View>
 
+            {/*
+              保存と共有は別ボタンにしている。
+              1つにまとめると、共有したいだけの場合でも写真フォルダに
+              必ず追加されてしまうため。
+            */}
             <View style={styles.bottomBar}>
               <Pressable
                 disabled={saving}
-                onPress={handleSaveAndShare}
+                onPress={handleSave}
                 style={[
                   styles.saveShareBtn,
                   { backgroundColor: colors.accent, opacity: saving ? 0.6 : 1 },
                 ]}
               >
                 <Ionicons
-                  name="share-outline"
+                  name="download-outline"
                   size={19}
                   color={colors.onAccent}
                 />
                 <Text
                   style={[styles.saveShareBtnText, { color: colors.onAccent }]}
                 >
-                  {saving ? "処理中…" : "保存 / 共有"}
+                  {savingMode === "save" ? "処理中…" : "保存"}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                disabled={saving}
+                onPress={handleShare}
+                style={[
+                  styles.shareBtn,
+                  { borderColor: colors.accent, opacity: saving ? 0.6 : 1 },
+                ]}
+              >
+                <Ionicons
+                  name="share-outline"
+                  size={19}
+                  color={colors.accent}
+                />
+                <Text style={[styles.saveShareBtnText, { color: colors.accent }]}>
+                  {savingMode === "share" ? "処理中…" : "共有"}
                 </Text>
               </Pressable>
             </View>
@@ -530,14 +555,33 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     marginRight: 10,
   },
-  bottomBar: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 4 },
+  bottomBar: {
+    flexDirection: "row",
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 4,
+  },
   saveShareBtn: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 9,
     borderRadius: 10,
     paddingVertical: 15,
+  },
+  // 共有は副次的な操作なので、塗りつぶさず枠線のみにして
+  // 保存ボタンとの主従を視覚的に分ける。高さは保存側と揃える。
+  shareBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 9,
+    borderRadius: 10,
+    paddingVertical: 15,
+    borderWidth: 1.5,
   },
   saveShareBtnText: { fontWeight: "700", fontSize: 15.5 },
 });

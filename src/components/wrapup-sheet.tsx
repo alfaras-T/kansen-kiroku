@@ -46,6 +46,7 @@ export function WrapUpSheet({
   const colors = useTheme();
   const [ratio, setRatio] = useState<WrapRatio>("story");
   const [busy, setBusy] = useState(false);
+  const [busyMode, setBusyMode] = useState<"save" | "share" | null>(null);
   const [backgroundUri, setBackgroundUri] = useState<string | null>(null);
   const exportRef = useRef<View>(null);
   const previewRef = useRef<View>(null);
@@ -210,6 +211,13 @@ export function WrapUpSheet({
     }
   }
 
+  function downloadOnWeb(uri: string) {
+    const link = document.createElement("a");
+    link.download = `ball-films_wrapup_${summary!.year}.png`;
+    link.href = uri;
+    link.click();
+  }
+
   async function shareOnWeb(uri: string) {
     const filename = `ball-films_wrapup_${summary!.year}.png`;
     try {
@@ -227,15 +235,20 @@ export function WrapUpSheet({
     } catch {
       // fall through to download
     }
-    const link = document.createElement("a");
-    link.download = filename;
-    link.href = uri;
-    link.click();
+    downloadOnWeb(uri);
   }
 
-  async function handleShare() {
+  /**
+   * まとめ画像の書き出し本体。観戦カード側（create-form.tsx）と同じ考え方で、
+   * 共通の前処理だけを共有し、mode で後段を切り替える。
+   *
+   * - 'save'  : 写真アプリ（Webはダウンロード）に保存する。共有シートは開かない
+   * - 'share' : 共有シートだけを開く。写真アプリには追加しない
+   */
+  async function runExport(mode: "save" | "share") {
     if (busy) return;
     setBusy(true);
+    setBusyMode(mode);
     try {
       if (backgroundUri) await waitForBackground();
       // Webは事前生成済みの画像があればそれを使う(タップ直後に共有できる)
@@ -259,71 +272,78 @@ export function WrapUpSheet({
       ) {
         uri = `file://${uri}`;
       }
+
       if (Platform.OS === "web") {
-        await shareOnWeb(uri);
+        if (mode === "save") {
+          downloadOnWeb(uri);
+          notify("保存しました", "端末のダウンロードフォルダに画像を保存しました。");
+        } else {
+          await shareOnWeb(uri);
+        }
         return;
       }
-      // ネイティブ: 写真に保存してから共有シートを開く(既存の保存導線と同じ流れ)
+
+      // ネイティブ
       // '/legacy' から読み込む理由は create-form.tsx のコメント参照
       // (SDK 57でルートの saveToLibraryAsync は実行時に必ず投げるスタブになった)
-      const MediaLibrary = await import("expo-media-library/legacy");
-      // 権限を確認し、未許可のときだけダイアログを出す(毎回出さない)
-      let perm = await MediaLibrary.getPermissionsAsync();
-      let prompted = false;
-      if (!perm.granted) {
-        perm = await MediaLibrary.requestPermissionsAsync();
-        prompted = true;
-      }
-      if (perm.granted) {
+      if (mode === "save") {
+        const MediaLibrary = await import("expo-media-library/legacy");
+        // 権限を確認し、未許可のときだけダイアログを出す(毎回出さない)
+        let perm = await MediaLibrary.getPermissionsAsync();
+        if (!perm.granted) {
+          perm = await MediaLibrary.requestPermissionsAsync();
+        }
+        if (!perm.granted) {
+          notify("権限が必要です", "写真アプリへの保存を許可してください");
+          return;
+        }
         await MediaLibrary.saveToLibraryAsync(uri);
+        notify("保存しました", "写真アプリに画像を保存しました。");
+        return;
       }
-      // iOSでは、権限ダイアログが閉じるアニメーションの最中に共有シートを
-      // 出そうとすると表示が静かに失敗する(初回タップで共有画面が開かない
-      // 症状の原因)。ダイアログを出した直後は少し待ってから表示する。
-      if (prompted) {
-        await new Promise((resolve) => setTimeout(resolve, 700));
+
+      // mode === "share"
+      // 共有シートを開くだけ。写真アプリへの保存は行わない。
+      // 権限ダイアログを挟まなくなったため、以前ここにあった
+      // 「ダイアログが閉じるアニメーションと競合して共有シートが
+      // 出ない」問題は発生しなくなる。ただし別要因での失敗に備えて
+      // 1回だけ再試行する処理は残す。
+      if (!(await Sharing.isAvailableAsync())) {
+        notify("共有できません", "この端末では共有機能を利用できませんでした。");
+        return;
       }
       try {
-        if (await Sharing.isAvailableAsync()) {
-          try {
-            await Sharing.shareAsync(uri, {
-              mimeType: "image/png",
-              dialogTitle: "観戦まとめを共有",
-            });
-          } catch (firstError) {
-            // 表示タイミングの競合で失敗した場合に備え、少し待って1回だけ再試行
-            console.warn("共有シートの表示に失敗。再試行します", firstError);
-            await new Promise((resolve) => setTimeout(resolve, 600));
-            await Sharing.shareAsync(uri, {
-              mimeType: "image/png",
-              dialogTitle: "観戦まとめを共有",
-            });
-          }
-        }
-      } catch (e) {
-        console.warn("共有シートの表示に失敗しました(保存は完了済み)", e);
-        notify(
-          "写真に保存しました",
-          "共有画面を開けなかったため、保存のみ行いました。写真アプリから共有できます。",
-        );
-      }
-      if (!perm.granted) {
-        notify("写真への保存はスキップしました", "権限が無いため共有のみ行いました。");
+        await Sharing.shareAsync(uri, {
+          mimeType: "image/png",
+          dialogTitle: "観戦まとめを共有",
+        });
+      } catch (firstError) {
+        console.warn("共有シートの表示に失敗。再試行します", firstError);
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        await Sharing.shareAsync(uri, {
+          mimeType: "image/png",
+          dialogTitle: "観戦まとめを共有",
+        });
       }
     } catch (e) {
       // catchが無いと例外がそのまま握り潰され、「押しても何も起きない」
       // 状態になって原因が分からなくなる。必ずユーザーに伝える。
-      console.warn("まとめ画像の保存に失敗しました", e);
+      const label = mode === "save" ? "保存" : "共有";
+      console.warn(`まとめ画像の${label}に失敗しました`, e);
       notify(
-        "保存に失敗しました",
+        `${label}に失敗しました`,
         `時間をおいてもう一度お試しください。\n\n(詳細: ${String(
           (e as any)?.message ?? e,
         )})`,
       );
     } finally {
       setBusy(false);
+      setBusyMode(null);
     }
   }
+
+  const handleSave = () => runExport("save");
+  const handleShare = () => runExport("share");
 
   const exportHeight = wrapCardHeight(ratio, EXPORT_WIDTH);
 
@@ -443,28 +463,60 @@ export function WrapUpSheet({
             />
           </View>
 
-          <Pressable
-            onPress={handleShare}
-            disabled={busy || bgStatus === "loading"}
-            style={[
-              styles.shareBtn,
-              {
-                backgroundColor: colors.accent,
-                opacity: busy || bgStatus === "loading" ? 0.6 : 1,
-              },
-            ]}
-          >
-            <Ionicons name="share-outline" size={18} color={colors.onAccent} />
-            <Text style={[styles.shareBtnText, { color: colors.onAccent }]}>
-              {busy
-                ? "処理中…"
-                : bgStatus === "loading"
-                  ? "背景画像を読み込み中…"
-                  : Platform.OS === "web"
-                    ? "画像を共有・保存"
-                    : "写真に保存して共有"}
-            </Text>
-          </Pressable>
+          {/* 観戦カード側と同様、保存と共有は分ける */}
+          {bgStatus === "loading" ? (
+            <View
+              style={[
+                styles.shareBtn,
+                { backgroundColor: colors.accent, opacity: 0.6, marginTop: 18 },
+              ]}
+            >
+              <Text style={[styles.shareBtnText, { color: colors.onAccent }]}>
+                背景画像を読み込み中…
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.actionRow}>
+              <Pressable
+                onPress={handleSave}
+                disabled={busy}
+                style={[
+                  styles.shareBtn,
+                  styles.actionBtn,
+                  { backgroundColor: colors.accent, opacity: busy ? 0.6 : 1 },
+                ]}
+              >
+                <Ionicons
+                  name="download-outline"
+                  size={18}
+                  color={colors.onAccent}
+                />
+                <Text style={[styles.shareBtnText, { color: colors.onAccent }]}>
+                  {busyMode === "save" ? "処理中…" : "保存"}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={handleShare}
+                disabled={busy}
+                style={[
+                  styles.shareBtn,
+                  styles.actionBtn,
+                  styles.actionBtnOutline,
+                  { borderColor: colors.accent, opacity: busy ? 0.6 : 1 },
+                ]}
+              >
+                <Ionicons
+                  name="share-outline"
+                  size={18}
+                  color={colors.accent}
+                />
+                <Text style={[styles.shareBtnText, { color: colors.accent }]}>
+                  {busyMode === "share" ? "処理中…" : "共有"}
+                </Text>
+              </Pressable>
+            </View>
+          )}
           <Text style={[styles.note, { color: colors.textSecondary }]}>
             画像はこの端末上で生成されます。サーバーへは送信されません。
           </Text>
@@ -557,6 +609,11 @@ const styles = StyleSheet.create({
     marginTop: 18,
   },
   shareBtnText: { fontSize: 15, fontWeight: "700" },
+  // 保存 / 共有を横並びにする。marginTop は shareBtn 側で持っているため
+  // ここでは行として揃えるだけにする。
+  actionRow: { flexDirection: "row", gap: 10 },
+  actionBtn: { flex: 1 },
+  actionBtnOutline: { borderWidth: 1.5, backgroundColor: "transparent" },
   note: { fontSize: 12, marginTop: 10, textAlign: "center" },
   exportStage: { position: "absolute", top: 0, left: 0, opacity: 0 },
   processingOverlay: {

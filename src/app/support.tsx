@@ -27,10 +27,22 @@ function QA({ q, children }: { q: string; children: React.ReactNode }) {
   );
 }
 
-export default function SupportScreen() {
+/**
+ * onClose を渡した場合は「アプリ内モーダルとして開かれている」とみなし、
+ * 戻るボタンで画面遷移せずモーダルを閉じるだけにする。
+ * 渡さない場合（_layout.tsx の RootGate から /privacy · /support を
+ * 直接開いた場合。ストア審査担当者はこちらを通る）は従来どおり
+ * アプリのトップへ遷移する。
+ */
+export default function SupportScreen({ onClose }: { onClose?: () => void } = {}) {
   const colors = useTheme();
   const insets = useSafeAreaInsets();
   function backToApp() {
+    // アプリ内モーダルで表示中なら、閉じるだけで元の画面に戻る。
+    if (onClose) {
+      onClose();
+      return;
+    }
     if (Platform.OS === "web") {
       // ストア審査やURLを直接開いた場合など、アプリ内の遷移履歴を
       // 持たずに開かれることもあるため、履歴に頼らず
@@ -50,7 +62,7 @@ export default function SupportScreen() {
         <View style={styles.header}>
           <Pressable onPress={backToApp} hitSlop={10}>
             <ThemedText type="link" themeColor="accent">
-              ← Ball Filmsを開く
+              {onClose ? "← 戻る" : "← Ball Filmsを開く"}
             </ThemedText>
           </Pressable>
           <ThemedText type="title" style={styles.title}>

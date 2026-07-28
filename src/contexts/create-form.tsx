@@ -80,6 +80,8 @@ interface CreateFormContextValue {
   setMemo: (v: string) => void;
 
   saving: boolean;
+  /** 'save' | 'share' | null — 押された側のボタンだけ「処理中…」にするため */
+  savingMode: 'save' | 'share' | null;
   savedFlash: boolean;
 
   stadiumName: string;
@@ -89,7 +91,10 @@ interface CreateFormContextValue {
   pickPhoto: () => Promise<void>;
   clearPhoto: () => void;
   resetPhotoAdjustment: () => void;
-  handleSaveAndShare: () => Promise<void>;
+  /** 写真アプリ（Webはダウンロード）に保存する。共有シートは開かない */
+  handleSave: () => Promise<void>;
+  /** 共有シートだけを開く。写真アプリには追加しない */
+  handleShare: () => Promise<void>;
   handleSaveRecord: () => Promise<boolean>;
 }
 
@@ -126,6 +131,9 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
   const [memo, setMemo] = useState('');
 
   const [saving, setSaving] = useState(false);
+  // 保存ボタンと共有ボタンのどちらを押して処理中なのか。
+  // 押した側のボタンだけラベルを「処理中…」にするために使う。
+  const [savingMode, setSavingMode] = useState<'save' | 'share' | null>(null);
   const [savedFlash, setSavedFlash] = useState(false);
 
   const stadiumName = stadium === OTHER_STADIUM ? stadiumOther.trim() : stadium;
@@ -392,21 +400,40 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
    *   開く(他のアプリへすぐ送れるように)。共有シート表示に失敗しても保存自体は
    *   既に完了しているので、それを無効なエラーとして扱わない。
    */
-  async function handleSaveAndShare() {
+  /**
+   * 画像の書き出し本体。保存ボタンと共有ボタンで共通の前処理（キャプチャ・
+   * file://補完）を行い、mode によって後段の振る舞いだけを切り替える。
+   *
+   * - 'save'  : 写真アプリ（Webはダウンロード）に保存する。共有シートは開かない
+   * - 'share' : 共有シートだけを開く。写真アプリには追加しない
+   *
+   * 以前は1つのボタンで保存と共有を同時に行っていたが、共有するだけのつもりでも
+   * 写真フォルダに必ず追加されてしまうため、操作を分離した。
+   */
+  async function runExport(mode: 'save' | 'share') {
+    if (saving) return;
     setSaving(true);
+    setSavingMode(mode);
     try {
       const rawUri = Platform.OS === 'web' && preparedUri ? preparedUri : await capture();
       if (!rawUri) return;
       // captureRefはfile://スキームの付かない生のファイルパスを返すことがある。
       // expo-media-library / expo-sharing はfile:// URIを前提としているため補う。
+      // （iOS側は Data(contentsOf:) でファイルを読むため、スキームが無いと読めない）
       const uri =
         Platform.OS !== 'web' && !rawUri.startsWith('file://') && !rawUri.startsWith('data:')
           ? `file://${rawUri}`
           : rawUri;
 
       if (Platform.OS === 'web') {
-        const completed = await shareOrDownloadOnWeb(uri);
-        if (completed) await maybeSaveRecordAfterExport();
+        if (mode === 'save') {
+          downloadOnWeb(uri);
+          await maybeSaveRecordAfterExport();
+          notify('保存しました', '端末のダウンロードフォルダに画像を保存しました。');
+        } else {
+          const completed = await shareOrDownloadOnWeb(uri);
+          if (completed) await maybeSaveRecordAfterExport();
+        }
         return;
       }
 
@@ -419,36 +446,45 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
       // (node_modules/expo-media-library/src/legacyWarnings.ts)。
       // そのため型チェックもビルドも通るのに、実行時にだけ失敗する。
       // 従来の関数を使い続ける場合は '/legacy' から読み込む必要がある。
-      const MediaLibrary = await import('expo-media-library/legacy');
-      const perm = await MediaLibrary.requestPermissionsAsync();
-      if (!perm.granted) {
-        notify('権限が必要です', '写真アプリへの保存を許可してください');
+      if (mode === 'save') {
+        const MediaLibrary = await import('expo-media-library/legacy');
+        const perm = await MediaLibrary.requestPermissionsAsync();
+        if (!perm.granted) {
+          notify('権限が必要です', '写真アプリへの保存を許可してください');
+          return;
+        }
+        await MediaLibrary.saveToLibraryAsync(uri);
+        await maybeSaveRecordAfterExport();
+        notify('保存しました', '写真アプリに画像を保存しました。');
         return;
       }
-      await MediaLibrary.saveToLibraryAsync(uri);
-      await maybeSaveRecordAfterExport();
 
-      // 保存は完了済み。続けて共有シートを開く（失敗しても保存自体は成功しているので握りつぶす）
-      try {
-        const available = await Sharing.isAvailableAsync();
-        if (available) {
-          await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Ball Filmsを共有' });
-        }
-      } catch (e) {
-        console.warn('共有シートの表示に失敗しました（保存は完了済み）', e);
+      // mode === 'share'
+      // 共有シートを開くだけ。ここでは写真アプリへの保存は行わない。
+      // 保存も残したい場合は、利用者が共有シート内の「画像を保存」を選ぶか、
+      // 保存ボタンを別途押す。
+      const available = await Sharing.isAvailableAsync();
+      if (!available) {
+        notify('共有できません', 'この端末では共有機能を利用できませんでした。');
+        return;
       }
+      await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Ball Filmsを共有' });
+      await maybeSaveRecordAfterExport();
     } catch (e) {
-      console.warn('保存に失敗しました', e);
-      // 原因調査のため実際のエラー内容も添える。そのまま公開しても
-      // 差し支えない文面にしてあるので、無理に戻す必要はない。
+      const label = mode === 'save' ? '保存' : '共有';
+      console.warn(`${label}に失敗しました`, e);
       notify(
-        '保存に失敗しました',
+        `${label}に失敗しました`,
         `時間をおいてもう一度お試しください。\n\n(詳細: ${String((e as any)?.message ?? e)})`
       );
     } finally {
       setSaving(false);
+      setSavingMode(null);
     }
   }
+
+  const handleSave = () => runExport('save');
+  const handleShare = () => runExport('share');
 
   /**
    * 観戦履歴への保存に必要な項目が揃っているかを確認する。
@@ -543,6 +579,7 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     memo,
     setMemo,
     saving,
+    savingMode,
     savedFlash,
     stadiumName,
     visitorTeamName,
@@ -550,7 +587,8 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     pickPhoto,
     clearPhoto,
     resetPhotoAdjustment,
-    handleSaveAndShare,
+    handleSave,
+    handleShare,
     handleSaveRecord,
   };
 
