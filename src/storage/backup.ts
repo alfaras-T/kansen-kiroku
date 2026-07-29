@@ -7,6 +7,10 @@ import {
   saveHistory,
   saveMyTeam,
 } from "@/storage/history";
+import {
+  exportThumbnails,
+  importThumbnails,
+} from "@/storage/thumbnails";
 import { HistoryEntry } from "@/types/history";
 
 // 観戦履歴・マイチーム・お気に入りチームをまとめてJSONとして書き出し/読み込みするための
@@ -21,6 +25,13 @@ interface BackupPayload {
   history: HistoryEntry[];
   myTeam: string;
   favoriteTeam: string;
+  /**
+   * ベタ焼き用サムネイル。記録IDをキーにしたbase64(JPEG)。
+   * 機種変更でベタ焼きが消えてしまうと、積み重ねを残すという狙いと
+   * 逆行するため、バックアップにも含める。
+   * version 1 のバックアップには存在しないので、読み込み側は省略を許容する。
+   */
+  thumbnails?: Record<string, string>;
 }
 
 function backupFileName(): string {
@@ -44,6 +55,7 @@ async function buildBackupJson(): Promise<string> {
     history,
     myTeam,
     favoriteTeam,
+    thumbnails: await exportThumbnails(history.map((e) => e.id)),
   };
   return JSON.stringify(payload, null, 2);
 }
@@ -123,6 +135,10 @@ function parseBackupJson(raw: string): BackupPayload {
     exportedAt: p.exportedAt ?? "",
     history: p.history,
     myTeam: typeof p.myTeam === "string" ? p.myTeam : "",
+    thumbnails:
+      p.thumbnails && typeof p.thumbnails === "object"
+        ? (p.thumbnails as Record<string, string>)
+        : undefined,
     favoriteTeam: typeof p.favoriteTeam === "string" ? p.favoriteTeam : "",
   };
 }
@@ -153,6 +169,7 @@ export async function importBackup(): Promise<BackupPayload | null> {
     saveHistory(payload.history),
     saveMyTeam(payload.myTeam),
     saveFavoriteTeam(payload.favoriteTeam),
+    importThumbnails(payload.thumbnails ?? {}),
   ]);
   return payload;
 }

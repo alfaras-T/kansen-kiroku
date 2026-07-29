@@ -53,6 +53,10 @@ export async function deleteHistoryEntry(id: string): Promise<HistoryEntry[]> {
   const current = await loadHistory();
   const next = current.filter((e) => e.id !== id);
   await saveHistory(next);
+  // ベタ焼き用のサムネイルも一緒に消す。残すと参照されないファイルが
+  // 端末内に溜まり続けてしまう。
+  const { deleteThumbnail } = await import('@/storage/thumbnails');
+  await deleteThumbnail(id);
   return next;
 }
 

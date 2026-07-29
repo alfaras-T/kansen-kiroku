@@ -13,10 +13,16 @@ import {
   OverlayPosition,
   OverlayStyleKey,
   PhotoOffset,
+  resolveOverlayAspect,
 } from '@/constants/overlayStyles';
 import { OTHER_STADIUM } from '@/constants/stadiums';
 import { OTHER_TEAM } from '@/constants/teams';
 import { addHistoryEntry } from '@/storage/history';
+import {
+  loadThumbnailEnabled,
+  saveThumbnail,
+  THUMBNAIL_WIDTH,
+} from '@/storage/thumbnails';
 import { HistoryEntry } from '@/types/history';
 import { confirmAsync, notify } from '@/utils/dialogs';
 import { blobUrlToResizedDataUri } from '@/utils/image';
@@ -95,7 +101,8 @@ interface CreateFormContextValue {
   handleSave: () => Promise<void>;
   /** 共有シートだけを開く。写真アプリには追加しない */
   handleShare: () => Promise<void>;
-  handleSaveRecord: () => Promise<boolean>;
+  /** 保存に成功したら記録のIDを、保存しなかった場合は null を返す */
+  handleSaveRecord: () => Promise<string | null>;
 }
 
 const CreateFormContext = createContext<CreateFormContextValue | null>(null);
@@ -508,12 +515,16 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     return null;
   }
 
-  /** 保存に成功したら true、必須項目が不足していて保存しなかった場合は false を返す */
-  async function handleSaveRecord(): Promise<boolean> {
+  /**
+   * 保存に成功したら作成した記録のIDを、保存しなかった場合は null を返す。
+   * IDを返すのは、呼び出し側がベタ焼き用のサムネイルを同じIDで
+   * 保存できるようにするため。
+   */
+  async function handleSaveRecord(): Promise<string | null> {
     const error = validateRecordInput();
     if (error) {
       notify('観戦履歴に保存できませんでした', error);
-      return false;
+      return null;
     }
     const entry: HistoryEntry = {
       id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
@@ -529,7 +540,55 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     await addHistoryEntry(entry);
     setSavedFlash(true);
     setTimeout(() => setSavedFlash(false), 1600);
-    return true;
+    return entry.id;
+  }
+
+  /**
+   * ベタ焼き（その年の観戦を格子に並べた一枚）のために、書き出した画像の
+   * 縮小版を記録と同じIDで保存する。
+   *
+   * 書き出し本体とは別にもう一度キャプチャしている。書き出し済みの大きな
+   * 画像を縮小する手段(expo-image-manipulator)を新たに入れると、ネイティブ
+   * 依存が増えてバージョン不整合の危険が生じるため、既にある書き出し
+   * ステージを小さい寸法で撮り直す方が安全と判断した。
+   * 縮小方向のキャプチャなので、テロップがぼやける心配はない。
+   *
+   * 失敗しても記録の保存自体は妨げない。あくまで付加価値のため。
+   */
+  async function captureAndStoreThumbnail(entryId: string) {
+    // 写真なしの記録（記録のみ保存）にはサムネイルを作らない
+    if (!photoUri || !exportRef.current) return;
+    if (!(await loadThumbnailEnabled())) return;
+
+    try {
+      const aspect = resolveOverlayAspect(ratio, photoAspectRatio);
+      const height = Math.round(THUMBNAIL_WIDTH / aspect);
+
+      if (Platform.OS === 'web') {
+        const { toJpeg } = await import('html-to-image');
+        const dataUri = await toJpeg(
+          exportRef.current as unknown as HTMLElement,
+          {
+            quality: 0.7,
+            canvasWidth: THUMBNAIL_WIDTH,
+            canvasHeight: height,
+          },
+        );
+        await saveThumbnail(entryId, dataUri.replace(/^data:image\/\w+;base64,/, ''));
+        return;
+      }
+
+      const base64 = await captureRef(exportRef, {
+        format: 'jpg',
+        quality: 0.7,
+        result: 'base64',
+        width: THUMBNAIL_WIDTH,
+        height,
+      });
+      await saveThumbnail(entryId, base64);
+    } catch (e) {
+      console.warn('サムネイルの生成に失敗しました', e);
+    }
   }
 
   /**
@@ -540,8 +599,10 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     if (!alsoSaveToHistory || recordSavedForDraft.current) return;
     // 保存に成功した場合のみ「この下書きは保存済み」の印を付ける。
     // 失敗時に印を付けてしまうと、入力を直しても二度と保存されなくなる。
-    const saved = await handleSaveRecord();
-    if (saved) recordSavedForDraft.current = true;
+    const entryId = await handleSaveRecord();
+    if (!entryId) return;
+    recordSavedForDraft.current = true;
+    await captureAndStoreThumbnail(entryId);
   }
 
   const value: CreateFormContextValue = {

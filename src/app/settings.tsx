@@ -1,12 +1,26 @@
 import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
-import { useRef, useState } from "react";
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import {
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SelectModal } from "@/components/form/select-modal";
 import { InfoNote, InfoSheet, InfoStep } from "@/components/info-sheet";
 import { ContactSheet } from "@/components/contact-sheet";
+import {
+  deleteAllThumbnails,
+  loadThumbnailEnabled,
+  saveThumbnailEnabled,
+} from "@/storage/thumbnails";
 import PrivacyScreen from "./privacy";
 import SupportScreen from "./support";
 import { ThemedText } from "@/components/themed-text";
@@ -56,6 +70,25 @@ export default function SettingsScreen() {
     setLegalPage(path === "/privacy" ? "privacy" : "support");
   }
   const [backupHelpOpen, setBackupHelpOpen] = useState(false);
+
+  // ベタ焼き用のサムネイル保存。既定は有効。
+  const [thumbnailEnabled, setThumbnailEnabled] = useState(true);
+  useEffect(() => {
+    loadThumbnailEnabled().then(setThumbnailEnabled);
+  }, []);
+
+  async function handleThumbnailToggle(next: boolean) {
+    if (!next) {
+      const ok = await confirmAsync(
+        "保存済みの写真を削除しますか？",
+        "オフにすると、これまでに保存したサムネイルもすべて削除されます。ベタ焼きに写真が並ばなくなります。観戦記録そのものは残ります。",
+      );
+      if (!ok) return;
+      await deleteAllThumbnails();
+    }
+    setThumbnailEnabled(next);
+    await saveThumbnailEnabled(next);
+  }
   const [contactOpen, setContactOpen] = useState(false);
 
   const appVersion = Constants.expoConfig?.version ?? "1.0.0";
@@ -139,6 +172,31 @@ export default function SettingsScreen() {
           >
             選んだチームのイメージカラーに合わせて、アプリの配色が変わります。
           </ThemedText>
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText
+            type="small"
+            themeColor="textSecondary"
+            style={styles.sectionLabel}
+          >
+            ベタ焼き用の写真
+          </ThemedText>
+          <View style={styles.toggleRow}>
+            <View style={styles.toggleTextArea}>
+              <Text style={[styles.toggleTitle, { color: colors.text }]}>
+                作った画像を残す
+              </Text>
+              <ThemedText type="small" themeColor="textSecondary">
+                その年の観戦を一枚に並べる「ベタ焼き」に使います。写真はこの端末の中だけに保存され、サーバーには送られません。
+              </ThemedText>
+            </View>
+            <Switch
+              value={thumbnailEnabled}
+              onValueChange={handleThumbnailToggle}
+              trackColor={{ true: colors.accent }}
+            />
+          </View>
         </View>
 
         <View style={styles.section}>
@@ -345,6 +403,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
+  toggleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+  },
+  toggleTextArea: { flex: 1, gap: 3 },
+  toggleTitle: { fontSize: 14.5, fontWeight: "600" },
   helpButton: {
     flexDirection: "row",
     alignItems: "center",
