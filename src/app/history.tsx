@@ -22,6 +22,7 @@ import {
 import { HistoryEntry } from "@/types/history";
 import { confirmAsync } from "@/utils/dialogs";
 import { summarizeYear } from "@/utils/yearSummary";
+import { ProofSheet } from "@/components/proof-sheet";
 import { WrapUpSheet } from "@/components/wrapup-sheet";
 import { EditEntrySheet } from "@/components/edit-entry-sheet";
 import { useTheme } from "@/hooks/use-theme";
@@ -41,6 +42,7 @@ export default function HistoryScreen() {
   const [loaded, setLoaded] = useState(false);
   const [selectedYear, setSelectedYear] = useState("");
   const [wrapOpen, setWrapOpen] = useState(false);
+  const [proofOpen, setProofOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<HistoryEntry | null>(null);
 
   const refresh = useCallback(async () => {
@@ -204,21 +206,40 @@ export default function HistoryScreen() {
       </View>
 
       {wrapSummary && wrapSummary.games > 0 && (
-        <Pressable
-          onPress={() => setWrapOpen(true)}
-          style={[
-            styles.wrapBtn,
-            {
-              borderColor: colors.accent,
-              backgroundColor: colors.backgroundElement,
-            },
-          ]}
-        >
-          <Ionicons name="sparkles-outline" size={16} color={colors.accent} />
-          <Text style={[styles.wrapBtnText, { color: colors.accent }]}>
-            {wrapYear}年の観戦まとめを作る
-          </Text>
-        </Pressable>
+        <View style={styles.sheetBtnRow}>
+          <Pressable
+            onPress={() => setWrapOpen(true)}
+            style={[
+              styles.wrapBtn,
+              styles.sheetBtn,
+              {
+                borderColor: colors.accent,
+                backgroundColor: colors.backgroundElement,
+              },
+            ]}
+          >
+            <Ionicons name="sparkles-outline" size={16} color={colors.accent} />
+            <Text style={[styles.wrapBtnText, { color: colors.accent }]}>
+              観戦まとめ
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setProofOpen(true)}
+            style={[
+              styles.wrapBtn,
+              styles.sheetBtn,
+              {
+                borderColor: colors.accent,
+                backgroundColor: colors.backgroundElement,
+              },
+            ]}
+          >
+            <Ionicons name="grid-outline" size={16} color={colors.accent} />
+            <Text style={[styles.wrapBtnText, { color: colors.accent }]}>
+              ベタ焼き
+            </Text>
+          </Pressable>
+        </View>
       )}
 
       {sections.length === 0 ? (
@@ -340,6 +361,13 @@ export default function HistoryScreen() {
         summary={wrapSummary}
         myTeam={myTeam}
       />
+      <ProofSheet
+        visible={proofOpen}
+        onClose={() => setProofOpen(false)}
+        year={wrapYear}
+        entries={entries.filter((e) => e.date?.slice(0, 4) === wrapYear)}
+        record={wrapSummary?.record ?? null}
+      />
       <EditEntrySheet
         entry={editingEntry}
         onClose={() => setEditingEntry(null)}
@@ -390,9 +418,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
     paddingVertical: 9,
+  },
+  // 観戦まとめとベタ焼きを横並びにする。余白はこの行がまとめて持つ。
+  sheetBtnRow: {
+    flexDirection: "row",
+    gap: 8,
     marginHorizontal: Spacing.four,
     marginBottom: Spacing.two,
   },
+  sheetBtn: { flex: 1 },
   wrapBtnText: { fontSize: 13.5, fontWeight: "700" },
   statLabel: {
     fontSize: 10.5,
