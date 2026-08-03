@@ -445,6 +445,7 @@ export default function HistoryScreen() {
         year={wrapYear}
         entries={entries.filter((e) => e.date?.slice(0, 4) === wrapYear)}
         record={wrapSummary?.record ?? null}
+        myTeam={myTeam}
       />
       <EditEntrySheet
         entry={editingEntry}

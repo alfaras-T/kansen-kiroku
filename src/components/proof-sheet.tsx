@@ -20,6 +20,7 @@ import {
   proofCardHeight,
 } from "@/components/proof-sheet-card";
 import { useTheme } from "@/hooks/use-theme";
+import { resolveGameResult } from "@/storage/history";
 import { loadThumbnailUriMap } from "@/storage/thumbnails";
 import { HistoryEntry } from "@/types/history";
 import { notify } from "@/utils/dialogs";
@@ -41,12 +42,14 @@ export function ProofSheet({
   year,
   entries,
   record,
+  myTeam,
 }: {
   visible: boolean;
   onClose: () => void;
   year: string;
   entries: HistoryEntry[];
   record: { win: number; lose: number; draw: number } | null;
+  myTeam: string;
 }) {
   const colors = useTheme();
   const [busy, setBusy] = useState(false);
@@ -73,12 +76,18 @@ export function ProofSheet({
       if (!alive) return;
       // 古い順に並べる。ベタ焼きは時系列で読むものなので。
       const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date));
-      setItems(sorted.map((entry) => ({ entry, uri: map[entry.id] ?? null })));
+      setItems(
+        sorted.map((entry) => ({
+          entry,
+          uri: map[entry.id] ?? null,
+          result: resolveGameResult(entry, myTeam),
+        })),
+      );
     })();
     return () => {
       alive = false;
     };
-  }, [visible, entries]);
+  }, [visible, entries, myTeam]);
 
   function handleCellLoad() {
     loadedRef.current += 1;

@@ -2,6 +2,7 @@ import { forwardRef } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 
 import { Palette } from "@/constants/theme";
+import { GameResult } from "@/storage/history";
 import { HistoryEntry } from "@/types/history";
 
 /** 基準幅。文字サイズや余白はこの幅に対する比率で決める。 */
@@ -11,7 +12,19 @@ export interface ProofSheetItem {
   entry: HistoryEntry;
   /** サムネイルの表示URI。無い記録もあるので null を許す。 */
   uri: string | null;
+  /** マイチームから見た勝敗。出場していない試合は null。 */
+  result: GameResult;
 }
+
+/**
+ * 勝敗の印。日本の野球でよく使われる表記に倣う。
+ * ○=勝ち ●=負け △=引き分け
+ */
+const RESULT_MARK: Record<"win" | "lose" | "draw", string> = {
+  win: "○",
+  lose: "●",
+  draw: "△",
+};
 
 /**
  * 枚数に応じて列数を決める。
@@ -113,7 +126,7 @@ export const ProofSheetCard = forwardRef<
       </View>
 
       <View style={[styles.grid, { gap, marginTop: 14 * s }]}>
-        {items.map(({ entry, uri }) => (
+        {items.map(({ entry, uri, result }) => (
           <View
             key={entry.id}
             style={[
@@ -158,6 +171,37 @@ export const ProofSheetCard = forwardRef<
                 </Text>
               </View>
             )}
+
+            {/*
+              勝敗の印。写真の有無に関わらず同じ位置に置くことで、
+              格子を眺めたときに勝ち負けの並びが読み取れる。
+              写真の上でも読めるよう、暗い下地を敷いている。
+            */}
+            {result && (
+              <View
+                style={[
+                  styles.mark,
+                  {
+                    top: 2 * s,
+                    right: 2 * s,
+                    paddingHorizontal: 3 * s,
+                    paddingVertical: 0.5 * s,
+                    borderRadius: 2 * s,
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    fontSize: 9 * s,
+                    lineHeight: 12 * s,
+                    fontWeight: "700",
+                    color: result === "lose" ? colors.textSecondary : "#FFFFFF",
+                  }}
+                >
+                  {RESULT_MARK[result]}
+                </Text>
+              </View>
+            )}
           </View>
         ))}
       </View>
@@ -194,6 +238,10 @@ const styles = StyleSheet.create({
   grid: { flexDirection: "row", flexWrap: "wrap" },
   cell: { overflow: "hidden" },
   cellImage: { width: "100%", height: "100%" },
+  mark: {
+    position: "absolute",
+    backgroundColor: "rgba(0,0,0,0.55)",
+  },
   cellFallback: {
     flex: 1,
     alignItems: "center",

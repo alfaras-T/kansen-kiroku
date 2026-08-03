@@ -57,6 +57,13 @@ export interface OverlayPalette {
   dateStamp?: boolean;
   /** 日付を自身の色で発光させる(焼き込みの滲みを再現する) */
   dateGlow?: boolean;
+  /**
+   * テロップを積み上げず、一列に並べる。
+   * フィルムカメラの焼き込みは、日付も何もかもが同じ大きさ・同じ色で
+   * 一列に並ぶ。要素ごとに大小や色を付けると、途端に「デザインされた
+   * テロップ」に見えてしまうため、構造ごと変える。
+   */
+  inline?: boolean;
 }
 
 export const OVERLAY_STYLES: Record<OverlayStyleKey, OverlayPalette> = {
@@ -104,12 +111,7 @@ export const OVERLAY_STYLES: Record<OverlayStyleKey, OverlayPalette> = {
     gradientTo: '#33210f',
     dateStamp: true,
     dateGlow: true,
-    // 日付は大きくせず、周りを引いて相対的に立たせる。
-    // 発光と「'26 6 14」の表記で既に十分目立つため、サイズまで上げると過剰。
-    // 「日付を大きくする」手法はスタンプが担っているので、フィルムは別の
-    // 手段で日付を立たせた方が、2つの違いが明確になる。
-    // 実際のコンパクトカメラの焼き込みも、写真の隅に小さく入るものだった。
-    sizes: { score: 0.75, code: 0.85 },
+    inline: true,
   },
   // スコアを主役から降ろし、日付を大きく据えた構成。
   // 「3対1だった」ことよりも「その日に行った」ことを残したい人向け。

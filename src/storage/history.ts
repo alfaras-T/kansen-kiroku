@@ -77,6 +77,27 @@ export async function saveMyTeam(code: string): Promise<void> {
   }
 }
 
+/** 1試合の、マイチームから見た結果。出場していなければ null。 */
+export type GameResult = 'win' | 'lose' | 'draw' | null;
+
+/**
+ * マイチームから見た1試合の勝敗を返す。computeRecord と同じ判定を
+ * 1件ずつ取り出せるようにしたもの(フィルムシートのコマに印を付けるため)。
+ */
+export function resolveGameResult(
+  entry: HistoryEntry,
+  myTeam: string,
+): GameResult {
+  if (!myTeam) return null;
+  if (entry.visitorCode !== myTeam && entry.homeCode !== myTeam) return null;
+  const v = Number(entry.visitorScore);
+  const h = Number(entry.homeScore);
+  if (!Number.isFinite(v) || !Number.isFinite(h)) return null;
+  if (v === h) return 'draw';
+  const winnerCode = v > h ? entry.visitorCode : entry.homeCode;
+  return winnerCode === myTeam ? 'win' : 'lose';
+}
+
 export function computeRecord(entries: HistoryEntry[], myTeam: string) {
   if (!myTeam) return null;
   let win = 0;

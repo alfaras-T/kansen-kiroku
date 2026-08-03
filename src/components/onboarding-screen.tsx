@@ -95,6 +95,11 @@ export function OnboardingScreen() {
             photoScale={DEFAULT_PHOTO_SCALE}
             telopScale={DEFAULT_TELOP_SCALE}
             previewMyTeam={picked}
+            // テロップの文字サイズは実寸(pt)で決まっているため、見本のような
+            // 小さいカードではテロップだけが相対的に大きくなり、日付が
+            // 途中で切れてしまう。実際の編集画面の幅(およそ350px)を基準に
+            // 縮小率を渡して、見た目の比率を実物と揃える。
+            scaleFactor={SAMPLE_WIDTH / 350}
             style={{
               width: SAMPLE_WIDTH,
               height: SAMPLE_WIDTH,

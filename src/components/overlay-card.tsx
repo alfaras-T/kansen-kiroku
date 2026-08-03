@@ -176,6 +176,11 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
       lineHeight: scOf('stadium', 13.5),
       letterSpacing: scOf('stadium', 2),
     },
+    inlineText: {
+      fontSize: scOf('date', 10),
+      lineHeight: scOf('date', 14),
+      letterSpacing: scOf('date', 1.6),
+    },
     memo: {
       fontSize: scOf('memo', 10.5),
       lineHeight: scOf('memo', 14),
@@ -462,52 +467,98 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
           // 大きくなってもテロップの基準位置はその角に固定されたままになる。
           // transformOrigin による支点指定はもう不要。
         ]}>
-        <Text
-          style={[
-            styles.dateLine,
-            telopStyles.dateLine,
-            dateShadow,
-            { color: dateColor },
-          ]}
-          numberOfLines={1}>
-          {dateText}
-        </Text>
+        {palette.inline ? (
+          /*
+            フィルムの一列構成。日付・スコア・球場を同じ大きさ・同じ色で
+            横一列に並べる。実際のフィルムカメラの焼き込みは、要素ごとに
+            大小や色の差を付けず、ただ一列に文字が並ぶだけだった。
+            勝敗ハイライトも効かせない。色の差が付いた時点で
+            「デザインされたテロップ」に見えてしまうため。
+          */
+          <View style={[styles.inlineRow, { gap: sc(9) }]}>
+            <Text
+              style={[
+                styles.inlineText,
+                telopStyles.inlineText,
+                dateShadow,
+                { color: dateColor },
+              ]}
+              numberOfLines={1}>
+              {dateText}
+            </Text>
+            <Text
+              style={[
+                styles.inlineText,
+                telopStyles.inlineText,
+                dateShadow,
+                { color: dateColor },
+              ]}
+              numberOfLines={1}>
+              {visitorCode} {visitorScore}-{homeScore} {homeCode}
+            </Text>
+            {!!stadium && (
+              <Text
+                style={[
+                  styles.inlineText,
+                  telopStyles.inlineText,
+                  dateShadow,
+                  { color: dateColor, flexShrink: 1 },
+                ]}
+                numberOfLines={1}>
+                {stadium}
+              </Text>
+            )}
+          </View>
+        ) : (
+          <>
+            <Text
+              style={[
+                styles.dateLine,
+                telopStyles.dateLine,
+                dateShadow,
+                { color: dateColor },
+              ]}
+              numberOfLines={1}>
+              {dateText}
+            </Text>
 
-        <View style={[styles.scoreRow, telopStyles.scoreRow]}>
-          <Text
-            style={[styles.code, telopStyles.code, textShadow, { color: palette.body }]}
-            numberOfLines={1}>
-            {visitorCode}
-          </Text>
-          <Text style={[styles.score, telopStyles.score, textShadow, { color: vColor }]}>
-            {visitorScore}
-          </Text>
-          <Text style={[styles.scoreDash, telopStyles.scoreDash, textShadow, { color: palette.dim }]}>
-            –
-          </Text>
-          <Text style={[styles.score, telopStyles.score, textShadow, { color: hColor }]}>
-            {homeScore}
-          </Text>
-          <Text
-            style={[styles.code, telopStyles.code, textShadow, { color: palette.body }]}
-            numberOfLines={1}>
-            {homeCode}
-          </Text>
-        </View>
+            <View style={[styles.scoreRow, telopStyles.scoreRow]}>
+              <Text
+                style={[styles.code, telopStyles.code, textShadow, { color: palette.body }]}
+                numberOfLines={1}>
+                {visitorCode}
+              </Text>
+              <Text style={[styles.score, telopStyles.score, textShadow, { color: vColor }]}>
+                {visitorScore}
+              </Text>
+              <Text style={[styles.scoreDash, telopStyles.scoreDash, textShadow, { color: palette.dim }]}>
+                –
+              </Text>
+              <Text style={[styles.score, telopStyles.score, textShadow, { color: hColor }]}>
+                {homeScore}
+              </Text>
+              <Text
+                style={[styles.code, telopStyles.code, textShadow, { color: palette.body }]}
+                numberOfLines={1}>
+                {homeCode}
+              </Text>
+            </View>
 
-        <View
-          style={[
-            styles.divider,
-            telopStyles.divider,
-            { backgroundColor: telopTeamColor ?? palette.divider },
-          ]}
-        />
+            <View
+              style={[
+                styles.divider,
+                telopStyles.divider,
+                { backgroundColor: telopTeamColor ?? palette.divider },
+              ]}
+            />
 
-        <Text
-          style={[styles.stadiumLine, telopStyles.stadiumLine, textShadow, { color: palette.caption }]}
-          numberOfLines={1}>
-          {stadium}
-        </Text>
+            <Text
+              style={[styles.stadiumLine, telopStyles.stadiumLine, textShadow, { color: palette.caption }]}
+              numberOfLines={1}>
+              {stadium}
+            </Text>
+          </>
+        )}
 
         {!!memo && (
           <Text
@@ -535,6 +586,8 @@ const styles = StyleSheet.create({
   photoImage: {
     position: 'absolute',
   },
+  inlineRow: { flexDirection: "row", alignItems: "baseline" },
+  inlineText: { fontWeight: "600" },
   overlayBlock: {
     position: 'absolute',
     maxWidth: '88%',
