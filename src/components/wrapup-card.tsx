@@ -1,5 +1,7 @@
 import { forwardRef } from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
+
+import { CardText } from "@/components/card-text";
 
 import { Palette } from "@/constants/theme";
 import {
@@ -130,7 +132,7 @@ export const WrapUpCard = forwardRef<View, {
       <View style={{ flex: 1, padding: (story ? 22 : 15) * s }}>
       {/* ヘッダー */}
       <View>
-        <Text
+        <CardText
           style={{
             color: ac,
             fontSize: (story ? 58 : 24) * s,
@@ -140,8 +142,8 @@ export const WrapUpCard = forwardRef<View, {
           }}
         >
           {summary.year}
-        </Text>
-        <Text
+        </CardText>
+        <CardText
           style={{
             color: tc,
             fontSize: (story ? 17 : 13) * s,
@@ -150,18 +152,18 @@ export const WrapUpCard = forwardRef<View, {
           }}
         >
           観戦まとめ
-        </Text>
+        </CardText>
       </View>
 
       {story && <View style={{ flexGrow: 1, maxHeight: 40 * s }} />}
 
       {/* メイン: 観戦数 */}
       <View style={{ marginTop: (story ? 12 : 6) * s }}>
-        <Text style={{ color: tc2, fontSize: (story ? 12.5 : 10.5) * s }}>
+        <CardText style={{ color: tc2, fontSize: (story ? 12.5 : 10.5) * s }}>
           今年、球場にいた回数
-        </Text>
+        </CardText>
         <View style={styles.bigRow}>
-          <Text
+          <CardText
             style={{
               color: ac,
               fontSize: (story ? 84 : 27) * s,
@@ -170,8 +172,8 @@ export const WrapUpCard = forwardRef<View, {
             }}
           >
             {summary.games}
-          </Text>
-          <Text
+          </CardText>
+          <CardText
             style={{
               color: tc,
               fontSize: (story ? 16 : 12) * s,
@@ -181,17 +183,17 @@ export const WrapUpCard = forwardRef<View, {
             }}
           >
             回
-          </Text>
+          </CardText>
         </View>
       </View>
 
       {/* マイチーム成績 */}
       {rec && (
         <View style={{ marginTop: (story ? 18 : 6) * s }}>
-          <Text style={{ color: tc2, fontSize: (story ? 12.5 : 10.5) * s }}>
+          <CardText style={{ color: tc2, fontSize: (story ? 12.5 : 10.5) * s }}>
             {nicknameOf(myTeam)}とともに
-          </Text>
-          <Text
+          </CardText>
+          <CardText
             style={{
               color: tc,
               fontSize: (story ? 24 : 14) * s,
@@ -201,9 +203,9 @@ export const WrapUpCard = forwardRef<View, {
           >
             {rec.win}勝{rec.lose}敗{rec.draw > 0 ? `${rec.draw}分` : ""}
             {pct !== null && (
-              <Text style={{ color: ac }}>{`  勝率${pct}%`}</Text>
+              <CardText style={{ color: ac }}>{`  勝率${pct}%`}</CardText>
             )}
-          </Text>
+          </CardText>
         </View>
       )}
 
@@ -227,15 +229,15 @@ export const WrapUpCard = forwardRef<View, {
               },
             ]}
           >
-            <Text
+            <CardText
               style={{
                 color: tc2,
                 fontSize: (story ? 11.5 : 9.5) * s,
               }}
             >
               {r.label}
-            </Text>
-            <Text
+            </CardText>
+            <CardText
               style={{
                 color: tc,
                 fontSize: (story ? 13.5 : 11.5) * s,
@@ -245,7 +247,7 @@ export const WrapUpCard = forwardRef<View, {
               numberOfLines={1}
             >
               {r.value}
-            </Text>
+            </CardText>
           </View>
         ))}
       </View>
@@ -253,11 +255,11 @@ export const WrapUpCard = forwardRef<View, {
       {/* フッター(通常フローで最下部に置き、行との重なりを構造的に防ぐ) */}
       <View style={[styles.footer, { paddingTop: (story ? 14 : 6) * s }]}>
         {summary.firstDate && summary.lastDate && (
-          <Text style={{ color: tc2, fontSize: (story ? 11.5 : 9.5) * s }}>
+          <CardText style={{ color: tc2, fontSize: (story ? 11.5 : 9.5) * s }}>
             {formatShortDate(summary.firstDate)} 〜 {formatShortDate(summary.lastDate)}
-          </Text>
+          </CardText>
         )}
-        <Text
+        <CardText
           style={{
             color: ac,
             fontSize: (story ? 12.5 : 10.5) * s,
@@ -266,7 +268,7 @@ export const WrapUpCard = forwardRef<View, {
           }}
         >
           Ball Films
-        </Text>
+        </CardText>
       </View>
       </View>
     </View>

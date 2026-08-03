@@ -6,10 +6,11 @@ import {
   PanResponder,
   PanResponderGestureState,
   StyleSheet,
-  Text,
   View,
   ViewStyle,
 } from 'react-native';
+
+import { CardText } from '@/components/card-text';
 
 import { resolveTelopTeamColor } from '@/constants/teamThemes';
 import { useFavoriteTeamOptional } from '@/contexts/favorite-team';
@@ -476,7 +477,7 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
             「デザインされたテロップ」に見えてしまうため。
           */
           <View style={[styles.inlineRow, { gap: sc(9) }]}>
-            <Text
+            <CardText
               style={[
                 styles.inlineText,
                 telopStyles.inlineText,
@@ -485,8 +486,8 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
               ]}
               numberOfLines={1}>
               {dateText}
-            </Text>
-            <Text
+            </CardText>
+            <CardText
               style={[
                 styles.inlineText,
                 telopStyles.inlineText,
@@ -495,9 +496,9 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
               ]}
               numberOfLines={1}>
               {visitorCode} {visitorScore}-{homeScore} {homeCode}
-            </Text>
+            </CardText>
             {!!stadium && (
-              <Text
+              <CardText
                 style={[
                   styles.inlineText,
                   telopStyles.inlineText,
@@ -506,12 +507,12 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
                 ]}
                 numberOfLines={1}>
                 {stadium}
-              </Text>
+              </CardText>
             )}
           </View>
         ) : (
           <>
-            <Text
+            <CardText
               style={[
                 styles.dateLine,
                 telopStyles.dateLine,
@@ -520,28 +521,28 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
               ]}
               numberOfLines={1}>
               {dateText}
-            </Text>
+            </CardText>
 
             <View style={[styles.scoreRow, telopStyles.scoreRow]}>
-              <Text
+              <CardText
                 style={[styles.code, telopStyles.code, textShadow, { color: palette.body }]}
                 numberOfLines={1}>
                 {visitorCode}
-              </Text>
-              <Text style={[styles.score, telopStyles.score, textShadow, { color: vColor }]}>
+              </CardText>
+              <CardText style={[styles.score, telopStyles.score, textShadow, { color: vColor }]}>
                 {visitorScore}
-              </Text>
-              <Text style={[styles.scoreDash, telopStyles.scoreDash, textShadow, { color: palette.dim }]}>
+              </CardText>
+              <CardText style={[styles.scoreDash, telopStyles.scoreDash, textShadow, { color: palette.dim }]}>
                 –
-              </Text>
-              <Text style={[styles.score, telopStyles.score, textShadow, { color: hColor }]}>
+              </CardText>
+              <CardText style={[styles.score, telopStyles.score, textShadow, { color: hColor }]}>
                 {homeScore}
-              </Text>
-              <Text
+              </CardText>
+              <CardText
                 style={[styles.code, telopStyles.code, textShadow, { color: palette.body }]}
                 numberOfLines={1}>
                 {homeCode}
-              </Text>
+              </CardText>
             </View>
 
             <View
@@ -552,20 +553,20 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
               ]}
             />
 
-            <Text
+            <CardText
               style={[styles.stadiumLine, telopStyles.stadiumLine, textShadow, { color: palette.caption }]}
               numberOfLines={1}>
               {stadium}
-            </Text>
+            </CardText>
           </>
         )}
 
         {!!memo && (
-          <Text
+          <CardText
             style={[styles.memo, telopStyles.memo, textShadow, { color: palette.caption }]}
             numberOfLines={1}>
             {memo}
-          </Text>
+          </CardText>
         )}
       </View>
     </View>

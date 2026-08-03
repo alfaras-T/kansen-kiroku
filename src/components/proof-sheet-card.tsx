@@ -1,5 +1,7 @@
 import { forwardRef } from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
+
+import { CardText } from "@/components/card-text";
 
 import { Palette } from "@/constants/theme";
 import { GameResult } from "@/storage/history";
@@ -103,15 +105,15 @@ export const ProofSheetCard = forwardRef<
       ]}
     >
       <View style={styles.header}>
-        <Text
+        <CardText
           style={[
             styles.year,
             { fontSize: 34 * s, lineHeight: 36 * s, color: colors.text },
           ]}
         >
           {year}
-        </Text>
-        <Text
+        </CardText>
+        <CardText
           style={[
             styles.brand,
             {
@@ -122,7 +124,7 @@ export const ProofSheetCard = forwardRef<
           ]}
         >
           BALL FILMS
-        </Text>
+        </CardText>
       </View>
 
       <View style={[styles.grid, { gap, marginTop: 14 * s }]}>
@@ -150,7 +152,7 @@ export const ProofSheetCard = forwardRef<
             ) : (
               // 写真が無い記録。日付とスコアだけの静かなコマにする。
               <View style={styles.cellFallback}>
-                <Text
+                <CardText
                   style={{
                     fontSize: 9 * s,
                     color: colors.textSecondary,
@@ -158,8 +160,8 @@ export const ProofSheetCard = forwardRef<
                   numberOfLines={1}
                 >
                   {shortDate(entry.date)}
-                </Text>
-                <Text
+                </CardText>
+                <CardText
                   style={{
                     fontSize: 11 * s,
                     fontWeight: "700",
@@ -168,7 +170,7 @@ export const ProofSheetCard = forwardRef<
                   numberOfLines={1}
                 >
                   {entry.visitorScore}-{entry.homeScore}
-                </Text>
+                </CardText>
               </View>
             )}
 
@@ -190,7 +192,7 @@ export const ProofSheetCard = forwardRef<
                   },
                 ]}
               >
-                <Text
+                <CardText
                   style={{
                     fontSize: 9 * s,
                     lineHeight: 12 * s,
@@ -199,7 +201,7 @@ export const ProofSheetCard = forwardRef<
                   }}
                 >
                   {RESULT_MARK[result]}
-                </Text>
+                </CardText>
               </View>
             )}
           </View>
@@ -207,9 +209,9 @@ export const ProofSheetCard = forwardRef<
       </View>
 
       <View style={[styles.footer, { marginTop: 16 * s }]}>
-        <Text style={{ fontSize: 12 * s, color: colors.textSecondary }}>
+        <CardText style={{ fontSize: 12 * s, color: colors.textSecondary }}>
           {items.length}試合
-        </Text>
+        </CardText>
         {record && (
           /*
             コマに付けた印と同じ記号で内訳を出す。
@@ -217,7 +219,7 @@ export const ProofSheetCard = forwardRef<
             どこへ行ったのか分からない。印のないコマ(マイチームが出ていない
             試合)があることを、記号の一致で読み取れるようにしている。
           */
-          <Text
+          <CardText
             style={{
               fontSize: 12 * s,
               fontWeight: "700",
@@ -228,7 +230,7 @@ export const ProofSheetCard = forwardRef<
             {record.win}　{RESULT_MARK.lose}
             {record.lose}　{RESULT_MARK.draw}
             {record.draw}
-          </Text>
+          </CardText>
         )}
       </View>
     </View>

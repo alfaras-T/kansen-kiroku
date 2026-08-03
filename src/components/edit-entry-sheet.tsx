@@ -185,6 +185,9 @@ export function EditEntrySheet({
               </View>
               <View style={styles.scoreField}>
                 <Text
+                  // 得点欄は幅64px固定のため、文字サイズを大きくしている
+                  // 端末では「得点」が折り返してしまう。拡大は1.2倍で頭打ちにする。
+                  maxFontSizeMultiplier={1.2}
                   style={[styles.scoreCaption, { color: colors.textSecondary }]}
                 >
                   得点
@@ -193,6 +196,7 @@ export function EditEntrySheet({
                   value={visitorScore}
                   onChangeText={(t) => setVisitorScore(sanitizeScoreInput(t))}
                   keyboardType="number-pad"
+                  maxFontSizeMultiplier={1.3}
                   accessibilityLabel="先攻チームの得点"
                   placeholder="0"
                   placeholderTextColor={colors.textSecondary}
@@ -238,6 +242,9 @@ export function EditEntrySheet({
               </View>
               <View style={styles.scoreField}>
                 <Text
+                  // 得点欄は幅64px固定のため、文字サイズを大きくしている
+                  // 端末では「得点」が折り返してしまう。拡大は1.2倍で頭打ちにする。
+                  maxFontSizeMultiplier={1.2}
                   style={[styles.scoreCaption, { color: colors.textSecondary }]}
                 >
                   得点
@@ -246,6 +253,7 @@ export function EditEntrySheet({
                   value={homeScore}
                   onChangeText={(t) => setHomeScore(sanitizeScoreInput(t))}
                   keyboardType="number-pad"
+                  maxFontSizeMultiplier={1.3}
                   accessibilityLabel="後攻チームの得点"
                   placeholder="0"
                   placeholderTextColor={colors.textSecondary}
