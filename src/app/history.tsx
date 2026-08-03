@@ -236,7 +236,7 @@ export default function HistoryScreen() {
           >
             <Ionicons name="grid-outline" size={16} color={colors.accent} />
             <Text style={[styles.wrapBtnText, { color: colors.accent }]}>
-              ベタ焼き
+              フィルムシート
             </Text>
           </Pressable>
         </View>

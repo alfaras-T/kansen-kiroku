@@ -81,7 +81,7 @@ export default function SettingsScreen() {
     if (!next) {
       const ok = await confirmAsync(
         "保存済みの写真を削除しますか？",
-        "オフにすると、これまでに保存したサムネイルもすべて削除されます。ベタ焼きに写真が並ばなくなります。観戦記録そのものは残ります。",
+        "オフにすると、これまでに保存したサムネイルもすべて削除されます。フィルムシートに写真が並ばなくなります。観戦記録そのものは残ります。",
       );
       if (!ok) return;
       await deleteAllThumbnails();
@@ -180,7 +180,7 @@ export default function SettingsScreen() {
             themeColor="textSecondary"
             style={styles.sectionLabel}
           >
-            ベタ焼き用の写真
+            フィルムシート用の写真
           </ThemedText>
           <View style={styles.toggleRow}>
             <View style={styles.toggleTextArea}>
@@ -188,7 +188,7 @@ export default function SettingsScreen() {
                 作った画像を残す
               </Text>
               <ThemedText type="small" themeColor="textSecondary">
-                その年の観戦を一枚に並べる「ベタ焼き」に使います。写真はこの端末の中だけに保存され、サーバーには送られません。
+                その年の観戦を一枚に並べる「フィルムシート」に使います。写真はこの端末の中だけに保存され、サーバーには送られません。
               </ThemedText>
             </View>
             <Switch

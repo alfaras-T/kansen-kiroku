@@ -134,7 +134,7 @@ export function ProofSheet({
 
       if (Platform.OS === "web") {
         const a = document.createElement("a");
-        a.download = `ball-films_${year}_contact-sheet.png`;
+        a.download = `ball-films_${year}_film-sheet.png`;
         a.href = uri;
         a.click();
         if (mode === "save") {
@@ -163,11 +163,11 @@ export function ProofSheet({
       }
       await Sharing.shareAsync(uri, {
         mimeType: "image/png",
-        dialogTitle: `${year}年のベタ焼き`,
+        dialogTitle: `${year}年のフィルムシート`,
       });
     } catch (e) {
       const label = mode === "save" ? "保存" : "共有";
-      console.warn(`ベタ焼きの${label}に失敗しました`, e);
+      console.warn(`フィルムシートの${label}に失敗しました`, e);
       notify(
         `${label}に失敗しました`,
         `時間をおいてもう一度お試しください。\n\n(詳細: ${String(
@@ -199,7 +199,7 @@ export function ProofSheet({
       >
         <View style={[styles.sheetHeader, { borderBottomColor: colors.border }]}>
           <Text style={[styles.sheetTitle, { color: colors.text }]}>
-            {year}年のベタ焼き
+            {year}年のフィルムシート
           </Text>
           <Pressable
             onPress={onClose}

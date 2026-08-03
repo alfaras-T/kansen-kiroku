@@ -279,41 +279,88 @@ export function resolveTheme(favoriteTeam: string): Palette {
   return TEAM_THEMES[favoriteTeam as TeamCode] ?? DEFAULT_PALETTE;
 }
 
-/** テロップで使う球団カラーの組。fill を outline で縁取る。 */
-export interface TelopTeamColors {
-  /** 文字・線の色。公式メインカラー */
-  fill: string;
-  /** 縁取りの色。公式セカンドカラー */
-  outline: string;
+/** #RRGGBB から sRGB の相対輝度(0=黒, 1=白)を求める。WCAG の定義に沿う。 */
+function relativeLuminance(hex: string): number {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return 1;
+  const int = parseInt(m[1], 16);
+  const channels = [(int >> 16) & 255, (int >> 8) & 255, int & 255].map((v) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  });
+  return (
+    0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2]
+  );
 }
 
-/**
- * テロップの日付・区切り線に使う色の組を返す。未選択や該当なしは null。
- *
- * メインカラーをそのまま使い、可読性はセカンドカラーの縁取りで確保する。
- * 濃紺や黒のメインカラーは単体では写真の上で沈むが、公式に対をなす
- * 白やゴールドで囲むことで、色を変えずに読めるようになる。
- * 全球団で同じ規則(メインをセカンドで縁取る)なので見た目に統一感が出る。
- */
-/**
- * 縁取り色の例外。
- *
- * ホークスは公式のメイン(レモンイエロー #FFF100)とセカンド(ホワイト)の
- * コントラストが 1.18:1 しかなく、白の縁が黄に埋もれて縁として機能しない。
- * ユニフォームで使われている黒に差し替える(黒との比は 17.82:1)。
- */
-const TELOP_OUTLINE_OVERRIDES: Partial<Record<TeamCode, string>> = {
-  H: '#000000',
-};
+function toHsl(hex: string): [number, number, number] {
+  const int = parseInt(hex.slice(1), 16);
+  const [r, g, b] = [(int >> 16) & 255, (int >> 8) & 255, int & 255].map(
+    (v) => v / 255,
+  );
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  const d = max - min;
+  if (!d) return [0, 0, l];
+  const sat = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  const h =
+    max === r
+      ? (g - b) / d + (g < b ? 6 : 0)
+      : max === g
+        ? (b - r) / d + 2
+        : (r - g) / d + 4;
+  return [h / 6, sat, l];
+}
 
-export function resolveTelopTeamColors(
-  favoriteTeam: string,
-): TelopTeamColors | null {
-  const code = favoriteTeam as TeamCode;
-  const brand = TEAM_BRAND_COLORS[code];
-  if (!brand) return null;
-  return {
-    fill: brand.main,
-    outline: TELOP_OUTLINE_OVERRIDES[code] ?? brand.second,
+function fromHsl(h: number, sat: number, l: number): string {
+  const f = (n: number) => {
+    const k = (n + h * 12) % 12;
+    const a = sat * Math.min(l, 1 - l);
+    return l - a * Math.max(-1, Math.min(k - 3, Math.min(9 - k, 1)));
   };
+  const to = (v: number) =>
+    Math.round(Math.max(0, Math.min(255, v * 255)))
+      .toString(16)
+      .padStart(2, '0')
+      .toUpperCase();
+  return `#${to(f(0))}${to(f(8))}${to(f(4))}`;
+}
+
+// テロップは写真の上の暗いスクリム(輝度0.005相当)に載る。
+// コントラスト比 4.5:1 を確保できる輝度がこの値。
+// (L + 0.05) / (0.005 + 0.05) >= 4.5 を解くと L >= 0.2225。
+const MIN_TELOP_LUMINANCE = 0.2225;
+// 黒や灰は色相を持たないため、明度を上げても中間の灰にしかならず
+// 球団色として弱い。無彩色だけは白寄りまで引き上げる。
+const ACHROMATIC_TARGET = 0.62;
+
+/**
+ * テロップの日付・区切り線に使う球団カラーを返す。未選択や該当なしは null。
+ *
+ * 公式のメインカラーをそのまま使うのが基本。ただし濃紺や黒は写真の上で
+ * 沈んで読めない。セカンドカラーで縁取る方式も試したが、細い文字では
+ * 縁が効かず、にじんで見えるだけだった。
+ *
+ * そこで「色相と彩度は保ったまま明度だけを上げる」方式にしている。
+ * ドラゴンズの濃紺なら同じ色相の明るい青になる。別の色に振り替えるのでは
+ * なく同じ色の明るい版なので、球団の色として認識できる。
+ *
+ * マリーンズの黒だけは色相を持たず、明度を上げても灰にしかならない。
+ * 無彩色は例外として白寄りまで引き上げる。
+ */
+export function resolveTelopTeamColor(favoriteTeam: string): string | null {
+  const brand = TEAM_BRAND_COLORS[favoriteTeam as TeamCode];
+  if (!brand) return null;
+  const main = brand.main;
+  if (relativeLuminance(main) >= MIN_TELOP_LUMINANCE) return main;
+
+  const [h, sat, startL] = toHsl(main);
+  const goal = sat < 0.08 ? ACHROMATIC_TARGET : MIN_TELOP_LUMINANCE;
+  let l = startL;
+  for (let i = 0; i < 200 && l < 0.99; i += 1) {
+    l += 0.005;
+    if (relativeLuminance(fromHsl(h, sat, l)) >= goal) break;
+  }
+  return fromHsl(h, sat, l);
 }
