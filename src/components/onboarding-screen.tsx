@@ -11,15 +11,16 @@ import {
 } from "@/constants/overlayStyles";
 import { TEAMS } from "@/constants/teams";
 import { resolveTheme } from "@/constants/teamThemes";
-import { MaxContentWidth, Spacing } from "@/constants/theme";
+import { MaxContentWidth, Radius } from "@/constants/theme";
+import { Rule, Space, Type } from "@/constants/typography";
 import { useFavoriteTeam } from "@/contexts/favorite-team";
 
 const NONE_VALUE = "";
 
 const OPTIONS = [{ code: NONE_VALUE, nickname: "既定のデザイン" }, ...TEAMS];
 
-/** 見本カードの表示幅 */
-const SAMPLE_WIDTH = 168;
+/** 見本カードの表示幅。画面の主役なので大きく取る。 */
+const SAMPLE_WIDTH = 226;
 
 /**
  * 見本の対戦相手。選んだチーム自身にならないよう、先頭から違うものを選ぶ。
@@ -46,6 +47,7 @@ export function OnboardingScreen() {
   // 選択中のチームの配色をその場でプレビューする(まだ保存はしない)。
   // ThemedText/ThemedView は保存済みの設定を参照するため、ここでは素の Text を使う。
   const colors = resolveTheme(picked);
+  const pickedTeam = TEAMS.find((t) => t.code === picked);
 
   async function handleStart() {
     if (submitting) return;
@@ -57,26 +59,15 @@ export function OnboardingScreen() {
     <SafeAreaView
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <View style={styles.inner}>
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>
-            Ball Filmsへようこそ
-          </Text>
-          <Text style={[styles.lead, { color: colors.text }]}>
-            お気に入りのチームは？
-          </Text>
-          <Text style={[styles.note, { color: colors.textSecondary }]}>
-            選んだチームのイメージカラーに合わせて、アプリの配色が変わります。後ほど設定からいつでも変更できます。
-          </Text>
-        </View>
-
+      <ScrollView
+        contentContainerStyle={styles.inner}
+        showsVerticalScrollIndicator={false}
+      >
         {/*
-          このアプリで何が作れるかを、言葉ではなく現物で見せる。
-          画像を同梱せず OverlayCard をその場で描いているのは、テロップの
-          デザインを変えたときに見本も自動で追随するため。同梱画像はすぐ古くなる。
-          写真は渡していないので、プリセットのグラデーションが背景になる。
+          見本を画面の主役に据える。このアプリが何をするものかは、
+          言葉より一枚見せた方が早い。選択肢の列より上に、大きく置く。
         */}
-        <View style={styles.sampleArea}>
+        <View style={styles.stage}>
           <OverlayCard
             photoUri={null}
             photoAspectRatio={1}
@@ -95,10 +86,6 @@ export function OnboardingScreen() {
             photoScale={DEFAULT_PHOTO_SCALE}
             telopScale={DEFAULT_TELOP_SCALE}
             previewMyTeam={picked}
-            // テロップの文字サイズは実寸(pt)で決まっているため、見本のような
-            // 小さいカードではテロップだけが相対的に大きくなり、日付が
-            // 途中で切れてしまう。実際の編集画面の幅(およそ350px)を基準に
-            // 縮小率を渡して、見た目の比率を実物と揃える。
             scaleFactor={SAMPLE_WIDTH / 350}
             style={{
               width: SAMPLE_WIDTH,
@@ -106,52 +93,83 @@ export function OnboardingScreen() {
               aspectRatio: undefined,
             }}
           />
-          <Text style={[styles.sampleNote, { color: colors.textSecondary }]}>
-            観戦写真にこんな一枚が作れます
-          </Text>
         </View>
 
-        <ScrollView
-          style={styles.list}
-          contentContainerStyle={styles.listContent}
-        >
+        <Text style={[styles.eyebrow, { color: colors.accent }]}>
+          BALL FILMS
+        </Text>
+        <Text style={[styles.heading, { color: colors.text }]}>
+          観戦写真が、一枚のフィルムになります
+        </Text>
+
+        {/*
+          区切りは面(カード)ではなく線で作る。選択肢を一つずつ箱に入れると、
+          12球団すべてが同じ重さに見えて、選ぶ手がかりが消える。
+        */}
+        <View style={[styles.rule, { backgroundColor: colors.border }]} />
+
+        <View style={styles.pickHeader}>
+          <Text style={[styles.pickLabel, { color: colors.textSecondary }]}>
+            応援するチーム
+          </Text>
+          <Text style={[styles.pickValue, { color: colors.text }]}>
+            {pickedTeam ? pickedTeam.nickname : "指定なし"}
+          </Text>
+        </View>
+        <Text style={[styles.pickNote, { color: colors.textSecondary }]}>
+          アプリの配色と、テロップの日付の色が変わります。あとから設定で変えられます。
+        </Text>
+
+        {/*
+          選択肢は箱に入れず、文字のまま並べる。選ばれたものだけ
+          チームカラーの縦線と明るい文字で示す。選択の表現に枠線ではなく
+          「印」を使うことで、12個が均一な塊に見えるのを避ける。
+        */}
+        <View style={styles.chips}>
           {OPTIONS.map((opt) => {
-            const selected = opt.code === picked;
+            const on = opt.code === picked;
             return (
               <Pressable
                 key={opt.code || "none"}
                 onPress={() => setPicked(opt.code)}
-                style={[
-                  styles.row,
-                  {
-                    backgroundColor: selected
-                      ? colors.backgroundSelected
-                      : colors.backgroundElement,
-                    borderColor: selected ? colors.accent : colors.border,
-                  },
-                ]}
+                style={styles.chip}
+                accessibilityRole="button"
+                accessibilityState={{ selected: on }}
               >
+                <View
+                  style={[
+                    styles.chipMark,
+                    { backgroundColor: on ? colors.accent : "transparent" },
+                  ]}
+                />
                 <Text
                   style={[
-                    styles.rowText,
-                    { color: selected ? colors.accent : colors.text },
+                    styles.chipText,
+                    {
+                      color: on ? colors.text : colors.textSecondary,
+                      fontWeight: on ? "700" : "400",
+                    },
                   ]}
                 >
-                  {opt.nickname}
-                  {opt.code ? `（${opt.code}）` : ""}
+                  {opt.code ? opt.nickname : "指定なし"}
                 </Text>
-                {selected && (
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={20}
-                    color={colors.accent}
-                  />
+                {!!opt.code && (
+                  <Text
+                    style={[
+                      styles.chipCode,
+                      { color: on ? colors.accent : colors.textSecondary },
+                    ]}
+                  >
+                    {opt.code}
+                  </Text>
                 )}
               </Pressable>
             );
           })}
-        </ScrollView>
+        </View>
+      </ScrollView>
 
+      <View style={[styles.footer, { borderTopColor: colors.border }]}>
         <Pressable
           onPress={handleStart}
           disabled={submitting}
@@ -163,6 +181,7 @@ export function OnboardingScreen() {
           <Text style={[styles.startBtnText, { color: colors.onAccent }]}>
             はじめる
           </Text>
+          <Ionicons name="arrow-forward" size={17} color={colors.onAccent} />
         </Pressable>
       </View>
     </SafeAreaView>
@@ -171,41 +190,51 @@ export function OnboardingScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  sampleArea: { alignItems: "center", gap: 8, marginBottom: Spacing.three },
-  sampleNote: { fontSize: 11.5 },
   inner: {
-    flex: 1,
     maxWidth: MaxContentWidth,
     width: "100%",
     alignSelf: "center",
-    padding: Spacing.four,
+    paddingHorizontal: Space.edge,
+    paddingTop: Space.section,
+    paddingBottom: Space.section,
   },
-  header: { marginBottom: Spacing.three },
-  title: {
-    fontSize: 24,
-    lineHeight: 30,
-    marginBottom: Spacing.three,
-    fontWeight: "600",
+  stage: { alignItems: "center", marginBottom: Space.section },
+  eyebrow: { ...Type.eyebrow, marginBottom: Space.tight },
+  heading: { ...Type.headingJa, marginBottom: Space.section },
+  rule: { height: Rule.hairline, marginBottom: Space.row },
+  pickHeader: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "space-between",
   },
-  lead: { fontSize: 16, fontWeight: "700", marginBottom: 6, lineHeight: 22 },
-  note: { fontSize: 14, lineHeight: 18 },
-  list: { flex: 1 },
-  listContent: { gap: 8, paddingBottom: Spacing.three },
-  row: {
+  pickLabel: Type.label,
+  pickValue: { ...Type.actionJa, fontSize: 16 },
+  pickNote: { ...Type.captionJa, marginTop: Space.tight },
+  chips: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    columnGap: 18,
+    rowGap: 2,
+    marginTop: Space.row,
+  },
+  chip: { flexDirection: "row", alignItems: "center", paddingVertical: 7 },
+  // 選択の印。枠線ではなく短い縦線で示す
+  chipMark: { width: 2, height: 15, marginRight: 8, borderRadius: Radius.mark },
+  chipText: { fontSize: 14.5 },
+  chipCode: { ...Type.display(15), marginLeft: 6 },
+  footer: {
+    borderTopWidth: Rule.hairline,
+    paddingHorizontal: Space.edge,
+    paddingTop: Space.row,
+    paddingBottom: Space.tight,
+  },
+  startBtn: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    justifyContent: "center",
+    gap: 8,
+    borderRadius: Radius.surface,
+    paddingVertical: 15,
   },
-  rowText: { fontSize: 15, fontWeight: "600" },
-  startBtn: {
-    borderRadius: 10,
-    paddingVertical: 16,
-    alignItems: "center",
-    marginTop: Spacing.two,
-  },
-  startBtnText: { fontSize: 15, fontWeight: "700" },
+  startBtnText: { ...Type.actionJa },
 });

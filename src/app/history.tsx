@@ -16,7 +16,7 @@ import { SelectModal } from "@/components/form/select-modal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { TEAMS } from "@/constants/teams";
-import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
+import { BottomTabInset, MaxContentWidth, Radius, Spacing } from "@/constants/theme";
 import {
   computeRecord,
   deleteHistoryEntry,
@@ -484,7 +484,7 @@ const styles = StyleSheet.create({
   statBox: {
     flex: 1,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: Radius.surface,
     paddingVertical: 10,
     alignItems: "center",
   },
@@ -495,13 +495,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: Radius.surface,
     paddingVertical: 9,
   },
   // 観戦まとめとベタ焼きを横並びにする。余白はこの行がまとめて持つ。
   nudge: {
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: Radius.surface,
     padding: 14,
     gap: 12,
     marginHorizontal: Spacing.four,
@@ -521,7 +521,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    borderRadius: 7,
+    borderRadius: Radius.surface,
     paddingVertical: 8,
     paddingHorizontal: 14,
   },
@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: Radius.surface,
     padding: 12,
   },
   rowMeta: { fontSize: 11.5, marginBottom: 4 },

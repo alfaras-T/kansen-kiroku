@@ -1,6 +1,7 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * 配色。夜の球場を土台にした固定のダークテーマで、ライト/ダークの自動切替は
+ * しない。写真が主役の画面なので、地は一貫して沈んでいる方がよい。
+ * お気に入りチームが選ばれている場合は constants/teamThemes.ts が上書きする。
  */
 
 import "@/global.css";
@@ -36,30 +37,19 @@ export const Colors = {
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: "system-ui",
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: "ui-serif",
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: "ui-rounded",
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: "ui-monospace",
-  },
-  default: {
-    sans: "normal",
-    serif: "serif",
-    rounded: "normal",
-    mono: "monospace",
-  },
-  web: {
-    sans: "var(--font-display)",
-    serif: "var(--font-serif)",
-    rounded: "var(--font-rounded)",
-    mono: "var(--font-mono)",
-  },
-});
+/**
+ * 角丸。値は2つだけに絞る。
+ *
+ * 以前は 6/7/8/10 が場当たりに混在していた。均一を避けようとして無秩序に
+ * するのは設計ではない。「面の角」と「小さな印の角」で意味が違うので、
+ * その2つだけを持つ。写真とカードは角を落とさない(0)。
+ */
+export const Radius = {
+  /** ボタンや入力欄などの面 */
+  surface: 6,
+  /** 選択の印など、ごく小さな要素 */
+  mark: 2,
+} as const;
 
 export const Spacing = {
   half: 2,

@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DateField } from "@/components/form/date-field";
 import { formatDateOverlay } from "@/components/form/date-field";
 import { LabeledField } from "@/components/form/labeled-field";
+import { Rule, Space, Type } from "@/constants/typography";
 import { SelectModal, SelectOption } from "@/components/form/select-modal";
 import { OverlayCard } from "@/components/overlay-card";
 import { ThemedText } from "@/components/themed-text";
@@ -22,10 +23,11 @@ import { ThemedView } from "@/components/themed-view";
 import { resolveOverlayAspect } from "@/constants/overlayStyles";
 import { OTHER_STADIUM, STADIUMS } from "@/constants/stadiums";
 import { OTHER_TEAM, TEAMS } from "@/constants/teams";
-import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
+import { BottomTabInset, MaxContentWidth, Spacing , Radius } from "@/constants/theme";
 import { useCreateForm } from "@/contexts/create-form";
 import { useTheme } from "@/hooks/use-theme";
 import {
+  loadHistory,
   loadLastStadium,
   loadMyTeam,
   saveLastStadium,
@@ -74,14 +76,25 @@ export default function CreateScreen() {
   // 画面に戻るたびに読み直す(履歴画面と同じ useFocusEffect の使い方)。
   const [myTeam, setMyTeam] = useState("");
   const [lastStadium, setLastStadium] = useState("");
+  // その年の何枚目になるか。ヘッダーのフレーム番号に使う。
+  const thisYear = String(new Date().getFullYear());
+  const [yearCount, setYearCount] = useState(0);
+  const frameNumber = yearCount + 1;
   useFocusEffect(
     useCallback(() => {
       let alive = true;
       (async () => {
-        const [mt, ls] = await Promise.all([loadMyTeam(), loadLastStadium()]);
+        const [mt, ls, history] = await Promise.all([
+          loadMyTeam(),
+          loadLastStadium(),
+          loadHistory(),
+        ]);
         if (!alive) return;
         setMyTeam(mt);
         setLastStadium(ls);
+        setYearCount(
+          history.filter((e) => e.date?.slice(0, 4) === thisYear).length,
+        );
       })();
       return () => {
         alive = false;
@@ -189,21 +202,35 @@ export default function CreateScreen() {
         overScrollMode="never"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <ThemedText type="title" style={styles.title}>
-            Ball Films
-          </ThemedText>
-        </View>
-
-        <View style={styles.card}>
-          <View style={styles.switchRow}>
-            <ThemedText type="default">観戦記録のみ保存（写真なし）</ThemedText>
-            <Switch
-              value={recordOnly}
-              onValueChange={setRecordOnly}
-              trackColor={{ true: colors.accent, false: colors.border }}
-            />
+        {/*
+          フィルムの先頭に焼かれるリーダー部分に倣ったヘッダー。
+          右の数字は、この記録がその年の何枚目になるかを示す。
+          装飾ではなく、貯まっていく実感そのものを出している。
+        */}
+        <View style={styles.leader}>
+          <Text style={[styles.brand, { color: colors.textSecondary }]}>
+            BALL FILMS
+          </Text>
+          <View style={styles.frame}>
+            <Text style={[styles.frameYear, { color: colors.textSecondary }]}>
+              {thisYear}
+            </Text>
+            <Text style={[styles.frameNo, { color: colors.accent }]}>
+              {String(frameNumber).padStart(2, "0")}
+            </Text>
           </View>
+        </View>
+        <View style={[styles.leaderRule, { backgroundColor: colors.border }]} />
+
+        <View style={styles.modeRow}>
+          <Text style={[styles.modeLabel, { color: colors.textSecondary }]}>
+            写真なしで記録だけ残す
+          </Text>
+          <Switch
+            value={recordOnly}
+            onValueChange={setRecordOnly}
+            trackColor={{ true: colors.accent, false: colors.border }}
+          />
         </View>
 
         {/*
@@ -213,10 +240,10 @@ export default function CreateScreen() {
           「フォームを埋める作業」ではなく「仕上げていく作業」にする。
         */}
         {!recordOnly && (
-          <View style={styles.card}>
-            <ThemedText type="smallBold" style={styles.sectionTitle}>
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
               写真
-            </ThemedText>
+            </Text>
 
             {photoUri ? (
               <>
@@ -316,10 +343,10 @@ export default function CreateScreen() {
           </View>
         )}
 
-        <View style={styles.card}>
-          <ThemedText type="smallBold" style={styles.sectionTitle}>
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
             試合情報
-          </ThemedText>
+          </Text>
 
           <LabeledField label="試合日">
             <DateField value={date} onChange={setDate} />
@@ -465,7 +492,7 @@ export default function CreateScreen() {
             )}
           </LabeledField>
 
-          <LabeledField label="自由メモ（任意）">
+          <LabeledField label="自由メモ（任意）" last>
             <TextInput
               value={memo}
               onChangeText={setMemo}
@@ -512,14 +539,45 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
     paddingBottom: BottomTabInset + Spacing.four,
   },
-  header: { marginBottom: Spacing.three },
-  title: { fontSize: 26, lineHeight: 32 },
-  card: {
-    marginBottom: Spacing.three,
+  leader: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    paddingHorizontal: Space.edge,
+    paddingTop: Space.row,
   },
+  brand: { ...Type.eyebrow },
+  frame: { flexDirection: "row", alignItems: "baseline", gap: 7 },
+  frameYear: { ...Type.display(15) },
+  frameNo: { ...Type.display(26) },
+  leaderRule: {
+    height: Rule.hairline,
+    marginTop: 10,
+    marginHorizontal: Space.edge,
+  },
+  modeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: Space.edge,
+    paddingTop: Space.row,
+  },
+  modeLabel: { fontSize: 13, letterSpacing: 0.3 },
+  section: {
+    paddingHorizontal: Space.edge,
+    marginTop: Space.section,
+  },
+  sectionTitle: {
+    fontSize: 15.5,
+    fontWeight: "700",
+    letterSpacing: 0.4,
+    marginBottom: Space.tight,
+  },
+  // プレビューは節の余白から外に出して、画面幅いっぱいに置く。
+  // 写真がこの画面の主役なので、他の要素と同じ枠に収めない。
   previewStage: {
-    width: "100%",
-    borderRadius: 8,
+    width: "auto",
+    marginHorizontal: -Space.edge,
     overflow: "hidden",
   },
   photoPlaceholder: {
@@ -528,7 +586,7 @@ const styles = StyleSheet.create({
     gap: 6,
     borderWidth: 1,
     borderStyle: "dashed",
-    borderRadius: 8,
+    borderRadius: Radius.surface,
     paddingVertical: 34,
   },
   photoActions: {
@@ -543,13 +601,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     borderWidth: 1.5,
-    borderRadius: 8,
+    borderRadius: Radius.surface,
     paddingVertical: 12,
     marginBottom: 8,
-  },
-  sectionTitle: {
-    marginBottom: 10,
-    letterSpacing: 0.5,
   },
   // alignItems は flex-end。得点欄の上に「得点」ラベルが乗るため、
   // 中央揃えだと入力欄だけが下にずれてチーム選択欄と揃わなくなる。
@@ -564,7 +618,7 @@ const styles = StyleSheet.create({
   scoreInput: {
     width: "100%",
     borderWidth: 1,
-    borderRadius: 6,
+    borderRadius: Radius.surface,
     paddingVertical: 9,
     paddingHorizontal: 10,
     fontSize: 15,
@@ -572,20 +626,14 @@ const styles = StyleSheet.create({
   },
   textInput: {
     borderWidth: 1,
-    borderRadius: 6,
+    borderRadius: Radius.surface,
     paddingVertical: 9,
     paddingHorizontal: 12,
     fontSize: 14,
   },
-  switchRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 6,
-  },
   recordBtn: {
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: Radius.surface,
     paddingVertical: 12,
     alignItems: "center",
     marginBottom: Spacing.three,

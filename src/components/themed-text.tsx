@@ -1,6 +1,6 @@
 import { Platform, StyleSheet, Text, type TextProps } from 'react-native';
 
-import { Fonts, ThemeColor } from '@/constants/theme';
+import { ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export type ThemedTextProps = TextProps & {
@@ -66,8 +66,10 @@ const styles = StyleSheet.create({
     color: '#3c87f7',
   },
   code: {
-    fontFamily: Fonts.mono,
-    fontWeight: Platform.select({ android: 700 }) ?? 500,
+    // 数字と英字だけを想定した表示。読み込み済みの Montserrat を使う
+    // (Expo雛形の ui-monospace は日本語のUIに馴染まず、使い所も無かった)。
+    fontFamily: 'Montserrat_500Medium',
     fontSize: 12,
+    letterSpacing: 0.6,
   },
 });
