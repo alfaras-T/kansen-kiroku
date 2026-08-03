@@ -245,6 +245,7 @@ export default function CreateScreen() {
                       visitorScore={visitorScore || "0"}
                       homeScore={homeScore || "0"}
                       dateLabel={formatDateOverlay(date)}
+                      dateIso={date}
                       stadium={stadiumName}
                       memo={memo}
                       winHighlight={winHighlight}

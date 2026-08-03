@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-export type OverlayStyleKey = 'classic' | 'minimal' | 'film' | 'night' | 'stamp';
+export type OverlayStyleKey = 'classic' | 'minimal' | 'film' | 'stamp';
 export type OverlayPosition = 'br' | 'bl' | 'tr' | 'tl';
 export type OutputRatio = 'original' | 'square' | 'portrait' | 'story';
 
@@ -53,6 +53,10 @@ export interface OverlayPalette {
   gradientTo: string;
   /** テロップの大きさの階層。省略時はスコアを主役にした既定の階層 */
   sizes?: OverlayTelopSizes;
+  /** 日付を「'26 6 14」というフィルムカメラ風の表記にする */
+  dateStamp?: boolean;
+  /** 日付を自身の色で発光させる(焼き込みの滲みを再現する) */
+  dateGlow?: boolean;
 }
 
 export const OVERLAY_STYLES: Record<OverlayStyleKey, OverlayPalette> = {
@@ -80,17 +84,26 @@ export const OVERLAY_STYLES: Record<OverlayStyleKey, OverlayPalette> = {
     gradientFrom: '#161616',
     gradientTo: '#2b2b2b',
   },
-  // 写ルンです的な、フィルムカメラの日付焼き込み風。暖色でノスタルジックに
+  // 写ルンです的な、フィルムカメラの日付焼き込み。
+  //
+  // 当時のコンパクトカメラは、日付を橙色の発光で写真に焼き込んでいた。
+  // 色を暖色にするだけでは「暖色系のテロップ」にしかならないので、
+  // あの見た目を成り立たせている2つの特徴を再現する。
+  //   1. 日付そのものが光っているような滲み(dateGlow)
+  //   2. 「'26 6 14」という独特の日付表記(dateStamp)
   film: {
     label: 'フィルム',
     body: '#F7EEDF',
-    accent: '#FF9E45',
+    // 当時の焼き込みに近い、彩度の高い橙。
+    accent: '#FF8A2B',
     dim: 'rgba(247,238,223,0.4)',
     caption: 'rgba(247,238,223,0.9)',
     divider: 'rgba(247,238,223,0.45)',
     scrim: 'rgba(24,14,6,0.45)',
     gradientFrom: '#1a120a',
     gradientTo: '#33210f',
+    dateStamp: true,
+    dateGlow: true,
   },
   // スコアを主役から降ろし、日付を大きく据えた構成。
   // 「3対1だった」ことよりも「その日に行った」ことを残したい人向け。
@@ -109,18 +122,6 @@ export const OVERLAY_STYLES: Record<OverlayStyleKey, OverlayPalette> = {
     // 日付を最大にし、スコアを添え物の大きさまで落とす。
     // 既定値(日付10.5/コード21/スコア34/球場12)に対する倍率。
     sizes: { date: 1.7, code: 0.8, score: 0.45, stadium: 1.15 },
-  },
-  // ナイトゲームの空気。氷のようなブルーで涼しく締める
-  night: {
-    label: 'ナイト',
-    body: '#FFFFFF',
-    accent: '#8FD4FF',
-    dim: 'rgba(255,255,255,0.38)',
-    caption: 'rgba(255,255,255,0.9)',
-    divider: 'rgba(255,255,255,0.48)',
-    scrim: 'rgba(5,11,24,0.48)',
-    gradientFrom: '#060d1c',
-    gradientTo: '#12233f',
   },
 };
 

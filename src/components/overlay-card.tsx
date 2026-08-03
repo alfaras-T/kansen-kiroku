@@ -47,6 +47,11 @@ export interface OverlayCardProps {
   visitorScore: string;
   homeScore: string;
   dateLabel: string;
+  /**
+   * ISO形式(YYYY-MM-DD)の日付。プリセットによって表記を変えるために使う。
+   * 未指定なら dateLabel をそのまま出す。
+   */
+  dateIso?: string;
   stadium: string;
   memo: string;
   winHighlight: boolean;
@@ -109,6 +114,7 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
     memo,
     stadium,
     dateLabel,
+    dateIso,
     photoOffset = DEFAULT_PHOTO_OFFSET,
     onPhotoOffsetChange,
     photoScale = DEFAULT_PHOTO_SCALE,
@@ -345,6 +351,34 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
     textShadowRadius: sc(6),
   };
 
+  const dateColor = telopTeamColor ?? palette.accent;
+
+  /**
+   * フィルムカメラの焼き込み表記。「'26 6 14」のように、西暦を2桁にして
+   * 月日をゼロ埋めせずに並べる。当時のコンパクトカメラの表示に倣ったもの。
+   */
+  const dateText =
+    palette.dateStamp && dateIso
+      ? (() => {
+          const [y, m, d] = dateIso.split('-');
+          if (!y || !m || !d) return dateLabel;
+          return `'${y.slice(2)} ${Number(m)} ${Number(d)}`;
+        })()
+      : dateLabel;
+
+  /**
+   * 日付の影。フィルムでは落ち影ではなく、文字と同じ色を四方に滲ませて
+   * 「発光して焼き込まれている」ように見せる。
+   * 球団カラーが入っている場合もその色で光るので、印象が破綻しない。
+   */
+  const dateShadow = palette.dateGlow
+    ? {
+        textShadowColor: dateColor,
+        textShadowOffset: { width: 0, height: 0 },
+        textShadowRadius: sc(5),
+      }
+    : textShadow;
+
   // 縁取り(セカンドカラーで文字を囲む方式)は廃止した。細い文字では縁が
   // 効かず、にじんで見えるだけだったため。可読性は resolveTelopTeamColor が
   // 「色相を保ったまま明度を上げる」ことで確保している。
@@ -432,11 +466,11 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
           style={[
             styles.dateLine,
             telopStyles.dateLine,
-            textShadow,
-            { color: telopTeamColor ?? palette.accent },
+            dateShadow,
+            { color: dateColor },
           ]}
           numberOfLines={1}>
-          {dateLabel}
+          {dateText}
         </Text>
 
         <View style={[styles.scoreRow, telopStyles.scoreRow]}>
