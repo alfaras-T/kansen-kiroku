@@ -57,6 +57,8 @@ export async function deleteHistoryEntry(id: string): Promise<HistoryEntry[]> {
   // 端末内に溜まり続けてしまう。
   const { deleteThumbnail } = await import('@/storage/thumbnails');
   await deleteThumbnail(id);
+  const { deleteSourcePhoto } = await import('@/storage/source-photos');
+  await deleteSourcePhoto(id);
   return next;
 }
 

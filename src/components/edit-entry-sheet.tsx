@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Modal,
@@ -16,7 +17,9 @@ import { LabeledField } from "@/components/form/labeled-field";
 import { SelectModal } from "@/components/form/select-modal";
 import { OTHER_STADIUM, STADIUMS } from "@/constants/stadiums";
 import { OTHER_TEAM, TEAMS } from "@/constants/teams";
+import { useCreateForm } from "@/contexts/create-form";
 import { useTheme } from "@/hooks/use-theme";
+import { loadSourcePhotoUri } from "@/storage/source-photos";
 import { HistoryEntry } from "@/types/history";
 import { confirmAsync, notify } from "@/utils/dialogs";
 import { sanitizeScoreInput } from "@/utils/score";
@@ -44,6 +47,40 @@ export function EditEntrySheet({
   onSave: (entry: HistoryEntry) => Promise<void> | void;
 }) {
   const colors = useTheme();
+  const router = useRouter();
+  const { loadFromEntry } = useCreateForm();
+
+  // 元写真が残っている記録だけ「作り直す」を出す。
+  // 残っていない場合にボタンだけ見せると、押してから断られることになる。
+  const [canRebuild, setCanRebuild] = useState(false);
+  useEffect(() => {
+    if (!entry) {
+      setCanRebuild(false);
+      return;
+    }
+    let alive = true;
+    loadSourcePhotoUri(entry.id).then((uri) => {
+      if (alive) setCanRebuild(!!uri);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [entry]);
+
+  async function handleRebuild() {
+    if (!entry) return;
+    const ok = await loadFromEntry(entry);
+    if (!ok) {
+      notify(
+        "作り直せませんでした",
+        "この記録の元写真は残っていません。作り直せるのは最近の20件までです。",
+      );
+      setCanRebuild(false);
+      return;
+    }
+    onClose();
+    router.push("/adjust");
+  }
 
   const [date, setDate] = useState("");
   const [stadium, setStadium] = useState("");
@@ -342,6 +379,18 @@ export function EditEntrySheet({
               {saving ? "保存中…" : "保存する"}
             </Text>
           </Pressable>
+
+          {canRebuild && (
+            <Pressable
+              onPress={handleRebuild}
+              style={[styles.rebuildBtn, { borderColor: colors.accent }]}
+            >
+              <Ionicons name="refresh-outline" size={17} color={colors.accent} />
+              <Text style={[styles.rebuildBtnText, { color: colors.accent }]}>
+                この記録で画像を作り直す
+              </Text>
+            </Pressable>
+          )}
         </ScrollView>
       </SafeAreaView>
     </Modal>
@@ -400,4 +449,15 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   saveBtnText: { fontSize: 15, fontWeight: "700" },
+  rebuildBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    borderWidth: 1.5,
+    borderRadius: 8,
+    paddingVertical: 13,
+    marginTop: 10,
+  },
+  rebuildBtnText: { fontSize: 14.5, fontWeight: "600" },
 });

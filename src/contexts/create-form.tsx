@@ -2,7 +2,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react';
-import { Platform, View } from 'react-native';
+import { Image, Platform, View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 
 import {
@@ -15,9 +15,10 @@ import {
   PhotoOffset,
   resolveOverlayAspect,
 } from '@/constants/overlayStyles';
-import { OTHER_STADIUM } from '@/constants/stadiums';
-import { OTHER_TEAM } from '@/constants/teams';
+import { OTHER_STADIUM, STADIUMS } from '@/constants/stadiums';
+import { OTHER_TEAM, TEAMS } from '@/constants/teams';
 import { addHistoryEntry } from '@/storage/history';
+import { loadSourcePhotoUri, saveSourcePhoto } from '@/storage/source-photos';
 import {
   loadThumbnailEnabled,
   saveThumbnail,
@@ -103,6 +104,8 @@ interface CreateFormContextValue {
   handleShare: () => Promise<void>;
   /** 保存に成功したら記録のIDを、保存しなかった場合は null を返す */
   handleSaveRecord: () => Promise<string | null>;
+  /** 保存済みの記録を編集画面に読み込み直す。元写真が無ければ false */
+  loadFromEntry: (entry: HistoryEntry) => Promise<boolean>;
 }
 
 const CreateFormContext = createContext<CreateFormContextValue | null>(null);
@@ -160,6 +163,60 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     setPhotoOffset(DEFAULT_PHOTO_OFFSET);
     setPhotoScale(DEFAULT_PHOTO_SCALE);
     setTelopScale(DEFAULT_TELOP_SCALE);
+  }
+
+  /**
+   * 保存済みの記録を編集画面に読み込み直す。作り直しのための入り口。
+   *
+   * 元写真が残っていない(直近20件から外れた、Web、設定で保存していない)
+   * 場合は false を返す。呼び出し側で案内する。
+   */
+  async function loadFromEntry(entry: HistoryEntry): Promise<boolean> {
+    const uri = await loadSourcePhotoUri(entry.id);
+    if (!uri) return false;
+
+    setDate(entry.date);
+    // 一覧に無い球場・チームは「その他」の自由入力として復元する
+    if (STADIUMS.includes(entry.stadium)) {
+      setStadium(entry.stadium);
+      setStadiumOther('');
+    } else {
+      setStadium(OTHER_STADIUM);
+      setStadiumOther(entry.stadium);
+    }
+    const restoreTeam = (
+      code: string,
+      setCode: (v: string) => void,
+      setOther: (v: string) => void,
+    ) => {
+      if (TEAMS.some((t) => t.code === code)) {
+        setCode(code);
+        setOther('');
+      } else {
+        setCode(OTHER_TEAM);
+        setOther(code);
+      }
+    };
+    restoreTeam(entry.visitorCode, setVisitorCode, setVisitorTeamOther);
+    restoreTeam(entry.homeCode, setHomeCode, setHomeTeamOther);
+    setVisitorScore(entry.visitorScore);
+    setHomeScore(entry.homeScore);
+    setMemo(entry.memo);
+
+    setPhotoUri(uri);
+    setPhotoAspectRatio(null);
+    // 写真の縦横比は書き出しサイズの計算に使う。復元時はファイルからしか
+    // 取れないため、Image.getSize で読み直す。
+    Image.getSize(
+      uri,
+      (w, h) => setPhotoAspectRatio(h ? w / h : null),
+      () => setPhotoAspectRatio(null),
+    );
+    resetPhotoAdjustment();
+
+    // 作り直した画像を保存しても、履歴に同じ記録が二重に増えないようにする
+    recordSavedForDraft.current = true;
+    return true;
   }
 
   async function pickPhoto() {
@@ -603,6 +660,8 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     if (!entryId) return;
     recordSavedForDraft.current = true;
     await captureAndStoreThumbnail(entryId);
+    // 作り直しのために元写真も残す(直近20件のみ。詳細は source-photos.ts)
+    if (photoUri) await saveSourcePhoto(entryId, photoUri);
   }
 
   const value: CreateFormContextValue = {
@@ -660,6 +719,7 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     handleSave,
     handleShare,
     handleSaveRecord,
+    loadFromEntry,
   };
 
   return <CreateFormContext.Provider value={value}>{children}</CreateFormContext.Provider>;
