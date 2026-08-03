@@ -211,6 +211,12 @@ export const ProofSheetCard = forwardRef<
           {items.length}試合
         </Text>
         {record && (
+          /*
+            コマに付けた印と同じ記号で内訳を出す。
+            「24試合」と「15勝4敗1分」を並べると合計が合わず、残りの試合が
+            どこへ行ったのか分からない。印のないコマ(マイチームが出ていない
+            試合)があることを、記号の一致で読み取れるようにしている。
+          */
           <Text
             style={{
               fontSize: 12 * s,
@@ -218,7 +224,10 @@ export const ProofSheetCard = forwardRef<
               color: colors.text,
             }}
           >
-            {record.win}勝{record.lose}敗{record.draw}分
+            {RESULT_MARK.win}
+            {record.win}　{RESULT_MARK.lose}
+            {record.lose}　{RESULT_MARK.draw}
+            {record.draw}
           </Text>
         )}
       </View>
