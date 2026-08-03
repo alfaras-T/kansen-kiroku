@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-export type OverlayStyleKey = 'classic' | 'minimal' | 'film' | 'stamp';
+export type OverlayStyleKey = 'classic' | 'minimal' | 'film';
 export type OverlayPosition = 'br' | 'bl' | 'tr' | 'tl';
 export type OutputRatio = 'original' | 'square' | 'portrait' | 'story';
 
@@ -112,24 +112,6 @@ export const OVERLAY_STYLES: Record<OverlayStyleKey, OverlayPalette> = {
     dateStamp: true,
     dateGlow: true,
     inline: true,
-  },
-  // スコアを主役から降ろし、日付を大きく据えた構成。
-  // 「3対1だった」ことよりも「その日に行った」ことを残したい人向け。
-  // 色は控えめな温白色にしている。日付が大きくなる分、色まで強いと
-  // うるさくなるため。
-  stamp: {
-    label: 'スタンプ',
-    body: '#F4EFE6',
-    accent: '#EBD9BC',
-    dim: 'rgba(244,239,230,0.4)',
-    caption: 'rgba(244,239,230,0.92)',
-    divider: 'rgba(244,239,230,0.45)',
-    scrim: 'rgba(18,14,10,0.42)',
-    gradientFrom: '#17130d',
-    gradientTo: '#2c2418',
-    // 日付を最大にし、スコアを添え物の大きさまで落とす。
-    // 既定値(日付10.5/コード21/スコア34/球場12)に対する倍率。
-    sizes: { date: 1.7, code: 0.8, score: 0.45, stadium: 1.15 },
   },
 };
 

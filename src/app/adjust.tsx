@@ -36,7 +36,7 @@ import { useCreateForm } from "@/contexts/create-form";
 import { useTheme } from "@/hooks/use-theme";
 
 const POSITION_ORDER: OverlayPosition[] = ["br", "bl", "tr", "tl"];
-const STYLE_ORDER: OverlayStyleKey[] = ["classic", "stamp", "film", "minimal"];
+const STYLE_ORDER: OverlayStyleKey[] = ["classic", "film", "minimal"];
 const RATIO_ORDER: OutputRatio[] = OUTPUT_RATIOS.map((r) => r.key);
 
 function nextInList<T>(list: T[], current: T): T {
