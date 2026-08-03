@@ -41,3 +41,27 @@ export async function saveOnboarded(): Promise<void> {
     console.warn('初回起動フラグの保存に失敗しました', e);
   }
 }
+
+// バックアップを最後に案内した(または実際に取った)時点の記録件数。
+// 端末内保存のみという方針の裏返しで、アプリを消すと記録は戻らない。
+// かといって毎回促すと煩わしいので、件数が一定量増えたときだけ出す。
+const BACKUP_NUDGE_KEY = 'kansen-kiroku:backupNudgeAt';
+
+export async function loadBackupNudgeAt(): Promise<number> {
+  try {
+    const raw = await AsyncStorage.getItem(BACKUP_NUDGE_KEY);
+    const n = raw ? Number(raw) : 0;
+    return Number.isFinite(n) ? n : 0;
+  } catch (e) {
+    console.warn('バックアップ案内の読み込みに失敗しました', e);
+    return 0;
+  }
+}
+
+export async function saveBackupNudgeAt(count: number): Promise<void> {
+  try {
+    await AsyncStorage.setItem(BACKUP_NUDGE_KEY, String(count));
+  } catch (e) {
+    console.warn('バックアップ案内の保存に失敗しました', e);
+  }
+}

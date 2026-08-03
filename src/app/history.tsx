@@ -1,8 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFocusEffect } from "expo-router";
 
 import { useFavoriteTeam } from "@/contexts/favorite-team";
+import { exportBackup } from "@/storage/backup";
+import {
+  loadBackupNudgeAt,
+  saveBackupNudgeAt,
+} from "@/storage/preferences";
 import { Pressable, SectionList, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -32,6 +37,11 @@ const MY_TEAM_OPTIONS = [
   ...TEAMS.map((t) => ({ label: `${t.nickname}（${t.code}）`, value: t.code, compactLabel: `${t.shortNickname ?? t.nickname}（${t.code}）` })),
 ];
 
+/** これ以下の件数では案内しない。数件のうちは失っても痛手が小さい。 */
+const BACKUP_NUDGE_MIN = 20;
+/** 前回の案内からこれだけ増えたら、もう一度だけ案内する。 */
+const BACKUP_NUDGE_STEP = 20;
+
 export default function HistoryScreen() {
   const colors = useTheme();
   const insets = useSafeAreaInsets();
@@ -43,6 +53,33 @@ export default function HistoryScreen() {
   const [selectedYear, setSelectedYear] = useState("");
   const [wrapOpen, setWrapOpen] = useState(false);
   const [proofOpen, setProofOpen] = useState(false);
+
+  // バックアップの案内。記録は端末内にしか無いので、アプリを消すと戻らない。
+  // ただし毎回促すと煩わしいので、前回案内した時点から一定数増えたときだけ出す。
+  const [nudgeAt, setNudgeAt] = useState<number | null>(null);
+  useEffect(() => {
+    loadBackupNudgeAt().then(setNudgeAt);
+  }, []);
+
+  const showBackupNudge =
+    nudgeAt !== null &&
+    entries.length >= BACKUP_NUDGE_MIN &&
+    entries.length >= nudgeAt + BACKUP_NUDGE_STEP;
+
+  async function dismissBackupNudge() {
+    setNudgeAt(entries.length);
+    await saveBackupNudgeAt(entries.length);
+  }
+
+  async function handleBackupFromNudge() {
+    // 案内から直接書き出す。設定画面まで辿らせると、そこで離脱する。
+    await dismissBackupNudge();
+    try {
+      await exportBackup();
+    } catch (e) {
+      console.warn("バックアップの書き出しに失敗しました", e);
+    }
+  }
   const [editingEntry, setEditingEntry] = useState<HistoryEntry | null>(null);
 
   const refresh = useCallback(async () => {
@@ -204,6 +241,47 @@ export default function HistoryScreen() {
           </Text>
         </View>
       </View>
+
+      {showBackupNudge && (
+        <View
+          style={[
+            styles.nudge,
+            {
+              borderColor: colors.border,
+              backgroundColor: colors.backgroundElement,
+            },
+          ]}
+        >
+          <View style={styles.nudgeTextArea}>
+            <Text style={[styles.nudgeTitle, { color: colors.text }]}>
+              {entries.length}試合分の記録があります
+            </Text>
+            <Text style={[styles.nudgeBody, { color: colors.textSecondary }]}>
+              記録はこの端末の中だけに保存されています。機種変更やアプリの削除に備えて、控えを書き出しておきませんか。
+            </Text>
+          </View>
+          <View style={styles.nudgeActions}>
+            <Pressable onPress={dismissBackupNudge} hitSlop={8}>
+              <Text style={[styles.nudgeLater, { color: colors.textSecondary }]}>
+                あとで
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={handleBackupFromNudge}
+              style={[styles.nudgeBtn, { backgroundColor: colors.accent }]}
+            >
+              <Ionicons
+                name="download-outline"
+                size={15}
+                color={colors.onAccent}
+              />
+              <Text style={[styles.nudgeBtnText, { color: colors.onAccent }]}>
+                書き出す
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
 
       {wrapSummary && wrapSummary.games > 0 && (
         <View style={styles.sheetBtnRow}>
@@ -420,6 +498,33 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
   },
   // 観戦まとめとベタ焼きを横並びにする。余白はこの行がまとめて持つ。
+  nudge: {
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 14,
+    gap: 12,
+    marginHorizontal: Spacing.four,
+    marginBottom: Spacing.two,
+  },
+  nudgeTextArea: { gap: 4 },
+  nudgeTitle: { fontSize: 14, fontWeight: "700" },
+  nudgeBody: { fontSize: 12.5, lineHeight: 18 },
+  nudgeActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 16,
+  },
+  nudgeLater: { fontSize: 13 },
+  nudgeBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderRadius: 7,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+  },
+  nudgeBtnText: { fontSize: 13, fontWeight: "700" },
   sheetBtnRow: {
     flexDirection: "row",
     gap: 8,
