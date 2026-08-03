@@ -31,6 +31,12 @@ import { useLatestRef } from '@/hooks/use-latest-ref';
 
 export interface OverlayCardProps {
   photoUri: string | null;
+  /**
+   * マイチームの判定を外から差し替える。オンボーディングのように、
+   * まだ保存されていない「選択中のチーム」で見本を出したい場面で使う。
+   * 未指定なら保存済みの設定に従う。
+   */
+  previewMyTeam?: string;
   /** 写真の元の横/縦比（幅÷高さ）。「元の写真のまま」表示時に使う。 */
   photoAspectRatio?: number | null;
   ratio: OutputRatio;
@@ -90,6 +96,7 @@ function touchDistance(touches: { pageX: number; pageY: number }[]): number {
 export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCard(props, ref) {
   const {
     photoUri,
+    previewMyTeam,
     photoAspectRatio,
     ratio,
     position,
@@ -190,7 +197,7 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
   // プリセットなので対象外。球団色を使いたくない人はこれを選べばよく、
   // 設定項目を増やさずに済む。
   const favoriteTeamCtx = useFavoriteTeamOptional();
-  const myTeam = favoriteTeamCtx?.myTeam ?? '';
+  const myTeam = previewMyTeam ?? favoriteTeamCtx?.myTeam ?? '';
   // 自由入力のチーム名は球団コードと一致しないため、自然と対象外になる
   // (アマチュアの試合などを記録した場合)。
   const myTeamIsPlaying =
