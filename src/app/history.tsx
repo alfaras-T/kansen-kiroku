@@ -4,6 +4,7 @@ import { useFocusEffect } from "expo-router";
 
 import { useFavoriteTeam } from "@/contexts/favorite-team";
 import { exportBackup } from "@/storage/backup";
+import { resolveGameResult } from "@/storage/history";
 import {
   loadBackupNudgeAt,
   saveBackupNudgeAt,
@@ -17,6 +18,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { TEAMS } from "@/constants/teams";
 import { BottomTabInset, MaxContentWidth, Radius, Spacing } from "@/constants/theme";
+import { Rule, Type } from "@/constants/typography";
 import {
   computeRecord,
   deleteHistoryEntry,
@@ -145,7 +147,12 @@ export default function HistoryScreen() {
     () =>
       groupHistoryByYear(filteredEntries).map((g) => ({
         title: `${g.year}年`,
-        data: g.entries,
+        // コマ番号はその年の古い方から数える。一覧は新しい順なので、
+        // 後ろの要素ほど小さい番号になる。フィルムと同じ並び。
+        data: g.entries.map((entry, i) => ({
+          entry,
+          frameNo: g.entries.length - i,
+        })),
       })),
     [filteredEntries],
   );
@@ -337,7 +344,7 @@ export default function HistoryScreen() {
       ) : (
         <SectionList
           sections={sections}
-          keyExtractor={(item) => item.id}
+          keyExtractor={({ entry }) => entry.id}
           style={styles.flatList}
           contentContainerStyle={[
             styles.list,
@@ -364,71 +371,115 @@ export default function HistoryScreen() {
               </Text>
             </View>
           )}
-          renderItem={({ item }) => {
-            const resultTag =
-              item.visitorScore === item.homeScore ? " ・引分" : "";
+          renderItem={({ item: { entry, frameNo } }) => {
+            const result = resolveGameResult(entry, myTeam);
+            const mark =
+              result === "win"
+                ? "○"
+                : result === "lose"
+                  ? "●"
+                  : result === "draw"
+                    ? "△"
+                    : "";
+            const [, month, day] = entry.date.split("-");
 
             return (
-              <View
-                style={[
-                  styles.row,
-                  {
-                    backgroundColor: colors.backgroundElement,
-                    borderColor: colors.border,
-                  },
-                ]}
+              <Pressable
+                onPress={() => setEditingEntry(entry)}
+                accessibilityRole="button"
+                accessibilityLabel="この観戦記録を編集"
+                style={[styles.frame, { borderBottomColor: colors.border }]}
               >
-                <Pressable
-                  style={{ flex: 1 }}
-                  onPress={() => setEditingEntry(item)}
-                  accessibilityRole="button"
-                  accessibilityLabel="この観戦記録を編集"
-                >
-                  <Text
-                    style={[styles.rowMeta, { color: colors.textSecondary }]}
+                {/*
+                  左端はフィルムの送り穴。一覧を上から下へ貫く連続した列に
+                  見せることで、記録の並びが「積み重なった一本のフィルム」
+                  として読める。コマ番号はその年の何枚目かを示す実数値。
+                */}
+                <View style={styles.rail}>
+                  {[0, 1, 2, 3].map((i) => (
+                    <View
+                      key={i}
+                      style={[
+                        styles.perf,
+                        { backgroundColor: colors.border },
+                      ]}
+                    />
+                  ))}
+                  <View
+                    style={[
+                      styles.railNo,
+                      { backgroundColor: colors.background },
+                    ]}
                   >
-                    {formatDateJP(item.date)} {item.stadium}
-                    {resultTag}
-                  </Text>
-                  <Text style={[styles.rowScore, { color: colors.text }]}>
-                    {item.visitorCode} {item.visitorScore}–{item.homeScore}{" "}
-                    {item.homeCode}
-                  </Text>
-                  {!!item.memo && (
                     <Text
-                      style={[styles.rowMemo, { color: colors.textSecondary }]}
+                      style={[styles.frameNo, { color: colors.textSecondary }]}
                     >
-                      {item.memo}
+                      {String(frameNo).padStart(2, "0")}
                     </Text>
-                  )}
-                </Pressable>
+                  </View>
+                </View>
+
+                <View style={styles.frameBody}>
+                  <View style={styles.frameTop}>
+                    <Text style={[styles.date, { color: colors.textSecondary }]}>
+                      {Number(month)}.{day}
+                    </Text>
+                    {!!mark && (
+                      <Text
+                        style={[
+                          styles.mark,
+                          {
+                            color:
+                              result === "win" ? colors.accent : colors.textSecondary,
+                          },
+                        ]}
+                      >
+                        {mark}
+                      </Text>
+                    )}
+                  </View>
+
+                  <View style={styles.scoreLine}>
+                    <Text style={[styles.code, { color: colors.textSecondary }]}>
+                      {entry.visitorCode}
+                    </Text>
+                    <Text style={[styles.score, { color: colors.text }]}>
+                      {entry.visitorScore}
+                    </Text>
+                    <Text style={[styles.dash, { color: colors.textSecondary }]}>
+                      –
+                    </Text>
+                    <Text style={[styles.score, { color: colors.text }]}>
+                      {entry.homeScore}
+                    </Text>
+                    <Text style={[styles.code, { color: colors.textSecondary }]}>
+                      {entry.homeCode}
+                    </Text>
+                  </View>
+
+                  <Text
+                    style={[styles.stadium, { color: colors.textSecondary }]}
+                    numberOfLines={1}
+                  >
+                    {entry.stadium}
+                    {!!entry.memo && `　${entry.memo}`}
+                  </Text>
+                </View>
+
                 <Pressable
-                  onPress={() => setEditingEntry(item)}
-                  hitSlop={10}
-                  accessibilityRole="button"
-                  accessibilityLabel="この観戦記録を編集"
-                  style={styles.delBtn}
-                >
-                  <Ionicons
-                    name="pencil-outline"
-                    size={17}
-                    color={colors.textSecondary}
-                  />
-                </Pressable>
-                <Pressable
-                  onPress={() => handleDelete(item)}
-                  hitSlop={10}
+                  onPress={() => handleDelete(entry)}
+                  hitSlop={12}
                   accessibilityRole="button"
                   accessibilityLabel="この観戦記録を削除"
                   style={styles.delBtn}
                 >
                   <Ionicons
-                    name="trash-outline"
-                    size={18}
-                    color={colors.danger}
+                    name="close"
+                    size={15}
+                    color={colors.textSecondary}
                   />
                 </Pressable>
-              </View>
+              </Pressable>
             );
           }}
         />
@@ -557,16 +608,41 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.six,
   },
   empty: { textAlign: "center", lineHeight: 20 },
-  row: {
+  // 1件 = フィルムの1コマ。枠で囲わず、下罫線だけで隣のコマと分ける。
+  frame: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderWidth: 1,
-    borderRadius: Radius.surface,
-    padding: 12,
+    alignItems: "stretch",
+    borderBottomWidth: Rule.hairline,
   },
-  rowMeta: { fontSize: 11.5, marginBottom: 4 },
-  rowScore: { fontSize: 15, fontWeight: "600" },
-  rowMemo: { fontSize: 11.5, marginTop: 3 },
-  delBtn: { padding: 6 },
+  // 送り穴の列。一覧を貫いて連続して見えるよう、コマの高さいっぱいに伸ばす
+  rail: {
+    width: 34,
+    alignItems: "center",
+    justifyContent: "space-around",
+    paddingVertical: 8,
+  },
+  perf: { width: 7, height: 5, borderRadius: Radius.mark },
+  // コマ番号は送り穴の列に重ねる。地色を敷いて穴を隠し、刻印に見せる
+  railNo: {
+    position: "absolute",
+    top: "50%",
+    marginTop: -11,
+    paddingVertical: 3,
+  },
+  frameNo: { ...Type.display(17) },
+  frameBody: { flex: 1, paddingVertical: 14, paddingRight: 4 },
+  frameTop: { flexDirection: "row", alignItems: "baseline", gap: 8 },
+  date: { ...Type.display(16) },
+  mark: { fontSize: 11, fontWeight: "700" },
+  scoreLine: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 6,
+    marginTop: 2,
+  },
+  code: { ...Type.display(16) },
+  score: { ...Type.display(27) },
+  dash: { ...Type.display(16) },
+  stadium: { fontSize: 12, marginTop: 3 },
+  delBtn: { paddingHorizontal: 10, justifyContent: "center" },
 });
