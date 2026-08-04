@@ -3,6 +3,7 @@ import { useMemo, useRef, useState } from "react";
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "@/hooks/use-theme";
+import { Radius } from "@/constants/theme";
 
 const WEEKDAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
 
@@ -247,7 +248,7 @@ export function DateField({
                         styles.yearCell,
                         isSelectedYear && {
                           backgroundColor: colors.accent,
-                          borderRadius: 8,
+                          borderRadius: Radius.surface,
                         },
                       ]}
                     >
@@ -312,7 +313,7 @@ export function DateField({
                       styles.dayCell,
                       isSelected && {
                         backgroundColor: colors.accent,
-                        borderRadius: 8,
+                        borderRadius: Radius.surface,
                       },
                     ]}
                   >
@@ -364,7 +365,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     borderWidth: 1,
-    borderRadius: 6,
+    borderRadius: Radius.surface,
     paddingVertical: 11,
     paddingHorizontal: 12,
   },
@@ -436,7 +437,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginTop: 10,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: Radius.surface,
     paddingVertical: 8,
     paddingHorizontal: 20,
   },

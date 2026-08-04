@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { CONTACT_EMAIL, WEB_BASE_URL } from "@/constants/contact";
-import { MaxContentWidth, Spacing } from "@/constants/theme";
+import { MaxContentWidth, Spacing, Radius } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 
 function QA({ q, children }: { q: string; children: React.ReactNode }) {
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   lead: { lineHeight: 21, marginBottom: 4 },
   qa: {
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: Radius.surface,
     padding: 12,
     marginBottom: 10,
   },
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: Radius.surface,
     paddingVertical: 12,
     paddingHorizontal: 14,
     marginTop: 4,

@@ -389,7 +389,7 @@ export default function HistoryScreen() {
                     style={[styles.meta, { color: colors.textSecondary }]}
                     numberOfLines={1}
                   >
-                    {Number(month)}.{day}　{entry.stadium}
+                    {month}.{day}　{entry.stadium}
                     {!!entry.memo && `　${entry.memo}`}
                   </Text>
 

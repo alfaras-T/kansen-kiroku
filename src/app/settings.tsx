@@ -27,7 +27,8 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { WEB_BASE_URL } from "@/constants/contact";
 import { TEAMS } from "@/constants/teams";
-import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
+import { BottomTabInset, MaxContentWidth, Radius, Spacing } from "@/constants/theme";
+import { Rule, Space } from "@/constants/typography";
 import { useFavoriteTeam } from "@/contexts/favorite-team";
 import { exportBackup, importBackup } from "@/storage/backup";
 import { confirmAsync, notify } from "@/utils/dialogs";
@@ -302,21 +303,11 @@ export default function SettingsScreen() {
           >
             アプリについて
           </ThemedText>
-          <View
-            style={[
-              styles.infoBox,
-              {
-                backgroundColor: colors.backgroundElement,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <View style={[styles.infoRow, styles.infoRowLast]}>
-              <ThemedText type="small" themeColor="textSecondary">
-                バージョン
-              </ThemedText>
-              <ThemedText type="small">{appVersion}</ThemedText>
-            </View>
+          <View style={styles.infoRow}>
+            <ThemedText type="small" themeColor="textSecondary">
+              バージョン
+            </ThemedText>
+            <ThemedText type="small">{appVersion}</ThemedText>
           </View>
           <View style={styles.linkRow}>
             <Pressable onPress={() => openLegalPage("/privacy")} hitSlop={6}>
@@ -387,11 +378,28 @@ const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
   },
-  header: { padding: Spacing.four, paddingBottom: Spacing.three },
-  title: { fontSize: 26, lineHeight: 32 },
-  section: { paddingHorizontal: Spacing.four, marginBottom: Spacing.four },
+  header: {
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.two,
+    paddingBottom: Space.row,
+  },
+  title: { fontSize: 22, fontWeight: "700", letterSpacing: 0.3 },
+  // 節は上罫線で仕切る。5つの節を余白だけで並べると、どこで話題が
+  // 変わったのか分からず、設定項目が一続きの塊に見える。
+  section: {
+    paddingHorizontal: Spacing.four,
+    paddingTop: Space.row,
+    paddingBottom: Space.section,
+    borderTopWidth: Rule.hairline,
+  },
   scrollContent: { paddingBottom: BottomTabInset + Spacing.six },
-  sectionLabel: { marginBottom: 6 },
+  // 節の見出し。補助色の小さな文字にして、中身より前に出ないようにする
+  sectionLabel: {
+    fontSize: 11.5,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    marginBottom: 10,
+  },
   linkRow: {
     flexDirection: "row",
     gap: 20,
@@ -420,24 +428,16 @@ const styles = StyleSheet.create({
   hint: { marginTop: 10, lineHeight: 18 },
   button: {
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: Radius.surface,
     paddingVertical: 12,
     alignItems: "center",
   },
   buttonSpacing: { marginTop: 8 },
   buttonText: { fontSize: 14, fontWeight: "600" },
-  infoBox: {
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 14,
-  },
+  // アプリ情報は操作ではなく参照。枠に入れず、素の行として置く。
   infoRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "rgba(255,255,255,0.08)",
   },
-  infoRowLast: { borderBottomWidth: 0 },
 });

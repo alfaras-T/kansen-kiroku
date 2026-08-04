@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "@/hooks/use-theme";
+import { Radius } from "@/constants/theme";
 
 export interface SelectOption {
   label: string;
@@ -173,7 +174,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     borderWidth: 1,
-    borderRadius: 6,
+    borderRadius: Radius.surface,
     paddingVertical: 11,
     paddingHorizontal: 12,
   },
@@ -188,7 +189,7 @@ const styles = StyleSheet.create({
   rowMain: { flexDirection: "row", alignItems: "center", gap: 8, flexShrink: 1 },
   badge: {
     borderWidth: 1,
-    borderRadius: 4,
+    borderRadius: Radius.surface,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },

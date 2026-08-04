@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { CONTACT_EMAIL } from "@/constants/contact";
 import { useTheme } from "@/hooks/use-theme";
+import { Radius } from "@/constants/theme";
 import { notify, openMailComposer } from "@/utils/dialogs";
 
 const CATEGORIES = [
@@ -208,7 +209,7 @@ const styles = StyleSheet.create({
   categoryChipText: { fontSize: 13, fontWeight: "600" },
   input: {
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: Radius.surface,
     padding: 12,
     minHeight: 120,
     fontSize: 14,
@@ -220,7 +221,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    borderRadius: 8,
+    borderRadius: Radius.surface,
     paddingVertical: 14,
     marginTop: 18,
   },

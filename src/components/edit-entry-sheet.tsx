@@ -19,6 +19,7 @@ import { OTHER_STADIUM, STADIUMS } from "@/constants/stadiums";
 import { OTHER_TEAM, TEAMS } from "@/constants/teams";
 import { useCreateForm } from "@/contexts/create-form";
 import { useTheme } from "@/hooks/use-theme";
+import { Radius } from "@/constants/theme";
 import { loadSourcePhotoUri } from "@/storage/source-photos";
 import { HistoryEntry } from "@/types/history";
 import { confirmAsync, notify } from "@/utils/dialogs";
@@ -429,7 +430,7 @@ const styles = StyleSheet.create({
   scoreInput: {
     width: "100%",
     borderWidth: 1,
-    borderRadius: 6,
+    borderRadius: Radius.surface,
     paddingVertical: 9,
     paddingHorizontal: 10,
     fontSize: 15,
@@ -437,13 +438,13 @@ const styles = StyleSheet.create({
   },
   textInput: {
     borderWidth: 1,
-    borderRadius: 6,
+    borderRadius: Radius.surface,
     paddingVertical: 9,
     paddingHorizontal: 12,
     fontSize: 14,
   },
   saveBtn: {
-    borderRadius: 8,
+    borderRadius: Radius.surface,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 8,
@@ -455,7 +456,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     borderWidth: 1.5,
-    borderRadius: 8,
+    borderRadius: Radius.surface,
     paddingVertical: 13,
     marginTop: 10,
   },

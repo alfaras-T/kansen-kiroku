@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTheme } from "@/hooks/use-theme";
+import { Radius } from "@/constants/theme";
 
 export interface SegmentedOption<T extends string> {
   value: T;
@@ -58,7 +59,7 @@ const styles = StyleSheet.create({
   chip: {
     paddingVertical: 9,
     paddingHorizontal: 12,
-    borderRadius: 6,
+    borderRadius: Radius.surface,
     borderWidth: 1,
   },
   chipText: {

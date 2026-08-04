@@ -31,7 +31,7 @@ import {
   resolveExportSize,
   resolveOverlayAspect,
 } from "@/constants/overlayStyles";
-import { MaxContentWidth } from "@/constants/theme";
+import { MaxContentWidth, Radius } from "@/constants/theme";
 import { useCreateForm } from "@/contexts/create-form";
 import { useTheme } from "@/hooks/use-theme";
 
@@ -494,7 +494,7 @@ const styles = StyleSheet.create({
   emptyBtn: {
     marginTop: 16,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: Radius.surface,
     paddingVertical: 10,
     paddingHorizontal: 18,
   },
@@ -528,7 +528,7 @@ const styles = StyleSheet.create({
   iconBtn: {
     width: 34,
     height: 34,
-    borderRadius: 17,
+    borderRadius: 17, // 円形。面の角丸(Radius)とは別の意味なのでトークン化しない
     backgroundColor: "rgba(0,0,0,0.4)",
     alignItems: "center",
     justifyContent: "center",
@@ -548,7 +548,7 @@ const styles = StyleSheet.create({
     right: 16,
     bottom: 8,
     backgroundColor: "rgba(0,0,0,0.55)",
-    borderRadius: 12,
+    borderRadius: Radius.surface,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 9,
-    borderRadius: 10,
+    borderRadius: Radius.surface,
     paddingVertical: 15,
   },
   // 共有は副次的な操作なので、塗りつぶさず枠線のみにして
@@ -598,7 +598,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 9,
-    borderRadius: 10,
+    borderRadius: Radius.surface,
     paddingVertical: 15,
     borderWidth: 1.5,
   },

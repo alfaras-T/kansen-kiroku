@@ -20,6 +20,7 @@ import {
   proofCardHeight,
 } from "@/components/proof-sheet-card";
 import { useTheme } from "@/hooks/use-theme";
+import { Radius } from "@/constants/theme";
 import { resolveGameResult } from "@/storage/history";
 import { loadThumbnailUriMap } from "@/storage/thumbnails";
 import { HistoryEntry } from "@/types/history";
@@ -345,7 +346,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    borderRadius: 8,
+    borderRadius: Radius.surface,
     paddingVertical: 14,
   },
   btnOutline: { borderWidth: 1.5, backgroundColor: "transparent" },

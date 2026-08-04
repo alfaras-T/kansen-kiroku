@@ -23,6 +23,7 @@ import {
   wrapCardHeight,
 } from "@/components/wrapup-card";
 import { useTheme } from "@/hooks/use-theme";
+import { Radius } from "@/constants/theme";
 import { notify } from "@/utils/dialogs";
 import { blobUrlToResizedDataUri } from "@/utils/image";
 import { YearSummary } from "@/utils/yearSummary";
@@ -633,7 +634,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: Radius.surface,
     paddingVertical: 10,
     marginTop: 10,
   },
@@ -644,7 +645,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    borderRadius: 8,
+    borderRadius: Radius.surface,
     paddingVertical: 14,
     marginTop: 18,
   },

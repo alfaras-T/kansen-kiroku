@@ -4,6 +4,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-nati
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useTheme } from "@/hooks/use-theme";
+import { Radius } from "@/constants/theme";
 
 /**
  * 説明・ヘルプ用のボトムシート。SelectModal と同じ見た目に揃えている。
@@ -101,7 +102,7 @@ const styles = StyleSheet.create({
   stepBadge: {
     width: 22,
     height: 22,
-    borderRadius: 11,
+    borderRadius: Radius.surface,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
