@@ -212,7 +212,7 @@ export default function SettingsScreen() {
           ラベルを左、操作を右に置いた行にすれば、目はラベルの列を追える。
         */}
         <View style={styles.section}>
-          <View style={[styles.row, styles.rowLast]}>
+          <View style={[styles.row, { borderBottomColor: colors.border }]}>
             <Text style={[styles.rowLabel, { color: colors.text }]}>
               お気に入りチーム
             </Text>
@@ -226,13 +226,18 @@ export default function SettingsScreen() {
               />
             </View>
           </View>
-          <Text style={[styles.note, { color: colors.textSecondary }]}>
+          <Text
+            style={[
+              styles.note,
+              { color: colors.textSecondary, borderBottomColor: colors.border },
+            ]}
+          >
             選んだチームの色に、アプリの配色とテロップの日付が変わります。
           </Text>
         </View>
 
         <View style={styles.section}>
-          <View style={[styles.row, styles.rowLast]}>
+          <View style={[styles.row, { borderBottomColor: colors.border }]}>
             <Text style={[styles.rowLabel, { color: colors.text }]}>
               作った画像を残す
             </Text>
@@ -242,7 +247,12 @@ export default function SettingsScreen() {
               accessibilityLabel="作った画像を残す"
             />
           </View>
-          <Text style={[styles.note, { color: colors.textSecondary }]}>
+          <Text
+            style={[
+              styles.note,
+              { color: colors.textSecondary, borderBottomColor: colors.border },
+            ]}
+          >
             その年の観戦を一枚に並べるのに使います。写真はこの端末の中だけに保存され、サーバーには送られません。
           </Text>
         </View>
@@ -280,9 +290,13 @@ export default function SettingsScreen() {
             onPress={handleImport}
             disabled={importing}
             colors={colors}
-            last
           />
-          <Text style={[styles.note, { color: colors.textSecondary }]}>
+          <Text
+            style={[
+              styles.note,
+              { color: colors.textSecondary, borderBottomColor: colors.border },
+            ]}
+          >
             観戦履歴とチーム設定をファイルに保存します。機種変更や再インストールの前にお使いください。サーバーへは送信されません。
           </Text>
         </View>
@@ -294,7 +308,12 @@ export default function SettingsScreen() {
             colors={colors}
             last
           />
-          <Text style={[styles.note, { color: colors.textSecondary }]}>
+          <Text
+            style={[
+              styles.note,
+              { color: colors.textSecondary, borderBottomColor: colors.border },
+            ]}
+          >
             端末のメールアプリが開きます。いただいた内容は改善の参考にさせていただきます。
           </Text>
         </View>
@@ -390,12 +409,10 @@ const styles = StyleSheet.create({
   // 節の見出しは置かない。設定の項目名がそのまま内容を語るので、
   // その上にさらに分類名を重ねると同じことを二度言うことになる。
   // 切れ目は上罫線と、節の下に置く説明文が担う。
-  // 節と節を離さず、罫線だけで隣接させる。余白で離すと、どこまでが
-  // ひとつの話題なのかが曖昧になり、画面も間延びする。
-  section: {
-    paddingHorizontal: Spacing.four,
-    borderTopWidth: Rule.hairline,
-  },
+  // 節そのものは余白も罫線も持たない。区切りは行が自分の下罫線で作る。
+  // 節ごとに上罫線と余白を持たせていたため、説明文の下余白と重なって
+  // 罫線の前後に空白の帯ができていた。
+  section: { paddingHorizontal: Spacing.four },
   // タブバーを隠して開くので、その分の余白は要らない
   scrollContent: { paddingBottom: Spacing.six },
   // 「方法を見る」は書き出しの上に添える。手順の説明は書き出しに付随する
@@ -405,7 +422,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingTop: Space.row,
-    paddingBottom: 2,
+    paddingBottom: 4,
   },
   exportLabel: { fontSize: 11.5, fontWeight: "700", letterSpacing: 1.2 },
   helpBtn: { flexDirection: "row", alignItems: "center", gap: 3 },
@@ -418,12 +435,16 @@ const styles = StyleSheet.create({
     paddingVertical: Space.row,
     borderBottomWidth: 1,
   },
-  rowLast: { borderBottomWidth: 0 },
   rowLabel: { fontSize: 15, flexShrink: 1 },
   rowValue: { flexShrink: 0 },
   version: { fontSize: 14 },
   // 節の説明。行の下に一段落として置き、行そのものは短く保つ
-  // 説明は節の最後に置くだけ。下に余白を持たせると、次の節の行の上余白と
-  // 足し合わさって、罫線の前後に空白の帯ができてしまう。
-  note: { fontSize: 12, lineHeight: 18, marginTop: 4, marginBottom: 12 },
+  // 説明は直前の行に属する。下罫線をここに引くことで、説明まで含めて
+  // ひとつの行として区切られ、余分な空白が生まれない。
+  note: {
+    fontSize: 12,
+    lineHeight: 18,
+    paddingBottom: Space.row,
+    borderBottomWidth: 1,
+  },
 });
