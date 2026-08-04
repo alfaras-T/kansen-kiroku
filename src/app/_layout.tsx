@@ -24,6 +24,10 @@ export default function TabLayout() {
     BebasNeue_400Regular,
     Montserrat_500Medium,
     Montserrat_600SemiBold,
+    // フィルムプリセットの日付に使う7セグメント書体。
+    // 当時のコンパクトカメラの焼き込み表示そのものの形。
+    // DSEG (SIL Open Font License 1.1 / keshikan) — assets/fonts/DSEG-LICENSE.txt
+    DSEG7Classic: require('../../assets/fonts/DSEG7Classic-Regular.ttf'),
   });
   const [fontWaitElapsed, setFontWaitElapsed] = useState(false);
   const pathname = usePathname();

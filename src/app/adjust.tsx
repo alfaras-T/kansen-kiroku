@@ -75,6 +75,8 @@ export default function AdjustScreen() {
     setStyleKey,
     winHighlight,
     setWinHighlight,
+    useTeamColor,
+    setUseTeamColor,
     alsoSaveToHistory,
     setAlsoSaveToHistory,
     savedFlash,
@@ -193,6 +195,7 @@ export default function AdjustScreen() {
                   stadium={stadiumName}
                   memo={memo}
                   winHighlight={winHighlight}
+                  useTeamColor={useTeamColor}
                   photoOffset={photoOffset}
                   onPhotoOffsetChange={setPhotoOffset}
                   photoScale={photoScale}
@@ -230,6 +233,7 @@ export default function AdjustScreen() {
                   stadium={stadiumName}
                   memo={memo}
                   winHighlight={winHighlight}
+                  useTeamColor={useTeamColor}
                   photoOffset={photoOffset}
                   photoScale={photoScale}
                   telopScale={telopScale}
@@ -314,19 +318,44 @@ export default function AdjustScreen() {
                   </Pressable>
                 </View>
 
-                <View style={styles.iconGroup}>
-                  <Text style={styles.iconLabel}>ハイライト</Text>
-                  <Pressable
-                    onPress={() => setWinHighlight(!winHighlight)}
-                    style={styles.iconBtn}
-                  >
-                    <Ionicons
-                      name={winHighlight ? "flame" : "flame-outline"}
-                      size={16}
-                      color={winHighlight ? colors.accent : "#fff"}
-                    />
-                  </Pressable>
-                </View>
+                {/*
+                  フィルムは一列構成で勝敗ハイライトを効かせないため、この枠を
+                  球団カラーの入切に差し替える。色を足さない状態を好む人も
+                  いるので、フィルムでは色の有無の方が意味のある選択になる。
+                */}
+                {styleKey === "film" ? (
+                  <View style={styles.iconGroup}>
+                    <Text style={styles.iconLabel}>
+                      {useTeamColor ? "球団カラー" : "デフォルト"}
+                    </Text>
+                    <Pressable
+                      onPress={() => setUseTeamColor(!useTeamColor)}
+                      accessibilityRole="button"
+                      accessibilityLabel="テロップの色を切り替える"
+                      style={styles.iconBtn}
+                    >
+                      <Ionicons
+                        name={useTeamColor ? "color-palette" : "color-palette-outline"}
+                        size={16}
+                        color={useTeamColor ? colors.accent : "#fff"}
+                      />
+                    </Pressable>
+                  </View>
+                ) : (
+                  <View style={styles.iconGroup}>
+                    <Text style={styles.iconLabel}>ハイライト</Text>
+                    <Pressable
+                      onPress={() => setWinHighlight(!winHighlight)}
+                      style={styles.iconBtn}
+                    >
+                      <Ionicons
+                        name={winHighlight ? "flame" : "flame-outline"}
+                        size={16}
+                        color={winHighlight ? colors.accent : "#fff"}
+                      />
+                    </Pressable>
+                  </View>
+                )}
 
                 {isAdjusted && (
                   <View style={styles.iconGroup}>

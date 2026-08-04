@@ -156,6 +156,7 @@ export default function CreateScreen() {
     position,
     styleKey,
     winHighlight,
+    useTeamColor,
     photoOffset,
     photoScale,
     telopScale,
@@ -260,6 +261,7 @@ export default function CreateScreen() {
                       stadium={stadiumName}
                       memo={memo}
                       winHighlight={winHighlight}
+                      useTeamColor={useTeamColor}
                       photoOffset={photoOffset}
                       photoScale={photoScale}
                       telopScale={telopScale}

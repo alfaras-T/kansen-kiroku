@@ -56,6 +56,8 @@ export interface OverlayCardProps {
   stadium: string;
   memo: string;
   winHighlight: boolean;
+  /** 球団カラーを使うか。false ならプリセットの既定色のまま */
+  useTeamColor?: boolean;
   /** 写真の表示位置オフセット（-1〜1、0が中央）。ドラッグで変更される。 */
   photoOffset?: PhotoOffset;
   /** ドラッグ操作で位置が変わるたびに呼ばれる */
@@ -112,6 +114,7 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
     visitorScore,
     homeScore,
     winHighlight,
+    useTeamColor = true,
     memo,
     stadium,
     dateLabel,
@@ -215,7 +218,7 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
   const myTeamIsPlaying =
     !!myTeam && (visitorCode === myTeam || homeCode === myTeam);
   const telopTeamColor =
-    styleKey === 'minimal' || !myTeamIsPlaying
+    !useTeamColor || styleKey === 'minimal' || !myTeamIsPlaying
       ? null
       : resolveTelopTeamColor(myTeam);
   // 「元の写真のまま」の場合は写真自体の縦横比を使う。
@@ -360,15 +363,19 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
   const dateColor = telopTeamColor ?? palette.accent;
 
   /**
-   * フィルムカメラの焼き込み表記。「'26 6 14」のように、西暦を2桁にして
+   * フィルムカメラの焼き込み表記。「26 6 14」のように、西暦を2桁にして
    * 月日をゼロ埋めせずに並べる。当時のコンパクトカメラの表示に倣ったもの。
+   *
+   * 頭のアポストロフィは付けない。7セグメント書体(DSEG7)は数字と一部の
+   * 記号しか持たず、アポストロフィが収録されていないため。実機の焼き込みも
+   * 記号を持たない表示器が多く、数字だけの方がむしろ忠実になる。
    */
   const dateText =
     palette.dateStamp && dateIso
       ? (() => {
           const [y, m, d] = dateIso.split('-');
           if (!y || !m || !d) return dateLabel;
-          return `'${y.slice(2)} ${Number(m)} ${Number(d)}`;
+          return `${y.slice(2)} ${Number(m)} ${Number(d)}`;
         })()
       : dateLabel;
 
@@ -377,6 +384,10 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
    * 「発光して焼き込まれている」ように見せる。
    * 球団カラーが入っている場合もその色で光るので、印象が破綻しない。
    */
+  // 7セグメント書体は数字と記号しか持たないため、フィルムの日付表記
+  // (「26 8 3」)にだけ使う。日本語や曜日には当てられない。
+  const dateFont = palette.dateStamp ? { fontFamily: 'DSEG7Classic' } : null;
+
   const dateShadow = palette.dateGlow
     ? {
         textShadowColor: dateColor,
@@ -481,6 +492,7 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
               style={[
                 styles.inlineText,
                 telopStyles.inlineText,
+                dateFont,
                 dateShadow,
                 { color: dateColor },
               ]}
@@ -516,6 +528,7 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
               style={[
                 styles.dateLine,
                 telopStyles.dateLine,
+                dateFont,
                 dateShadow,
                 { color: dateColor },
               ]}

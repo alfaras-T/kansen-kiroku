@@ -59,6 +59,8 @@ interface CreateFormContextValue {
   setStyleKey: (v: OverlayStyleKey) => void;
   winHighlight: boolean;
   setWinHighlight: (v: boolean) => void;
+  useTeamColor: boolean;
+  setUseTeamColor: (v: boolean) => void;
   recordOnly: boolean;
   setRecordOnly: (v: boolean) => void;
   /** 画像の保存/共有と同時に観戦履歴にも保存するか（調整画面のチェックボックス） */
@@ -124,6 +126,9 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
   const [position, setPosition] = useState<OverlayPosition>('br');
   const [styleKey, setStyleKey] = useState<OverlayStyleKey>('classic');
   const [winHighlight, setWinHighlight] = useState(false);
+  // テロップに球団カラーを使うか。色を足さない状態を好む人もいるため
+  // 切り替えられるようにする。既定は使う。
+  const [useTeamColor, setUseTeamColor] = useState(true);
   const [recordOnly, setRecordOnly] = useState(false);
   const [alsoSaveToHistory, setAlsoSaveToHistory] = useState(true);
   // 同じ下書き（同じ写真）で保存/共有を複数回押しても、観戦履歴には重複して記録しないようにする
@@ -299,6 +304,8 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
           '34px BebasNeue_400Regular',
           '10.5px Montserrat_600SemiBold',
           '12px Montserrat_600SemiBold',
+          // フィルムの日付。読み込み前に撮ると別書体で焼き込まれる
+          '14px DSEG7Classic',
         ];
         try {
           await Promise.all(requiredFonts.map((f) => document.fonts.load(f)));
@@ -683,6 +690,8 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
     setStyleKey,
     winHighlight,
     setWinHighlight,
+    useTeamColor,
+    setUseTeamColor,
     recordOnly,
     setRecordOnly,
     alsoSaveToHistory,

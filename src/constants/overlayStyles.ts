@@ -53,7 +53,7 @@ export interface OverlayPalette {
   gradientTo: string;
   /** テロップの大きさの階層。省略時はスコアを主役にした既定の階層 */
   sizes?: OverlayTelopSizes;
-  /** 日付を「'26 6 14」というフィルムカメラ風の表記にする */
+  /** 日付を「26 6 14」というフィルムカメラ風の表記にする */
   dateStamp?: boolean;
   /** 日付を自身の色で発光させる(焼き込みの滲みを再現する) */
   dateGlow?: boolean;
@@ -97,7 +97,7 @@ export const OVERLAY_STYLES: Record<OverlayStyleKey, OverlayPalette> = {
   // 色を暖色にするだけでは「暖色系のテロップ」にしかならないので、
   // あの見た目を成り立たせている2つの特徴を再現する。
   //   1. 日付そのものが光っているような滲み(dateGlow)
-  //   2. 「'26 6 14」という独特の日付表記(dateStamp)
+  //   2. 「26 6 14」という独特の日付表記(dateStamp)
   film: {
     label: 'フィルム',
     body: '#F7EEDF',
