@@ -196,9 +196,6 @@ export default function SettingsScreen() {
           ラベルを左、操作を右に置いた行にすれば、目はラベルの列を追える。
         */}
         <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
-            配色
-          </Text>
           <View style={[styles.row, { borderBottomColor: colors.border }]}>
             <Text style={[styles.rowLabel, { color: colors.text }]}>
               お気に入りチーム
@@ -219,9 +216,6 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
-            フィルムシート
-          </Text>
           <View style={[styles.row, { borderBottomColor: colors.border }]}>
             <Text style={[styles.rowLabel, { color: colors.text }]}>
               作った画像を残す
@@ -238,9 +232,6 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
-            バックアップ
-          </Text>
           <ActionRow
             label={exporting ? "書き出し中…" : "観戦履歴を書き出す"}
             onPress={handleExport}
@@ -265,9 +256,6 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
-            問い合わせ
-          </Text>
           <ActionRow
             label="ご要望・不具合を送る"
             onPress={() => setContactOpen(true)}
@@ -279,9 +267,6 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
-            Ball Films
-          </Text>
           <View style={[styles.row, { borderBottomColor: colors.border }]}>
             <Text style={[styles.rowLabel, { color: colors.text }]}>
               バージョン
@@ -366,20 +351,16 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: "700", letterSpacing: 0.3 },
   // 節は上罫線で仕切る。5つの節を余白だけで並べると、どこで話題が
   // 変わったのか分からず、設定項目が一続きの塊に見える。
+  // 節の見出しは置かない。設定の項目名がそのまま内容を語るので、
+  // その上にさらに分類名を重ねると同じことを二度言うことになる。
+  // 切れ目は上罫線と、節の下に置く説明文が担う。
   section: {
     paddingHorizontal: Spacing.four,
-    paddingTop: Space.row,
-    paddingBottom: Space.section,
+    paddingTop: Space.tight,
+    paddingBottom: Space.row,
     borderTopWidth: Rule.hairline,
   },
   scrollContent: { paddingBottom: BottomTabInset + Spacing.six },
-  // 節の見出し。補助色の小さな文字にして、中身より前に出ないようにする
-  sectionLabel: {
-    fontSize: 11.5,
-    fontWeight: "700",
-    letterSpacing: 1.2,
-    marginBottom: 4,
-  },
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -392,5 +373,5 @@ const styles = StyleSheet.create({
   rowValue: { flexShrink: 0 },
   version: { fontSize: 14 },
   // 節の説明。行の下に一段落として置き、行そのものは短く保つ
-  note: { fontSize: 12, lineHeight: 18, marginTop: 10 },
+  note: { fontSize: 12, lineHeight: 18, marginTop: 10, marginBottom: 4 },
 });

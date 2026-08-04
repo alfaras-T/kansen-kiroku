@@ -1,10 +1,20 @@
-import { Linking, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import {
+  Linking,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { CONTACT_EMAIL, WEB_BASE_URL } from "@/constants/contact";
 import { MaxContentWidth, Spacing } from "@/constants/theme";
+import { Rule, Space } from "@/constants/typography";
+import { useTheme } from "@/hooks/use-theme";
 
 const LAST_UPDATED = "2026年7月21日";
 
@@ -15,11 +25,12 @@ function Section({
   title: string;
   children: React.ReactNode;
 }) {
+  const colors = useTheme();
   return (
     <View style={styles.section}>
-      <ThemedText type="smallBold" style={styles.sectionTitle}>
+      <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
         {title}
-      </ThemedText>
+      </Text>
       {children}
     </View>
   );
@@ -162,9 +173,21 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.six,
   },
   header: { marginBottom: Spacing.four, gap: 4 },
-  title: { fontSize: 24, lineHeight: 30, marginTop: 8, marginBottom: 4 },
-  section: { marginBottom: Spacing.four },
-  sectionTitle: { marginBottom: 6 },
+  title: { fontSize: 22, lineHeight: 28, marginTop: 10, marginBottom: 2, fontWeight: "700" },
+  // 節は上罫線で仕切る。長い規約文が余白だけで並ぶと、どこで話題が
+  // 変わったのか分からず、一続きの壁に見える。
+  section: {
+    paddingTop: Space.row,
+    paddingBottom: Space.section,
+    borderTopWidth: Rule.hairline,
+    borderTopColor: "rgba(255,255,255,0.12)",
+  },
+  sectionTitle: {
+    fontSize: 11.5,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    marginBottom: 8,
+  },
   body: { lineHeight: 21 },
   footer: { textAlign: "center", marginTop: Spacing.four },
 });

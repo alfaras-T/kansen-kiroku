@@ -6,19 +6,15 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { CONTACT_EMAIL, WEB_BASE_URL } from "@/constants/contact";
 import { MaxContentWidth, Spacing, Radius } from "@/constants/theme";
+import { Rule, Space } from "@/constants/typography";
 import { useTheme } from "@/hooks/use-theme";
 
 function QA({ q, children }: { q: string; children: React.ReactNode }) {
   const colors = useTheme();
   return (
-    <View
-      style={[
-        styles.qa,
-        { borderColor: colors.border, backgroundColor: colors.backgroundElement },
-      ]}
-    >
+    <View style={[styles.qa, { borderBottomColor: colors.border }]}>
       <ThemedText type="smallBold" style={styles.q}>
-        Q. {q}
+        {q}
       </ThemedText>
       <ThemedText type="small" themeColor="textSecondary" style={styles.a}>
         {children}
@@ -119,12 +115,7 @@ export default function SupportScreen({ onClose }: { onClose?: () => void } = {}
         >
           上記で解決しない場合や、不具合のご報告・ご要望は、アプリ内の設定タブ「ご要望・お問い合わせフォーム」から、または下記メールアドレスまで直接ご連絡ください。
         </ThemedText>
-        <View
-          style={[
-            styles.contactBox,
-            { borderColor: colors.accent, backgroundColor: colors.backgroundElement },
-          ]}
-        >
+        <View style={[styles.contactRow, { borderTopColor: colors.border }]}>
           <Ionicons name="mail-outline" size={16} color={colors.accent} />
           <ThemedText type="smallBold" themeColor="accent">
             {CONTACT_EMAIL}
@@ -158,26 +149,27 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.six,
   },
   header: { marginBottom: Spacing.four, gap: 4 },
-  title: { fontSize: 24, lineHeight: 30, marginTop: 8, marginBottom: 4 },
-  sectionTitle: { marginTop: Spacing.three, marginBottom: 8 },
-  lead: { lineHeight: 21, marginBottom: 4 },
-  qa: {
-    borderWidth: 1,
-    borderRadius: Radius.surface,
-    padding: 12,
-    marginBottom: 10,
+  title: { fontSize: 22, lineHeight: 28, marginTop: 10, marginBottom: 2, fontWeight: "700" },
+  sectionTitle: {
+    fontSize: 11.5,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    marginTop: Space.section,
+    marginBottom: 8,
   },
-  q: { marginBottom: 4 },
-  a: { lineHeight: 20 },
-  contactBox: {
+  lead: { lineHeight: 21, marginBottom: 4 },
+  // 質問と答えを枠で囲うと、全ての問いが同じ重さの箱として並ぶ。
+  // 罫線で区切れば、問いの見出しが縦に並んで拾い読みしやすい。
+  qa: { paddingVertical: 14, borderBottomWidth: Rule.hairline },
+  q: { marginBottom: 5, fontSize: 14.5 },
+  a: { lineHeight: 21 },
+  contactRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    borderWidth: 1,
-    borderRadius: Radius.surface,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    marginTop: 4,
+    borderTopWidth: Rule.hairline,
+    paddingTop: 14,
+    marginTop: 12,
   },
   footer: { textAlign: "center", marginTop: Spacing.four },
 });
