@@ -101,7 +101,9 @@ export function ContactSheet({
           contentContainerStyle={styles.bodyContent}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={[styles.label, { color: colors.textSecondary }]}>種別</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>
+            種別
+          </Text>
           <View style={styles.categoryRow}>
             {CATEGORIES.map((c) => {
               const selected = c.value === category;
@@ -109,20 +111,27 @@ export function ContactSheet({
                 <Pressable
                   key={c.value}
                   onPress={() => setCategory(c.value)}
-                  style={[
-                    styles.categoryChip,
-                    {
-                      borderColor: selected ? colors.accent : colors.border,
-                      backgroundColor: selected
-                        ? colors.backgroundSelected
-                        : "transparent",
-                    },
-                  ]}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  style={styles.categoryChip}
                 >
+                  <View
+                    style={[
+                      styles.categoryMark,
+                      {
+                        backgroundColor: selected
+                          ? colors.accent
+                          : "transparent",
+                      },
+                    ]}
+                  />
                   <Text
                     style={[
                       styles.categoryChipText,
-                      { color: selected ? colors.accent : colors.text },
+                      {
+                        color: selected ? colors.text : colors.textSecondary,
+                        fontWeight: selected ? "700" : "400",
+                      },
                     ]}
                   >
                     {c.label}
@@ -133,7 +142,7 @@ export function ContactSheet({
           </View>
 
           <Text
-            style={[styles.label, { color: colors.textSecondary, marginTop: 18 }]}
+            style={[styles.label, { color: colors.textSecondary, marginTop: 22 }]}
           >
             内容
           </Text>
@@ -198,24 +207,29 @@ const styles = StyleSheet.create({
   sheetTitle: { fontSize: 15, fontWeight: "600", flexShrink: 1, marginRight: 8 },
   body: { paddingHorizontal: 18 },
   bodyContent: { paddingVertical: 18, paddingBottom: 28 },
-  label: { fontSize: 13, marginBottom: 8 },
-  categoryRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  categoryChip: {
-    borderWidth: 1,
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+  // 節のラベル。設定画面の見出しと同じ扱いにする
+  label: {
+    fontSize: 11.5,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    marginBottom: 6,
   },
-  categoryChipText: { fontSize: 13, fontWeight: "600" },
+  // 種別は枠付きの丸チップをやめ、文字と短い縦線で示す。
+  // オンボーディングのチーム選択と同じ語彙。選択肢が枠で囲まれていると、
+  // 送信ボタンと同じ「押す箱」に見えて、何が最終操作か分からなくなる。
+  categoryRow: { flexDirection: "row", flexWrap: "wrap", columnGap: 18 },
+  categoryChip: { flexDirection: "row", alignItems: "center", paddingVertical: 8 },
+  categoryMark: { width: 2, height: 14, marginRight: 8, borderRadius: Radius.mark },
+  categoryChipText: { fontSize: 14 },
   input: {
     borderWidth: 1,
     borderRadius: Radius.surface,
     padding: 12,
-    minHeight: 120,
-    fontSize: 14,
-    lineHeight: 20,
+    minHeight: 140,
+    fontSize: 14.5,
+    lineHeight: 21,
   },
-  note: { fontSize: 12.5, lineHeight: 18, marginTop: 12 },
+  note: { fontSize: 12, lineHeight: 18, marginTop: 12 },
   sendButton: {
     flexDirection: "row",
     alignItems: "center",

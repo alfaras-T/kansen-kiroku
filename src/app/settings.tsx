@@ -254,7 +254,7 @@ export default function SettingsScreen() {
             colors={colors}
           />
           <ActionRow
-            label="書き出したファイルの扱い"
+            label="方法を見る"
             icon="help-circle-outline"
             onPress={() => setBackupHelpOpen(true)}
             colors={colors}
@@ -323,10 +323,10 @@ export default function SettingsScreen() {
           さきほど保存したファイルを選ぶと、観戦記録が復元されます。
         </InfoStep>
         <InfoNote>
-          ※「バックアップから読み込む」を実行すると、いまこの端末にある記録は選んだファイルの内容で上書きされます。引き継ぎ前の端末で書き出したファイルを読み込んでください。
+          「バックアップから読み込む」を実行すると、いまこの端末にある記録は選んだファイルの内容で上書きされます。引き継ぎ前の端末で書き出したファイルを読み込んでください。
         </InfoNote>
         <InfoNote>
-          ※ ファイルはあなたが選んだ保存先にのみ置かれます。アプリからサーバーへ送信されることはありません。バックアップを取らずにアプリを削除すると記録も消えるため、定期的な書き出しをおすすめします。
+          ファイルはあなたが選んだ保存先にのみ置かれます。アプリからサーバーへ送信されることはありません。バックアップを取らずにアプリを削除すると記録も消えるため、定期的な書き出しをおすすめします。
         </InfoNote>
       </InfoSheet>
 

@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useTheme } from "@/hooks/use-theme";
 import { Radius } from "@/constants/theme";
+import { Type } from "@/constants/typography";
 
 /**
  * 説明・ヘルプ用のボトムシート。SelectModal と同じ見た目に揃えている。
@@ -57,26 +58,39 @@ export function InfoSheet({
   );
 }
 
-/** InfoSheet 内で使う番号付きの手順ステップ */
+/**
+ * 手順のステップ。
+ *
+ * 以前は番号をアクセント色で塗った四角に入れていたが、塗りが強く、
+ * 本文より番号の方が目立っていた。番号は道しるべであって主役ではない。
+ * アプリ内で数字に使っている書体(Bebas Neue)をそのまま当て、色だけで
+ * 示す。塗りが消えることで本文が読みやすくなる。
+ */
 export function InfoStep({ index, children }: { index: number; children: ReactNode }) {
   const colors = useTheme();
   return (
     <View style={styles.step}>
-      <View style={[styles.stepBadge, { backgroundColor: colors.accent }]}>
-        <Text style={[styles.stepBadgeText, { color: colors.onAccent }]}>
-          {index}
-        </Text>
-      </View>
+      <Text style={[styles.stepNo, { color: colors.accent }]}>
+        {String(index).padStart(2, "0")}
+      </Text>
       <Text style={[styles.stepText, { color: colors.text }]}>{children}</Text>
     </View>
   );
 }
 
-/** InfoSheet 内の補足テキスト */
+/**
+ * 補足。手順の下に罫線で区切って置く。
+ * 以前は「※」を文頭に付けていたが、記号に頼らなくても、区切りと色の差で
+ * 「これは補足である」ことは伝わる。
+ */
 export function InfoNote({ children }: { children: ReactNode }) {
   const colors = useTheme();
   return (
-    <Text style={[styles.note, { color: colors.textSecondary }]}>{children}</Text>
+    <View style={[styles.noteWrap, { borderTopColor: colors.border }]}>
+      <Text style={[styles.note, { color: colors.textSecondary }]}>
+        {children}
+      </Text>
+    </View>
   );
 }
 
@@ -98,17 +112,9 @@ const styles = StyleSheet.create({
   sheetTitle: { fontSize: 15, fontWeight: "600", flexShrink: 1, marginRight: 8 },
   body: { paddingHorizontal: 18 },
   bodyContent: { paddingVertical: 18, paddingBottom: 28 },
-  step: { flexDirection: "row", alignItems: "flex-start", marginBottom: 16 },
-  stepBadge: {
-    width: 22,
-    height: 22,
-    borderRadius: Radius.surface,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-    marginTop: 1,
-  },
-  stepBadgeText: { fontSize: 12, fontWeight: "700" },
+  step: { flexDirection: "row", alignItems: "flex-start", marginBottom: 18 },
+  stepNo: { ...Type.display(17), width: 30, marginTop: 2 },
   stepText: { flex: 1, fontSize: 14, lineHeight: 21 },
-  note: { fontSize: 13, lineHeight: 19, marginTop: 4 },
+  noteWrap: { borderTopWidth: 1, paddingTop: 14, marginTop: 4 },
+  note: { fontSize: 12.5, lineHeight: 19 },
 });
