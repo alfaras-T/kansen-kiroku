@@ -224,14 +224,88 @@ export default function HistoryScreen() {
       </View>
       <View style={[styles.headRule, { backgroundColor: colors.border }]} />
 
+      {/*
+        作成導線。このアプリで一番作ってほしいものなので、画面で最も強く扱う。
+        成績を見た直後がまとめを作りたくなる瞬間なので、成績のすぐ下に置く。
+
+        それぞれ「何が出てくるか」の縮図を添えている。中身が見えれば押す
+        理由になるし、2つが違う形になるので、同じボタンが並ぶことも避けられる。
+      */}
+      {wrapSummary && wrapSummary.games > 0 && (
+        <View style={styles.makeRow}>
+          <Pressable
+            onPress={() => setWrapOpen(true)}
+            style={[
+              styles.makeCard,
+              {
+                borderColor: colors.border,
+                backgroundColor: colors.backgroundElement,
+              },
+            ]}
+          >
+            {/* 観戦まとめの縮図: 大きな数字と説明行 */}
+            <View style={styles.thumb}>
+              <View
+                style={[styles.wrapNum, { backgroundColor: colors.accent }]}
+              />
+              <View
+                style={[styles.wrapLine, { backgroundColor: colors.border }]}
+              />
+              <View
+                style={[
+                  styles.wrapLine,
+                  { backgroundColor: colors.border, width: "60%" },
+                ]}
+              />
+            </View>
+            <Text style={[styles.makeTitle, { color: colors.text }]}>
+              観戦まとめ
+            </Text>
+            <Text style={[styles.makeNote, { color: colors.textSecondary }]}>
+              一年の成績を一枚に
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setProofOpen(true)}
+            style={[
+              styles.makeCard,
+              {
+                borderColor: colors.border,
+                backgroundColor: colors.backgroundElement,
+              },
+            ]}
+          >
+            {/* フィルムシートの縮図: 写真が並ぶ格子 */}
+            <View style={[styles.thumb, styles.grid]}>
+              {Array.from({ length: 9 }).map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.gridCell,
+                    {
+                      backgroundColor:
+                        i % 4 === 0 ? colors.accent : colors.border,
+                    },
+                  ]}
+                />
+              ))}
+            </View>
+            <Text style={[styles.makeTitle, { color: colors.text }]}>
+              フィルムシート
+            </Text>
+            <Text style={[styles.makeNote, { color: colors.textSecondary }]}>
+              観戦した写真を格子に
+            </Text>
+          </Pressable>
+        </View>
+      )}
+
       {showBackupNudge && (
         <View
           style={[
             styles.nudge,
-            {
-              borderColor: colors.border,
-              backgroundColor: colors.backgroundElement,
-            },
+            { borderTopColor: colors.border },
           ]}
         >
           <View style={styles.nudgeTextArea}>
@@ -262,28 +336,6 @@ export default function HistoryScreen() {
               </Text>
             </Pressable>
           </View>
-        </View>
-      )}
-
-      {/*
-        2つの作成導線。枠で囲うとバックアップの案内と同じ重さになるので、
-        文字と罫線だけにして「作る」動作の列であることを示す。
-      */}
-      {wrapSummary && wrapSummary.games > 0 && (
-        <View style={[styles.makeRow, { borderBottomColor: colors.border }]}>
-          <Pressable onPress={() => setWrapOpen(true)} style={styles.makeBtn}>
-            <Ionicons name="sparkles-outline" size={15} color={colors.accent} />
-            <Text style={[styles.makeText, { color: colors.accent }]}>
-              観戦まとめ
-            </Text>
-          </Pressable>
-          <View style={[styles.makeSep, { backgroundColor: colors.border }]} />
-          <Pressable onPress={() => setProofOpen(true)} style={styles.makeBtn}>
-            <Ionicons name="grid-outline" size={15} color={colors.accent} />
-            <Text style={[styles.makeText, { color: colors.accent }]}>
-              フィルムシート
-            </Text>
-          </Pressable>
         </View>
       )}
 
@@ -480,13 +532,14 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   // 観戦まとめとベタ焼きを横並びにする。余白はこの行がまとめて持つ。
+  // バックアップの案内は割り込み。作成導線より前に出ないよう、枠を持たず
+  // 罫線で仕切った帯にして、一覧の直前に置く。
   nudge: {
-    borderWidth: 1,
-    borderRadius: Radius.surface,
-    padding: 14,
-    gap: 12,
-    marginHorizontal: Spacing.four,
-    marginBottom: Spacing.two,
+    borderTopWidth: Rule.hairline,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: 14,
+    gap: 10,
+    marginTop: 18,
   },
   nudgeTextArea: { gap: 4 },
   nudgeTitle: { fontSize: 14, fontWeight: "700" },
@@ -526,20 +579,25 @@ const styles = StyleSheet.create({
   empty: { textAlign: "center", lineHeight: 20 },
   makeRow: {
     flexDirection: "row",
-    alignItems: "center",
-    borderBottomWidth: Rule.hairline,
-    marginTop: 4,
+    gap: 10,
+    paddingHorizontal: Spacing.four,
+    paddingTop: 18,
   },
-  makeBtn: {
+  makeCard: {
     flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 7,
-    paddingVertical: 14,
+    borderWidth: 1,
+    borderRadius: Radius.surface,
+    padding: 13,
   },
-  makeSep: { width: Rule.hairline, height: 16 },
-  makeText: { fontSize: 13.5, fontWeight: "700", letterSpacing: 0.3 },
+  thumb: { height: 40, justifyContent: "center", marginBottom: 11 },
+  // 観戦まとめの縮図
+  wrapNum: { width: 22, height: 13, borderRadius: Radius.mark },
+  wrapLine: { height: 3, borderRadius: Radius.mark, marginTop: 5, width: "85%" },
+  // フィルムシートの縮図
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: 3, alignContent: "center" },
+  gridCell: { width: 10, height: 10, borderRadius: Radius.mark },
+  makeTitle: { fontSize: 14, fontWeight: "700", letterSpacing: 0.2 },
+  makeNote: { fontSize: 11, marginTop: 3 },
   head: {
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.two,
