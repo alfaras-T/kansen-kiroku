@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import {
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -30,9 +29,7 @@ const OPTIONS = [{ code: NONE_VALUE, nickname: "既定のデザイン" }, ...TEA
  * 見本に使う写真。架空の球場を描き起こしたもので、実在の施設・球団の
  * 意匠は含まない。「観戦写真がこうなる」を、言葉ではなく現物で見せる。
  */
-const SAMPLE_PHOTO = Image.resolveAssetSource(
-  require("../../assets/images/sample-stadium.jpg"),
-).uri;
+const SAMPLE_PHOTO = require("@/assets/images/sample-stadium.jpg");
 
 /** 見本カードの表示幅。画面の主役なので大きく取る。 */
 const SAMPLE_WIDTH = 226;

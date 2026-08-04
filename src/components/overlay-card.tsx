@@ -31,7 +31,13 @@ import {
 import { useLatestRef } from '@/hooks/use-latest-ref';
 
 export interface OverlayCardProps {
-  photoUri: string | null;
+  /**
+   * 写真。撮影・選択した画像は URI 文字列、同梱画像は require() の戻り値。
+   * 同梱画像から URI を取り出すのに Image.resolveAssetSource を使うと、
+   * Webの静的書き出し(Node上での描画)で関数が存在せず落ちるため、
+   * source にそのまま渡せる形で受け取る。
+   */
+  photoUri: string | number | null;
   /**
    * マイチームの判定を外から差し替える。オンボーディングのように、
    * まだ保存されていない「選択中のチーム」で見本を出したい場面で使う。
@@ -433,7 +439,9 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
       {photoUri ? (
         <View style={[StyleSheet.absoluteFill, styles.photoTouchArea]} {...panResponder.panHandlers}>
           <Image
-            source={{ uri: photoUri }}
+            source={
+              typeof photoUri === 'number' ? photoUri : { uri: photoUri }
+            }
             style={[
               styles.photoImage,
               {
