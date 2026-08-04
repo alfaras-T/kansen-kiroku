@@ -28,11 +28,20 @@ export function SelectModal({
   options,
   value,
   onChange,
+  variant = "field",
 }: {
   title: string;
   options: SelectOption[];
   value: string;
   onChange: (value: string) => void;
+  /**
+   * field  … 入力欄として枠の中に置く（記録・編集フォーム）
+   * inline … 文字のまま並べる（履歴の絞り込みのような補助操作）
+   *
+   * 補助的な絞り込みまで入力欄と同じ枠で囲うと、画面の上部が同じ形の
+   * 箱で埋まり、何が主役か分からなくなる。役割が違えば見た目も変える。
+   */
+  variant?: "field" | "inline";
 }) {
   const [open, setOpen] = useState(false);
   const colors = useTheme();
@@ -46,17 +55,21 @@ export function SelectModal({
     <>
       <Pressable
         onPress={() => setOpen(true)}
-        style={[
-          styles.field,
-          {
-            backgroundColor: colors.backgroundElement,
-            borderColor: colors.border,
-          },
-        ]}
+        style={
+          variant === "inline"
+            ? styles.inline
+            : [
+                styles.field,
+                {
+                  backgroundColor: colors.backgroundElement,
+                  borderColor: colors.border,
+                },
+              ]
+        }
       >
         <Text
           style={[
-            styles.fieldText,
+            variant === "inline" ? styles.inlineText : styles.fieldText,
             // 未選択のときは入力済みの値と同じ明るさで出さない。
             // 「選択してください」が選択済みの値に見えてしまうため。
             { color: hasSelection ? colors.text : colors.textSecondary },
@@ -65,7 +78,11 @@ export function SelectModal({
         >
           {selectedLabel}
         </Text>
-        <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
+        <Ionicons
+          name="chevron-down"
+          size={variant === "inline" ? 13 : 16}
+          color={colors.textSecondary}
+        />
       </Pressable>
 
       <Modal
@@ -161,6 +178,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   fieldText: { fontSize: 14, flexShrink: 1, marginRight: 8 },
+  inline: { flexDirection: "row", alignItems: "center", paddingVertical: 4 },
+  inlineText: {
+    fontSize: 13.5,
+    fontWeight: "600",
+    marginRight: 4,
+    flexShrink: 1,
+  },
   rowMain: { flexDirection: "row", alignItems: "center", gap: 8, flexShrink: 1 },
   badge: {
     borderWidth: 1,

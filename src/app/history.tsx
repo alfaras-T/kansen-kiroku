@@ -135,6 +135,12 @@ export default function HistoryScreen() {
   );
 
   const record = computeRecord(filteredEntries, myTeam);
+  // マイチームが出場した試合数。成績の母数として添える。
+  const myTeamGames = myTeam
+    ? filteredEntries.filter(
+        (e) => e.visitorCode === myTeam || e.homeCode === myTeam,
+      ).length
+    : 0;
 
   // 観戦まとめの対象年: 「表示する年」を選んでいればその年、
   // 「すべての年」なら記録のある最新の年
@@ -154,95 +160,69 @@ export default function HistoryScreen() {
 
   return (
     <ThemedView style={[styles.screen, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <ThemedText type="title" style={styles.title}>
-          観戦履歴
-        </ThemedText>
-      </View>
-
-      <View style={styles.selectorsRow}>
-        <View style={styles.selectorCol}>
-          <ThemedText
-            type="small"
-            themeColor="textSecondary"
-            style={{ marginBottom: 6 }}
-          >
-            マイチーム
-          </ThemedText>
+      {/*
+        見出しと絞り込みを一行にまとめる。「観戦履歴」という大見出しの下に
+        ラベル付きの選択欄を2つ置くと、画面の上4分の1が操作系だけで埋まる。
+        絞り込みは補助操作なので、箱に入れず文字のまま右に寄せる。
+      */}
+      <View style={styles.head}>
+        <Text style={[styles.headTitle, { color: colors.text }]}>観戦履歴</Text>
+        <View style={styles.filters}>
           <SelectModal
             title="マイチームを選択"
             options={MY_TEAM_OPTIONS}
             value={myTeam}
             onChange={handleMyTeamChange}
+            variant="inline"
           />
-        </View>
-        <View style={styles.selectorCol}>
-          <ThemedText
-            type="small"
-            themeColor="textSecondary"
-            style={{ marginBottom: 6 }}
-          >
-            表示する年
-          </ThemedText>
           <SelectModal
             title="表示する年を選択"
             options={yearOptions}
             value={effectiveYear}
             onChange={setSelectedYear}
+            variant="inline"
           />
         </View>
       </View>
 
-      <View style={styles.statsRow}>
-        <View
-          style={[
-            styles.statBox,
-            {
-              backgroundColor: colors.backgroundElement,
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <Text style={[styles.statNum, { color: colors.accent }]}>
-            {filteredEntries.length}
-          </Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-            {effectiveYear ? `${effectiveYear}年の観戦数` : "総観戦数"}
-          </Text>
+      {/*
+        3つの数値を同じ大きさの箱に並べると、どれも同じ重さに見える。
+        実際にはマイチームの成績が主役で、観戦数はその文脈でしかない。
+        成績を数字の列として大きく組み、観戦数は下の一行に落とす。
+      */}
+      <View style={styles.stats}>
+        <View style={styles.tally}>
+          {[
+            { n: record?.win ?? 0, label: "勝", lead: true },
+            { n: record?.lose ?? 0, label: "敗", lead: false },
+            { n: record?.draw ?? 0, label: "分", lead: false },
+          ].map((cell) => (
+            <View key={cell.label} style={styles.tallyCell}>
+              <Text
+                style={[
+                  styles.tallyNum,
+                  { color: cell.lead ? colors.accent : colors.text },
+                ]}
+              >
+                {cell.n}
+              </Text>
+              <Text
+                style={[styles.tallyLabel, { color: colors.textSecondary }]}
+              >
+                {cell.label}
+              </Text>
+            </View>
+          ))}
         </View>
-        <View
-          style={[
-            styles.statBox,
-            {
-              backgroundColor: colors.backgroundElement,
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <Text style={[styles.statNum, { color: colors.accent }]}>
-            {record ? record.games : "–"}
-          </Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-            マイチーム観戦数
-          </Text>
-        </View>
-        <View
-          style={[
-            styles.statBox,
-            {
-              backgroundColor: colors.backgroundElement,
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <Text style={[styles.statNum, { color: colors.accent }]}>
-            {record ? `${record.win}勝${record.lose}敗${record.draw}分` : "–"}
-          </Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-            マイチーム成績
-          </Text>
-        </View>
+        <Text style={[styles.tallyNote, { color: colors.textSecondary }]}>
+          {myTeam
+            ? `マイチームの試合 ${myTeamGames}　`
+            : "マイチームを選ぶと成績が出ます　"}
+          {effectiveYear ? `${effectiveYear}年の観戦 ` : "総観戦 "}
+          {filteredEntries.length}
+        </Text>
       </View>
+      <View style={[styles.headRule, { backgroundColor: colors.border }]} />
 
       {showBackupNudge && (
         <View
@@ -285,37 +265,22 @@ export default function HistoryScreen() {
         </View>
       )}
 
+      {/*
+        2つの作成導線。枠で囲うとバックアップの案内と同じ重さになるので、
+        文字と罫線だけにして「作る」動作の列であることを示す。
+      */}
       {wrapSummary && wrapSummary.games > 0 && (
-        <View style={styles.sheetBtnRow}>
-          <Pressable
-            onPress={() => setWrapOpen(true)}
-            style={[
-              styles.wrapBtn,
-              styles.sheetBtn,
-              {
-                borderColor: colors.accent,
-                backgroundColor: colors.backgroundElement,
-              },
-            ]}
-          >
-            <Ionicons name="sparkles-outline" size={16} color={colors.accent} />
-            <Text style={[styles.wrapBtnText, { color: colors.accent }]}>
+        <View style={[styles.makeRow, { borderBottomColor: colors.border }]}>
+          <Pressable onPress={() => setWrapOpen(true)} style={styles.makeBtn}>
+            <Ionicons name="sparkles-outline" size={15} color={colors.accent} />
+            <Text style={[styles.makeText, { color: colors.accent }]}>
               観戦まとめ
             </Text>
           </Pressable>
-          <Pressable
-            onPress={() => setProofOpen(true)}
-            style={[
-              styles.wrapBtn,
-              styles.sheetBtn,
-              {
-                borderColor: colors.accent,
-                backgroundColor: colors.backgroundElement,
-              },
-            ]}
-          >
-            <Ionicons name="grid-outline" size={16} color={colors.accent} />
-            <Text style={[styles.wrapBtnText, { color: colors.accent }]}>
+          <View style={[styles.makeSep, { backgroundColor: colors.border }]} />
+          <Pressable onPress={() => setProofOpen(true)} style={styles.makeBtn}>
+            <Ionicons name="grid-outline" size={15} color={colors.accent} />
+            <Text style={[styles.makeText, { color: colors.accent }]}>
               フィルムシート
             </Text>
           </Pressable>
@@ -494,38 +459,6 @@ const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
   },
-  header: { padding: Spacing.four, paddingBottom: Spacing.two },
-  title: { fontSize: 22, lineHeight: 28, marginBottom: 0 },
-  selectorsRow: {
-    flexDirection: "row",
-    gap: 12,
-    paddingHorizontal: Spacing.four,
-    marginBottom: Spacing.three,
-  },
-  selectorCol: { flex: 1 },
-  statsRow: {
-    flexDirection: "row",
-    gap: 12,
-    paddingHorizontal: Spacing.four,
-    marginBottom: Spacing.two,
-  },
-  statBox: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: Radius.surface,
-    paddingVertical: 10,
-    alignItems: "center",
-  },
-  statNum: { fontSize: 16, fontWeight: "700" },
-  wrapBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    borderWidth: 1,
-    borderRadius: Radius.surface,
-    paddingVertical: 9,
-  },
   // 観戦まとめとベタ焼きを横並びにする。余白はこの行がまとめて持つ。
   nudge: {
     borderWidth: 1,
@@ -554,20 +487,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   nudgeBtnText: { fontSize: 13, fontWeight: "700" },
-  sheetBtnRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginHorizontal: Spacing.four,
-    marginBottom: Spacing.two,
-  },
-  sheetBtn: { flex: 1 },
-  wrapBtnText: { fontSize: 13.5, fontWeight: "700" },
-  statLabel: {
-    fontSize: 10.5,
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
-    marginTop: 2,
-  },
   list: { paddingHorizontal: Spacing.four, gap: 8 },
   flatList: { flex: 1 },
   sectionHeader: {
@@ -585,6 +504,39 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.six,
   },
   empty: { textAlign: "center", lineHeight: 20 },
+  makeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: Rule.hairline,
+    marginTop: 4,
+  },
+  makeBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    paddingVertical: 14,
+  },
+  makeSep: { width: Rule.hairline, height: 16 },
+  makeText: { fontSize: 13.5, fontWeight: "700", letterSpacing: 0.3 },
+  head: {
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.two,
+  },
+  headTitle: { fontSize: 22, fontWeight: "700", letterSpacing: 0.3 },
+  filters: { flexDirection: "row", gap: 20, marginTop: 10 },
+  stats: { paddingHorizontal: Spacing.four, paddingTop: 22 },
+  tally: { flexDirection: "row", alignItems: "flex-end", gap: 18 },
+  tallyCell: { flexDirection: "row", alignItems: "baseline", gap: 3 },
+  tallyNum: { ...Type.display(38) },
+  tallyLabel: { fontSize: 13, fontWeight: "600" },
+  tallyNote: { fontSize: 12, marginTop: 8, letterSpacing: 0.2 },
+  headRule: {
+    height: Rule.hairline,
+    marginTop: 18,
+    marginHorizontal: Spacing.four,
+  },
   // 1件を枠で囲わず、下罫線一本だけで隣と分ける
   frame: {
     flexDirection: "row",
