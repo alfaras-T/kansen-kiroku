@@ -520,10 +520,17 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
               numberOfLines={1}>
               {dateText}
             </CardText>
+            {/*
+              実際のフィルムカメラは表示器がひとつなので、日付もスコアも
+              同じ7セグメントで焼き込まれる。書体を分ける理由がない。
+              球場名だけは日本語なので標準書体のまま(7セグは日本語を持たない)。
+            */}
             <CardText
               style={[
                 styles.inlineText,
                 telopStyles.inlineText,
+                dateFont && telopStyles.inlineDate,
+                dateFont,
                 dateShadow,
                 { color: dateColor },
               ]}
