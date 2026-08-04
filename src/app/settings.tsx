@@ -227,10 +227,7 @@ export default function SettingsScreen() {
             </View>
           </View>
           <Text
-            style={[
-              styles.note,
-              { color: colors.textSecondary, borderBottomColor: colors.border },
-            ]}
+            style={[styles.note, { color: colors.textSecondary }]}
           >
             選んだチームの色に、アプリの配色とテロップの日付が変わります。
           </Text>
@@ -248,10 +245,7 @@ export default function SettingsScreen() {
             />
           </View>
           <Text
-            style={[
-              styles.note,
-              { color: colors.textSecondary, borderBottomColor: colors.border },
-            ]}
+            style={[styles.note, { color: colors.textSecondary }]}
           >
             その年の観戦を一枚に並べるのに使います。写真はこの端末の中だけに保存され、サーバーには送られません。
           </Text>
@@ -292,10 +286,7 @@ export default function SettingsScreen() {
             colors={colors}
           />
           <Text
-            style={[
-              styles.note,
-              { color: colors.textSecondary, borderBottomColor: colors.border },
-            ]}
+            style={[styles.note, { color: colors.textSecondary }]}
           >
             観戦履歴とチーム設定をファイルに保存します。機種変更や再インストールの前にお使いください。サーバーへは送信されません。
           </Text>
@@ -309,10 +300,7 @@ export default function SettingsScreen() {
             last
           />
           <Text
-            style={[
-              styles.note,
-              { color: colors.textSecondary, borderBottomColor: colors.border },
-            ]}
+            style={[styles.note, { color: colors.textSecondary }]}
           >
             端末のメールアプリが開きます。いただいた内容は改善の参考にさせていただきます。
           </Text>
@@ -439,12 +427,6 @@ const styles = StyleSheet.create({
   rowValue: { flexShrink: 0 },
   version: { fontSize: 14 },
   // 節の説明。行の下に一段落として置き、行そのものは短く保つ
-  // 説明は直前の行に属する。下罫線をここに引くことで、説明まで含めて
-  // ひとつの行として区切られ、余分な空白が生まれない。
-  note: {
-    fontSize: 12,
-    lineHeight: 18,
-    paddingBottom: Space.row,
-    borderBottomWidth: 1,
-  },
+  // 説明は直前の行に属する。罫線は行が持つので、ここには引かない。
+  note: { fontSize: 12, lineHeight: 18, paddingBottom: Space.row },
 });
