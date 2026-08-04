@@ -7,13 +7,13 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SelectModal } from "@/components/form/select-modal";
+import { ToggleSwitch } from "@/components/form/toggle-switch";
 import { InfoNote, InfoSheet, InfoStep } from "@/components/info-sheet";
 import { ContactSheet } from "@/components/contact-sheet";
 import {
@@ -192,10 +192,9 @@ export default function SettingsScreen() {
                 その年の観戦を一枚に並べる「フィルムシート」に使います。写真はこの端末の中だけに保存され、サーバーには送られません。
               </ThemedText>
             </View>
-            <Switch
+            <ToggleSwitch
               value={thumbnailEnabled}
               onValueChange={handleThumbnailToggle}
-              trackColor={{ true: colors.accent }}
             />
           </View>
         </View>

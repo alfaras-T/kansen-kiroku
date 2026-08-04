@@ -6,13 +6,13 @@ import {
   LayoutChangeEvent,
   Pressable,
   StyleSheet,
-  Switch,
   Text,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { formatDateOverlay } from "@/components/form/date-field";
+import { ToggleSwitch } from "@/components/form/toggle-switch";
 import { Slider } from "@/components/form/slider";
 import { OverlayCard } from "@/components/overlay-card";
 import { ThemedText } from "@/components/themed-text";
@@ -368,13 +368,9 @@ export default function AdjustScreen() {
               <Text style={styles.historyRowLabel}>
                 観戦履歴にも保存する{savedFlash ? "（保存しました ✓）" : ""}
               </Text>
-              <Switch
+              <ToggleSwitch
                 value={alsoSaveToHistory}
                 onValueChange={setAlsoSaveToHistory}
-                trackColor={{
-                  true: colors.accent,
-                  false: "rgba(255,255,255,0.25)",
-                }}
               />
             </View>
 
