@@ -28,6 +28,14 @@ const RESULT_MARK: Record<"win" | "lose" | "draw", string> = {
   draw: "△",
 };
 
+export type ProofRatio = "auto" | "story" | "square";
+
+/** 比率ごとの縦横比(幅÷高さ)。auto は中身の量で決まるので持たない。 */
+const RATIO_ASPECT: Record<Exclude<ProofRatio, "auto">, number> = {
+  story: 9 / 16,
+  square: 1,
+};
+
 /**
  * 枚数に応じて列数を決める。
  *
@@ -42,8 +50,16 @@ export function proofColumns(count: number): number {
   return 6;
 }
 
-/** 指定幅でカードを描いたときの高さ。書き出しサイズの算出に使う。 */
-export function proofCardHeight(count: number, width: number): number {
+/**
+ * 指定幅・指定比率でカードを描いたときの高さ。
+ * auto は中身の量で決まり、story / square は比率で固定される。
+ */
+export function proofCardHeight(
+  count: number,
+  width: number,
+  ratio: ProofRatio = "auto",
+): number {
+  if (ratio !== "auto") return width / RATIO_ASPECT[ratio];
   const s = width / BASE_WIDTH;
   const cols = proofColumns(count);
   const rows = Math.max(1, Math.ceil(count / cols));
@@ -52,6 +68,24 @@ export function proofCardHeight(count: number, width: number): number {
   const cell = (width - pad * 2 - gap * (cols - 1)) / cols;
   // ヘッダー(年+ブランド) + 格子 + フッター(成績)
   return pad + 62 * s + rows * (cell + gap) + 52 * s;
+}
+
+/**
+ * 高さが決まっている場合に、格子が収まる列数を求める。
+ *
+ * 比率を固定すると、枚数によっては既定の列数では縦にはみ出す。列を増やせば
+ * 1コマは小さくなるが、全部が収まる。逆に余った場合は列を増やさない
+ * (無理に引き伸ばすと、少ない枚数のときコマが不自然に大きくなる)。
+ */
+function fitColumns(count: number, width: number, gridHeight: number, pad: number, gap: number): number {
+  let cols = proofColumns(count);
+  for (let i = 0; i < 8; i += 1) {
+    const rows = Math.max(1, Math.ceil(count / cols));
+    const cell = (width - pad * 2 - gap * (cols - 1)) / cols;
+    if (rows * (cell + gap) <= gridHeight || cols >= 10) break;
+    cols += 1;
+  }
+  return cols;
 }
 
 /** 日付(ISO)から「4.02」のような短い表記を作る */
@@ -76,19 +110,25 @@ export const ProofSheetCard = forwardRef<
     width: number;
     colors: Palette;
     record: { win: number; lose: number; draw: number } | null;
+    ratio?: ProofRatio;
     /** 各コマの画像デコード完了時に呼ばれる。書き出し前の待ち合わせ用。 */
     onCellLoad?: () => void;
   }
 >(function ProofSheetCard(
-  { year, items, width, colors, record, onCellLoad },
+  { year, items, width, colors, record, ratio = "auto", onCellLoad },
   ref,
 ) {
   const s = width / BASE_WIDTH;
-  const cols = proofColumns(items.length);
   const pad = 22 * s;
   const gap = 5 * s;
+  const height = proofCardHeight(items.length, width, ratio);
+  // 格子に使える高さ(ヘッダーとフッターを除いた残り)
+  const gridHeight = height - pad * 2 - 62 * s - 52 * s;
+  const cols =
+    ratio === "auto"
+      ? proofColumns(items.length)
+      : fitColumns(items.length, width, gridHeight, pad, gap);
   const cell = (width - pad * 2 - gap * (cols - 1)) / cols;
-  const height = proofCardHeight(items.length, width);
 
   return (
     <View
@@ -127,7 +167,13 @@ export const ProofSheetCard = forwardRef<
         </CardText>
       </View>
 
-      <View style={[styles.grid, { gap, marginTop: 14 * s }]}>
+      <View
+        style={[
+          styles.grid,
+          { gap, marginTop: 14 * s },
+          ratio !== "auto" && { flex: 1, alignContent: "center" },
+        ]}
+      >
         {items.map(({ entry, uri, result }) => (
           <View
             key={entry.id}

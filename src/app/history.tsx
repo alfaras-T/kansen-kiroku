@@ -173,14 +173,8 @@ export default function HistoryScreen() {
           </Text>
           <SettingsButton />
         </View>
+        {/* 年は絞り込みなので、見出しの並びに置く */}
         <View style={styles.filters}>
-          <SelectModal
-            title="マイチームを選択"
-            options={MY_TEAM_OPTIONS}
-            value={myTeam}
-            onChange={handleMyTeamChange}
-            variant="inline"
-          />
           <SelectModal
             title="表示する年を選択"
             options={yearOptions}
@@ -197,6 +191,24 @@ export default function HistoryScreen() {
         成績を数字の列として大きく組み、観戦数は下の一行に落とす。
       */}
       <View style={styles.stats}>
+        {/*
+          マイチームは絞り込みではなく「誰の成績か」を決めるもの。
+          年の選択と横に並べていたため、履歴からそのチームの分だけ抜き出す
+          操作に見えていた。成績の見出しとして、数字の直上に置き直す。
+        */}
+        <View style={styles.teamPick}>
+          <Text style={[styles.teamPickLabel, { color: colors.textSecondary }]}>
+            成績を見るチーム
+          </Text>
+          <SelectModal
+            title="マイチームを選択"
+            options={MY_TEAM_OPTIONS}
+            value={myTeam}
+            onChange={handleMyTeamChange}
+            variant="inline"
+          />
+        </View>
+
         <View style={styles.tally}>
           {[
             { n: record?.win ?? 0, label: "勝", lead: true },
@@ -221,9 +233,7 @@ export default function HistoryScreen() {
           ))}
         </View>
         <Text style={[styles.tallyNote, { color: colors.textSecondary }]}>
-          {myTeam
-            ? `マイチームの試合 ${myTeamGames}　`
-            : "マイチームを選ぶと成績が出ます　"}
+          {myTeam ? `該当 ${myTeamGames}試合　` : "チームを選ぶと成績が出ます　"}
           {effectiveYear ? `${effectiveYear}年の観戦 ` : "総観戦 "}
           {filteredEntries.length}
         </Text>
@@ -582,7 +592,9 @@ const styles = StyleSheet.create({
   },
   headTitle: { fontSize: 22, fontWeight: "700", letterSpacing: 0.3 },
   filters: { flexDirection: "row", gap: 20, marginTop: 10 },
-  stats: { paddingHorizontal: Spacing.four, paddingTop: 22 },
+  stats: { paddingHorizontal: Spacing.four, paddingTop: 20 },
+  teamPick: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 6 },
+  teamPickLabel: { fontSize: 11.5, fontWeight: "700", letterSpacing: 1.2 },
   tally: { flexDirection: "row", alignItems: "flex-end", gap: 18 },
   tallyCell: { flexDirection: "row", alignItems: "baseline", gap: 3 },
   tallyNum: { ...Type.display(38) },

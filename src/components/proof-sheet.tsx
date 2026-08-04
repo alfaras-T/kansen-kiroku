@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { captureRef } from "react-native-view-shot";
 
 import {
+  ProofRatio,
   ProofSheetCard,
   ProofSheetItem,
   proofCardHeight,
@@ -56,6 +57,7 @@ export function ProofSheet({
   const [busy, setBusy] = useState(false);
   const [busyMode, setBusyMode] = useState<"save" | "share" | null>(null);
   const [items, setItems] = useState<ProofSheetItem[] | null>(null);
+  const [ratio, setRatio] = useState<ProofRatio>("auto");
   const exportRef = useRef<View>(null);
 
   // 書き出し用カードの画像デコード完了を数える。
@@ -193,7 +195,7 @@ export function ProofSheet({
   if (!visible) return null;
 
   const withPhoto = items?.filter((i) => i.uri).length ?? 0;
-  const exportHeight = proofCardHeight(items?.length ?? 0, EXPORT_WIDTH);
+  const exportHeight = proofCardHeight(items?.length ?? 0, EXPORT_WIDTH, ratio);
 
   return (
     <Modal
@@ -228,6 +230,51 @@ export function ProofSheet({
             </View>
           ) : (
             <>
+              {/*
+                比率の選択。枠付きのチップにすると保存・共有ボタンと同じ
+                「押す箱」に見えるので、文字と短い縦線で示す。
+              */}
+              <View style={styles.ratioRow}>
+                {(
+                  [
+                    { key: "auto", label: "枚数に合わせる" },
+                    { key: "square", label: "スクエア 1:1" },
+                    { key: "story", label: "ストーリー 9:16" },
+                  ] as const
+                ).map((o) => {
+                  const on = ratio === o.key;
+                  return (
+                    <Pressable
+                      key={o.key}
+                      onPress={() => setRatio(o.key)}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: on }}
+                      style={styles.ratioChip}
+                    >
+                      <View
+                        style={[
+                          styles.ratioMark,
+                          {
+                            backgroundColor: on ? colors.accent : "transparent",
+                          },
+                        ]}
+                      />
+                      <Text
+                        style={[
+                          styles.ratioText,
+                          {
+                            color: on ? colors.text : colors.textSecondary,
+                            fontWeight: on ? "700" : "400",
+                          },
+                        ]}
+                      >
+                        {o.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
               <View style={styles.previewWrap}>
                 <ProofSheetCard
                   year={year}
@@ -235,6 +282,7 @@ export function ProofSheet({
                   width={PREVIEW_WIDTH}
                   colors={colors}
                   record={record}
+                  ratio={ratio}
                 />
               </View>
 
@@ -310,6 +358,7 @@ export function ProofSheet({
               width={EXPORT_WIDTH}
               colors={colors}
               record={record}
+              ratio={ratio}
               onCellLoad={handleCellLoad}
             />
           </View>
@@ -338,6 +387,15 @@ const styles = StyleSheet.create({
   sheetTitle: { fontSize: 15, fontWeight: "600", flexShrink: 1, marginRight: 8 },
   body: { padding: 18, paddingBottom: 28 },
   loading: { paddingVertical: 40, alignItems: "center" },
+  ratioRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    columnGap: 16,
+    marginBottom: 16,
+  },
+  ratioChip: { flexDirection: "row", alignItems: "center", paddingVertical: 6 },
+  ratioMark: { width: 2, height: 13, marginRight: 7, borderRadius: 1 },
+  ratioText: { fontSize: 13 },
   previewWrap: { alignItems: "center" },
   actionRow: { flexDirection: "row", gap: 10, marginTop: 18 },
   btn: {

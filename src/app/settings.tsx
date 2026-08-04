@@ -248,6 +248,27 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
+          <View style={styles.exportHead}>
+            <Text style={[styles.exportLabel, { color: colors.textSecondary }]}>
+              バックアップ
+            </Text>
+            <Pressable
+              onPress={() => setBackupHelpOpen(true)}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel="バックアップの方法を見る"
+              style={styles.helpBtn}
+            >
+              <Ionicons
+                name="help-circle-outline"
+                size={17}
+                color={colors.accent}
+              />
+              <Text style={[styles.helpText, { color: colors.accent }]}>
+                方法を見る
+              </Text>
+            </Pressable>
+          </View>
           <ActionRow
             label={exporting ? "書き出し中…" : "観戦履歴を書き出す"}
             onPress={handleExport}
@@ -258,12 +279,6 @@ export default function SettingsScreen() {
             label={importing ? "読み込み中…" : "バックアップから読み込む"}
             onPress={handleImport}
             disabled={importing}
-            colors={colors}
-          />
-          <ActionRow
-            label="方法を見る"
-            icon="help-circle-outline"
-            onPress={() => setBackupHelpOpen(true)}
             colors={colors}
           />
           <Text style={[styles.note, { color: colors.textSecondary }]}>
@@ -373,14 +388,26 @@ const styles = StyleSheet.create({
   // 節の見出しは置かない。設定の項目名がそのまま内容を語るので、
   // その上にさらに分類名を重ねると同じことを二度言うことになる。
   // 切れ目は上罫線と、節の下に置く説明文が担う。
+  // 節と節を離さず、罫線だけで隣接させる。余白で離すと、どこまでが
+  // ひとつの話題なのかが曖昧になり、画面も間延びする。
   section: {
     paddingHorizontal: Spacing.four,
-    paddingTop: Space.tight,
-    paddingBottom: Space.row,
     borderTopWidth: Rule.hairline,
   },
   // タブバーを隠して開くので、その分の余白は要らない
   scrollContent: { paddingBottom: Spacing.six },
+  // 「方法を見る」は書き出しの上に添える。手順の説明は書き出しに付随する
+  // ものなので、独立した操作として同じ列に並べると重さが釣り合わない。
+  exportHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingTop: Space.row,
+    paddingBottom: 2,
+  },
+  exportLabel: { fontSize: 11.5, fontWeight: "700", letterSpacing: 1.2 },
+  helpBtn: { flexDirection: "row", alignItems: "center", gap: 3 },
+  helpText: { fontSize: 12.5, fontWeight: "600" },
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -393,5 +420,5 @@ const styles = StyleSheet.create({
   rowValue: { flexShrink: 0 },
   version: { fontSize: 14 },
   // 節の説明。行の下に一段落として置き、行そのものは短く保つ
-  note: { fontSize: 12, lineHeight: 18, marginTop: 10, marginBottom: 4 },
+  note: { fontSize: 12, lineHeight: 18, marginTop: 2, marginBottom: 14 },
 });

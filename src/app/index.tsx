@@ -545,9 +545,10 @@ const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
   },
+  // 左右の余白は各節(header / card / databack)が自分で持つ。
+  // ここでも padding を掛けると二重になり、内容が中央に寄って見える。
   scrollContent: {
     flexGrow: 1,
-    padding: Spacing.four,
     paddingBottom: BottomTabInset + Spacing.four,
   },
   // alignItems は flex-end。得点欄の上に「得点」ラベルが乗るため、

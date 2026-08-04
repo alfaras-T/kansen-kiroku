@@ -321,8 +321,11 @@ export function DateField({
                       style={[
                         styles.dayText,
                         {
+                          // 未来日は「押せない」ことが伝わる必要がある。
+                          // border は球団によって黄色など明るい色になるため、
+                          // 薄い白で沈ませる方が確実に無効に見える。
                           color: isFuture
-                            ? colors.border
+                            ? "rgba(255,255,255,0.22)"
                             : isSelected
                               ? colors.onAccent
                               : colors.text,
