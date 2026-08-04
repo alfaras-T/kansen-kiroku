@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Pressable, StyleSheet } from 'react-native';
+
+import { useTheme } from '@/hooks/use-theme';
 
 /**
  * オン・オフの切り替え。
@@ -9,9 +11,13 @@ import { Animated, Pressable, StyleSheet, View } from 'react-native';
  * 場面があるため。緑はこのアプリのどの配色とも無関係な色で、球団を
  * 切り替えても常に緑が残るのは具合が悪い。
  *
- * 判別の手掛かりは **濃淡とつまみの左右位置** だけにしている。
- * 色は白の不透明度だけで作るので、地の色が何であっても同じ濃淡差になり、
- * 球団カラーの明度に左右されない。色覚にも依存しない。
+ * オンのときは球団カラー、オフのときは白の薄い帯にする。ただし色だけに
+ * 判別を委ねない。つまみの左右位置が常に状態を示すので、色の明度が近い
+ * 配色でも、色覚に依存する人でも読み取れる。
+ *
+ * つまみの色は onAccent と白を切り替える。onAccent は「アクセント色の上に
+ * 載せる色」として定義されているので、ホークスの黄のような明るい球団でも
+ * つまみが埋もれない。オフのときは帯が暗いので白に戻す。
  */
 
 const TRACK_W = 46;
@@ -19,8 +25,8 @@ const TRACK_H = 28;
 const THUMB = 22;
 const PAD = (TRACK_H - THUMB) / 2;
 
-const TRACK_ON = 'rgba(255,255,255,0.45)';
 const TRACK_OFF = 'rgba(255,255,255,0.13)';
+const THUMB_OFF = '#FFFFFF';
 
 export function ToggleSwitch({
   value,
@@ -33,6 +39,7 @@ export function ToggleSwitch({
   disabled?: boolean;
   accessibilityLabel?: string;
 }) {
+  const colors = useTheme();
   const anim = useRef(new Animated.Value(value ? 1 : 0)).current;
 
   useEffect(() => {
@@ -59,7 +66,7 @@ export function ToggleSwitch({
           {
             backgroundColor: anim.interpolate({
               inputRange: [0, 1],
-              outputRange: [TRACK_OFF, TRACK_ON],
+              outputRange: [TRACK_OFF, colors.accent],
             }),
           },
         ]}
@@ -79,7 +86,17 @@ export function ToggleSwitch({
             },
           ]}
         >
-          <View style={styles.thumbInner} />
+          <Animated.View
+            style={[
+              styles.thumbInner,
+              {
+                backgroundColor: anim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [THUMB_OFF, colors.onAccent],
+                }),
+              },
+            ]}
+          />
         </Animated.View>
       </Animated.View>
     </Pressable>
@@ -99,7 +116,6 @@ const styles = StyleSheet.create({
     width: THUMB,
     height: THUMB,
     borderRadius: THUMB / 2,
-    backgroundColor: '#FFFFFF',
     // つまみを地から浮かせる。オフのとき、暗い帯の上でも輪郭が残る
     shadowColor: '#000',
     shadowOpacity: 0.3,
