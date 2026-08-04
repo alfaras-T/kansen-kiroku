@@ -27,7 +27,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { WEB_BASE_URL } from "@/constants/contact";
 import { TEAMS } from "@/constants/teams";
-import { BottomTabInset, MaxContentWidth, Radius, Spacing } from "@/constants/theme";
+import { BottomTabInset, MaxContentWidth, Radius, Spacing, Palette } from "@/constants/theme";
 import { Rule, Space } from "@/constants/typography";
 import { useFavoriteTeam } from "@/contexts/favorite-team";
 import { exportBackup, importBackup } from "@/storage/backup";
@@ -38,6 +38,43 @@ const FAVORITE_TEAM_OPTIONS = [
   { label: "既定のデザイン", value: "" },
   ...TEAMS.map((t) => ({ label: `${t.nickname}（${t.code}）`, value: t.code })),
 ];
+
+/**
+ * 操作の行。ラベルを左、行き先を示す矢印を右に置く。
+ * 枠付きの中央揃えボタンを縦に並べると、どれも同じ重さの塊になるので、
+ * 「押せる行」として組む。
+ */
+function ActionRow({
+  label,
+  onPress,
+  colors,
+  icon = "chevron-forward",
+  disabled = false,
+  last = false,
+}: {
+  label: string;
+  onPress: () => void;
+  colors: Palette;
+  icon?: keyof typeof Ionicons.glyphMap;
+  disabled?: boolean;
+  last?: boolean;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      style={[
+        styles.row,
+        !last && { borderBottomWidth: 1, borderBottomColor: colors.border },
+        { opacity: disabled ? 0.5 : 1 },
+      ]}
+    >
+      <Text style={[styles.rowLabel, { color: colors.text }]}>{label}</Text>
+      <Ionicons name={icon} size={16} color={colors.textSecondary} />
+    </Pressable>
+  );
+}
 
 export default function SettingsScreen() {
   const colors = useTheme();
@@ -152,174 +189,118 @@ export default function SettingsScreen() {
         overScrollMode="never"
         showsVerticalScrollIndicator={false}
       >
+        {/*
+          設定は「押す箱の集まり」ではなく「行の一覧」として組む。
+          枠付きのボタンを縦に並べると、どれも同じ重さの塊になり、
+          何がどの話題に属するのかが余白でしか分からない。
+          ラベルを左、操作を右に置いた行にすれば、目はラベルの列を追える。
+        */}
         <View style={styles.section}>
-          <ThemedText
-            type="small"
-            themeColor="textSecondary"
-            style={styles.sectionLabel}
-          >
-            お気に入りチーム（デザイン用）
-          </ThemedText>
-          <SelectModal
-            title="お気に入りチームを選択"
-            options={FAVORITE_TEAM_OPTIONS}
-            value={favoriteTeam}
-            onChange={setFavoriteTeam}
-          />
-          <ThemedText
-            type="small"
-            themeColor="textSecondary"
-            style={styles.hint}
-          >
-            選んだチームのイメージカラーに合わせて、アプリの配色が変わります。
-          </ThemedText>
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+            配色
+          </Text>
+          <View style={[styles.row, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.rowLabel, { color: colors.text }]}>
+              お気に入りチーム
+            </Text>
+            <View style={styles.rowValue}>
+              <SelectModal
+                title="お気に入りチームを選択"
+                options={FAVORITE_TEAM_OPTIONS}
+                value={favoriteTeam}
+                onChange={setFavoriteTeam}
+                variant="inline"
+              />
+            </View>
+          </View>
+          <Text style={[styles.note, { color: colors.textSecondary }]}>
+            選んだチームの色に、アプリの配色とテロップの日付が変わります。
+          </Text>
         </View>
 
         <View style={styles.section}>
-          <ThemedText
-            type="small"
-            themeColor="textSecondary"
-            style={styles.sectionLabel}
-          >
-            フィルムシート用の写真
-          </ThemedText>
-          <View style={styles.toggleRow}>
-            <View style={styles.toggleTextArea}>
-              <Text style={[styles.toggleTitle, { color: colors.text }]}>
-                作った画像を残す
-              </Text>
-              <ThemedText type="small" themeColor="textSecondary">
-                その年の観戦を一枚に並べる「フィルムシート」に使います。写真はこの端末の中だけに保存され、サーバーには送られません。
-              </ThemedText>
-            </View>
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+            フィルムシート
+          </Text>
+          <View style={[styles.row, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.rowLabel, { color: colors.text }]}>
+              作った画像を残す
+            </Text>
             <ToggleSwitch
               value={thumbnailEnabled}
               onValueChange={handleThumbnailToggle}
+              accessibilityLabel="作った画像を残す"
             />
           </View>
+          <Text style={[styles.note, { color: colors.textSecondary }]}>
+            その年の観戦を一枚に並べるのに使います。写真はこの端末の中だけに保存され、サーバーには送られません。
+          </Text>
         </View>
 
         <View style={styles.section}>
-          <View style={styles.sectionLabelRow}>
-            <ThemedText
-              type="small"
-              themeColor="textSecondary"
-              style={styles.sectionLabel}
-            >
-              データのバックアップ
-            </ThemedText>
-            <Pressable
-              onPress={() => setBackupHelpOpen(true)}
-              hitSlop={10}
-              accessibilityRole="button"
-              accessibilityLabel="バックアップの方法を見る"
-              style={styles.helpButton}
-            >
-              <Ionicons
-                name="help-circle-outline"
-                size={18}
-                color={colors.accent}
-              />
-              <Text style={[styles.helpButtonText, { color: colors.accent }]}>
-                方法を見る
-              </Text>
-            </Pressable>
-          </View>
-          <Pressable
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+            バックアップ
+          </Text>
+          <ActionRow
+            label={exporting ? "書き出し中…" : "観戦履歴を書き出す"}
             onPress={handleExport}
             disabled={exporting}
-            style={[
-              styles.button,
-              {
-                backgroundColor: colors.backgroundElement,
-                borderColor: colors.border,
-                opacity: exporting ? 0.6 : 1,
-              },
-            ]}
-          >
-            <Text style={[styles.buttonText, { color: colors.text }]}>
-              {exporting ? "書き出し中…" : "観戦履歴を書き出す"}
-            </Text>
-          </Pressable>
-          <Pressable
+            colors={colors}
+          />
+          <ActionRow
+            label={importing ? "読み込み中…" : "バックアップから読み込む"}
             onPress={handleImport}
             disabled={importing}
-            style={[
-              styles.button,
-              styles.buttonSpacing,
-              {
-                backgroundColor: colors.backgroundElement,
-                borderColor: colors.border,
-                opacity: importing ? 0.6 : 1,
-              },
-            ]}
-          >
-            <Text style={[styles.buttonText, { color: colors.text }]}>
-              {importing ? "読み込み中…" : "バックアップから読み込む"}
-            </Text>
-          </Pressable>
-          <ThemedText
-            type="small"
-            themeColor="textSecondary"
-            style={styles.hint}
-          >
-            観戦履歴・マイチーム・お気に入りチームをこの端末上でファイルに書き出せます。機種変更やアプリの再インストール前のバックアップ、他の端末への引き継ぎにお使いください。サーバーへは送信されません。
-          </ThemedText>
+            colors={colors}
+          />
+          <ActionRow
+            label="書き出したファイルの扱い"
+            icon="help-circle-outline"
+            onPress={() => setBackupHelpOpen(true)}
+            colors={colors}
+          />
+          <Text style={[styles.note, { color: colors.textSecondary }]}>
+            観戦履歴とチーム設定をファイルに保存します。機種変更や再インストールの前にお使いください。サーバーへは送信されません。
+          </Text>
         </View>
 
         <View style={styles.section}>
-          <ThemedText
-            type="small"
-            themeColor="textSecondary"
-            style={styles.sectionLabel}
-          >
-            ご要望・お問い合わせ
-          </ThemedText>
-          <Pressable
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+            問い合わせ
+          </Text>
+          <ActionRow
+            label="ご要望・不具合を送る"
             onPress={() => setContactOpen(true)}
-            style={[
-              styles.button,
-              {
-                backgroundColor: colors.backgroundElement,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <Text style={[styles.buttonText, { color: colors.text }]}>
-              ご要望・お問い合わせフォーム
-            </Text>
-          </Pressable>
-          <ThemedText type="small" themeColor="textSecondary" style={styles.hint}>
-            機能のご要望や不具合の報告をお送りいただけます。フォームから端末のメールアプリが開きます。いただいた内容は改善の参考にさせていただきます。
-          </ThemedText>
+            colors={colors}
+          />
+          <Text style={[styles.note, { color: colors.textSecondary }]}>
+            端末のメールアプリが開きます。いただいた内容は改善の参考にさせていただきます。
+          </Text>
         </View>
 
         <View style={styles.section}>
-          <ThemedText
-            type="small"
-            themeColor="textSecondary"
-            style={styles.sectionLabel}
-          >
-            アプリについて
-          </ThemedText>
-          <View style={styles.infoRow}>
-            <ThemedText type="small" themeColor="textSecondary">
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+            Ball Films
+          </Text>
+          <View style={[styles.row, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.rowLabel, { color: colors.text }]}>
               バージョン
-            </ThemedText>
-            <ThemedText type="small">{appVersion}</ThemedText>
+            </Text>
+            <Text style={[styles.version, { color: colors.textSecondary }]}>
+              {appVersion}
+            </Text>
           </View>
-          <View style={styles.linkRow}>
-            <Pressable onPress={() => openLegalPage("/privacy")} hitSlop={6}>
-              <ThemedText type="link" themeColor="accent">
-                プライバシーポリシー
-              </ThemedText>
-            </Pressable>
-            <Pressable onPress={() => openLegalPage("/support")} hitSlop={6}>
-              <ThemedText type="link" themeColor="accent">
-                サポート
-              </ThemedText>
-            </Pressable>
-          </View>
+          <ActionRow
+            label="プライバシーポリシー"
+            onPress={() => openLegalPage("/privacy")}
+            colors={colors}
+          />
+          <ActionRow
+            label="サポート"
+            onPress={() => openLegalPage("/support")}
+            colors={colors}
+            last
+          />
         </View>
       </ScrollView>
 
@@ -397,46 +378,19 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     fontWeight: "700",
     letterSpacing: 1.2,
-    marginBottom: 10,
+    marginBottom: 4,
   },
-  linkRow: {
-    flexDirection: "row",
-    gap: 20,
-    marginTop: 10,
-    marginBottom: 2,
-  },
-  sectionLabelRow: {
+  row: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-  },
-  toggleRow: {
-    flexDirection: "row",
-    alignItems: "center",
     gap: 14,
+    paddingVertical: Space.row,
+    borderBottomWidth: 1,
   },
-  toggleTextArea: { flex: 1, gap: 3 },
-  toggleTitle: { fontSize: 14.5, fontWeight: "600" },
-  helpButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    marginBottom: 6,
-  },
-  helpButtonText: { fontSize: 13, fontWeight: "600" },
-  hint: { marginTop: 10, lineHeight: 18 },
-  button: {
-    borderWidth: 1,
-    borderRadius: Radius.surface,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  buttonSpacing: { marginTop: 8 },
-  buttonText: { fontSize: 14, fontWeight: "600" },
-  // アプリ情報は操作ではなく参照。枠に入れず、素の行として置く。
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
+  rowLabel: { fontSize: 15, flexShrink: 1 },
+  rowValue: { flexShrink: 0 },
+  version: { fontSize: 14 },
+  // 節の説明。行の下に一段落として置き、行そのものは短く保つ
+  note: { fontSize: 12, lineHeight: 18, marginTop: 10 },
 });
