@@ -186,10 +186,19 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
       lineHeight: scOf('stadium', 13.5),
       letterSpacing: scOf('stadium', 2),
     },
+    // 一列構成の共通サイズ。焼き込みは写真の隅に小さく入るものなので、
+    // 主張しない大きさに抑える。
     inlineText: {
-      fontSize: scOf('date', 10),
-      lineHeight: scOf('date', 14),
-      letterSpacing: scOf('date', 1.6),
+      fontSize: scOf('date', 8.5),
+      lineHeight: scOf('date', 12),
+      letterSpacing: scOf('date', 1.2),
+    },
+    // 7セグメント書体は同じ指定でも字面が大きく、太く広く見える。
+    // 他の文字と並んだときに揃って見えるよう、日付だけ一回り落とす。
+    inlineDate: {
+      fontSize: scOf('date', 7.6),
+      lineHeight: scOf('date', 12),
+      letterSpacing: scOf('date', 0.6),
     },
     memo: {
       fontSize: scOf('memo', 10.5),
@@ -500,6 +509,7 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
               style={[
                 styles.inlineText,
                 telopStyles.inlineText,
+                dateFont && telopStyles.inlineDate,
                 dateFont,
                 dateShadow,
                 { color: dateColor },
