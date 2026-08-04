@@ -88,11 +88,15 @@ function fitColumns(count: number, width: number, gridHeight: number, pad: numbe
   return cols;
 }
 
-/** 日付(ISO)から「4.02」のような短い表記を作る */
+/**
+ * 日付(ISO)から「07.03」のような短い表記を作る。
+ * 月をゼロ埋めするのは、履歴一覧と桁を揃えるため。格子に並べたときも
+ * 幅が揃って読みやすい。
+ */
 function shortDate(iso: string): string {
   const [, m, d] = iso.split("-");
   if (!m || !d) return "";
-  return `${Number(m)}.${d}`;
+  return `${m}.${d}`;
 }
 
 /**

@@ -212,7 +212,7 @@ export default function SettingsScreen() {
           ラベルを左、操作を右に置いた行にすれば、目はラベルの列を追える。
         */}
         <View style={styles.section}>
-          <View style={[styles.row, { borderBottomColor: colors.border }]}>
+          <View style={[styles.row, styles.rowLast]}>
             <Text style={[styles.rowLabel, { color: colors.text }]}>
               お気に入りチーム
             </Text>
@@ -232,7 +232,7 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
-          <View style={[styles.row, { borderBottomColor: colors.border }]}>
+          <View style={[styles.row, styles.rowLast]}>
             <Text style={[styles.rowLabel, { color: colors.text }]}>
               作った画像を残す
             </Text>
@@ -280,6 +280,7 @@ export default function SettingsScreen() {
             onPress={handleImport}
             disabled={importing}
             colors={colors}
+            last
           />
           <Text style={[styles.note, { color: colors.textSecondary }]}>
             観戦履歴とチーム設定をファイルに保存します。機種変更や再インストールの前にお使いください。サーバーへは送信されません。
@@ -291,6 +292,7 @@ export default function SettingsScreen() {
             label="ご要望・不具合を送る"
             onPress={() => setContactOpen(true)}
             colors={colors}
+            last
           />
           <Text style={[styles.note, { color: colors.textSecondary }]}>
             端末のメールアプリが開きます。いただいた内容は改善の参考にさせていただきます。
@@ -416,9 +418,12 @@ const styles = StyleSheet.create({
     paddingVertical: Space.row,
     borderBottomWidth: 1,
   },
+  rowLast: { borderBottomWidth: 0 },
   rowLabel: { fontSize: 15, flexShrink: 1 },
   rowValue: { flexShrink: 0 },
   version: { fontSize: 14 },
   // 節の説明。行の下に一段落として置き、行そのものは短く保つ
-  note: { fontSize: 12, lineHeight: 18, marginTop: 2, marginBottom: 14 },
+  // 説明は節の最後に置くだけ。下に余白を持たせると、次の節の行の上余白と
+  // 足し合わさって、罫線の前後に空白の帯ができてしまう。
+  note: { fontSize: 12, lineHeight: 18, marginTop: 4, marginBottom: 12 },
 });

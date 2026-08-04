@@ -198,7 +198,7 @@ export default function HistoryScreen() {
         */}
         <View style={styles.teamPick}>
           <Text style={[styles.teamPickLabel, { color: colors.textSecondary }]}>
-            成績を見るチーム
+            マイチーム
           </Text>
           <SelectModal
             title="マイチームを選択"

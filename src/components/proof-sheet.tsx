@@ -25,6 +25,7 @@ import { Radius } from "@/constants/theme";
 import { resolveGameResult } from "@/storage/history";
 import { loadThumbnailUriMap } from "@/storage/thumbnails";
 import { HistoryEntry } from "@/types/history";
+import { ToggleSwitch } from "@/components/form/toggle-switch";
 import { notify } from "@/utils/dialogs";
 
 /** 書き出し解像度(幅) */
@@ -58,6 +59,12 @@ export function ProofSheet({
   const [busyMode, setBusyMode] = useState<"save" | "share" | null>(null);
   const [items, setItems] = useState<ProofSheetItem[] | null>(null);
   const [ratio, setRatio] = useState<ProofRatio>("auto");
+  // 写真のある試合だけを並べるか。既定は全試合。
+  // 枚数そのものが「その年どれだけ通ったか」を語るため。
+  //
+  // 絞り込み中はフッターの勝敗内訳を出さない。並んでいるコマの数と
+  // ○●△の合計が食い違い、どの試合を数えているのか分からなくなるため。
+  const [photoOnly, setPhotoOnly] = useState(false);
   const exportRef = useRef<View>(null);
 
   // 書き出し用カードの画像デコード完了を数える。
@@ -66,7 +73,9 @@ export function ProofSheet({
   const loadedRef = useRef(0);
   const waitersRef = useRef<(() => void)[]>([]);
 
-  const expectedLoads = items?.filter((i) => i.uri).length ?? 0;
+  // 表示・書き出しの対象。写真ありのみに絞ることもできる。
+  const shown = items?.filter((i) => !photoOnly || i.uri) ?? null;
+  const expectedLoads = shown?.filter((i) => i.uri).length ?? 0;
 
   useEffect(() => {
     if (!visible) return;
@@ -113,7 +122,7 @@ export function ProofSheet({
   }
 
   async function runExport(mode: "save" | "share") {
-    if (busy || !items || items.length === 0) return;
+    if (busy || !shown || shown.length === 0) return;
     setBusy(true);
     setBusyMode(mode);
     try {
@@ -195,7 +204,7 @@ export function ProofSheet({
   if (!visible) return null;
 
   const withPhoto = items?.filter((i) => i.uri).length ?? 0;
-  const exportHeight = proofCardHeight(items?.length ?? 0, EXPORT_WIDTH, ratio);
+  const exportHeight = proofCardHeight(shown?.length ?? 0, EXPORT_WIDTH, ratio);
 
   return (
     <Modal
@@ -278,19 +287,39 @@ export function ProofSheet({
               <View style={styles.previewWrap}>
                 <ProofSheetCard
                   year={year}
-                  items={items}
+                  items={shown ?? []}
                   width={PREVIEW_WIDTH}
                   colors={colors}
-                  record={record}
+                  record={photoOnly ? null : record}
                   ratio={ratio}
                 />
               </View>
 
               {withPhoto < items.length && (
-                <Text style={[styles.note, { color: colors.textSecondary }]}>
-                  {items.length - withPhoto}件は写真がないため、日付とスコアのコマになっています。
-                  設定で「作った画像を残す」を有効にすると、これから作る分の写真が並びます。
-                </Text>
+                <>
+                  <View
+                    style={[
+                      styles.filterRow,
+                      { borderTopColor: colors.border },
+                    ]}
+                  >
+                    <Text
+                      style={[styles.filterLabel, { color: colors.text }]}
+                    >
+                      写真がある試合だけ並べる
+                    </Text>
+                    <ToggleSwitch
+                      value={photoOnly}
+                      onValueChange={setPhotoOnly}
+                      accessibilityLabel="写真がある試合だけ並べる"
+                    />
+                  </View>
+                  <Text style={[styles.note, { color: colors.textSecondary }]}>
+                    {photoOnly
+                      ? `写真のない${items.length - withPhoto}件を外しています。`
+                      : `${items.length - withPhoto}件は写真がないため、日付とスコアのコマになります。`}
+                  </Text>
+                </>
               )}
 
               <View style={styles.actionRow}>
@@ -354,10 +383,10 @@ export function ProofSheet({
             <ProofSheetCard
               ref={exportRef}
               year={year}
-              items={items}
+              items={shown ?? []}
               width={EXPORT_WIDTH}
               colors={colors}
-              record={record}
+              record={photoOnly ? null : record}
               ratio={ratio}
               onCellLoad={handleCellLoad}
             />
@@ -387,6 +416,16 @@ const styles = StyleSheet.create({
   sheetTitle: { fontSize: 15, fontWeight: "600", flexShrink: 1, marginRight: 8 },
   body: { padding: 18, paddingBottom: 28 },
   loading: { paddingVertical: 40, alignItems: "center" },
+  filterRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    borderTopWidth: 1,
+    paddingTop: 14,
+    marginTop: 16,
+  },
+  filterLabel: { fontSize: 14, flexShrink: 1 },
   ratioRow: {
     flexDirection: "row",
     flexWrap: "wrap",
