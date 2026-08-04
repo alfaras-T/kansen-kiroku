@@ -222,14 +222,11 @@ export default function HistoryScreen() {
           {filteredEntries.length}
         </Text>
       </View>
-      <View style={[styles.headRule, { backgroundColor: colors.border }]} />
-
       {/*
         作成導線。このアプリで一番作ってほしいものなので、画面で最も強く扱う。
         成績を見た直後がまとめを作りたくなる瞬間なので、成績のすぐ下に置く。
 
-        それぞれ「何が出てくるか」の縮図を添えている。中身が見えれば押す
-        理由になるし、2つが違う形になるので、同じボタンが並ぶことも避けられる。
+        何が出てくるかは一行の説明で伝える。
       */}
       {wrapSummary && wrapSummary.games > 0 && (
         <View style={styles.makeRow}>
@@ -243,21 +240,12 @@ export default function HistoryScreen() {
               },
             ]}
           >
-            {/* 観戦まとめの縮図: 大きな数字と説明行 */}
-            <View style={styles.thumb}>
-              <View
-                style={[styles.wrapNum, { backgroundColor: colors.accent }]}
-              />
-              <View
-                style={[styles.wrapLine, { backgroundColor: colors.border }]}
-              />
-              <View
-                style={[
-                  styles.wrapLine,
-                  { backgroundColor: colors.border, width: "60%" },
-                ]}
-              />
-            </View>
+            <Ionicons
+              name="sparkles-outline"
+              size={20}
+              color={colors.accent}
+              style={styles.makeIcon}
+            />
             <Text style={[styles.makeTitle, { color: colors.text }]}>
               観戦まとめ
             </Text>
@@ -276,21 +264,12 @@ export default function HistoryScreen() {
               },
             ]}
           >
-            {/* フィルムシートの縮図: 写真が並ぶ格子 */}
-            <View style={[styles.thumb, styles.grid]}>
-              {Array.from({ length: 9 }).map((_, i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.gridCell,
-                    {
-                      backgroundColor:
-                        i % 4 === 0 ? colors.accent : colors.border,
-                    },
-                  ]}
-                />
-              ))}
-            </View>
+            <Ionicons
+              name="grid-outline"
+              size={20}
+              color={colors.accent}
+              style={styles.makeIcon}
+            />
             <Text style={[styles.makeTitle, { color: colors.text }]}>
               フィルムシート
             </Text>
@@ -589,13 +568,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.surface,
     padding: 13,
   },
-  thumb: { height: 40, justifyContent: "center", marginBottom: 11 },
-  // 観戦まとめの縮図
-  wrapNum: { width: 22, height: 13, borderRadius: Radius.mark },
-  wrapLine: { height: 3, borderRadius: Radius.mark, marginTop: 5, width: "85%" },
-  // フィルムシートの縮図
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 3, alignContent: "center" },
-  gridCell: { width: 10, height: 10, borderRadius: Radius.mark },
+  makeIcon: { marginBottom: 10 },
   makeTitle: { fontSize: 14, fontWeight: "700", letterSpacing: 0.2 },
   makeNote: { fontSize: 11, marginTop: 3 },
   head: {
@@ -610,11 +583,6 @@ const styles = StyleSheet.create({
   tallyNum: { ...Type.display(38) },
   tallyLabel: { fontSize: 13, fontWeight: "600" },
   tallyNote: { fontSize: 12, marginTop: 8, letterSpacing: 0.2 },
-  headRule: {
-    height: Rule.hairline,
-    marginTop: 18,
-    marginHorizontal: Spacing.four,
-  },
   // 1件を枠で囲わず、下罫線一本だけで隣と分ける
   frame: {
     flexDirection: "row",
