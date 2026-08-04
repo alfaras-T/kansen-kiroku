@@ -211,7 +211,7 @@ export function EditEntrySheet({
             <DateField value={date} onChange={setDate} />
           </LabeledField>
 
-          <LabeledField label="先攻（ビジター）">
+          <LabeledField label="先攻">
             <View style={styles.teamRow}>
               <View style={{ flex: 1 }}>
                 <SelectModal
@@ -222,14 +222,6 @@ export function EditEntrySheet({
                 />
               </View>
               <View style={styles.scoreField}>
-                <Text
-                  // 得点欄は幅64px固定のため、文字サイズを大きくしている
-                  // 端末では「得点」が折り返してしまう。拡大は1.2倍で頭打ちにする。
-                  maxFontSizeMultiplier={1.2}
-                  style={[styles.scoreCaption, { color: colors.textSecondary }]}
-                >
-                  得点
-                </Text>
                 <TextInput
                   value={visitorScore}
                   onChangeText={(t) => setVisitorScore(sanitizeScoreInput(t))}
@@ -268,7 +260,7 @@ export function EditEntrySheet({
             )}
           </LabeledField>
 
-          <LabeledField label="後攻（ホーム）">
+          <LabeledField label="後攻">
             <View style={styles.teamRow}>
               <View style={{ flex: 1 }}>
                 <SelectModal
@@ -279,14 +271,6 @@ export function EditEntrySheet({
                 />
               </View>
               <View style={styles.scoreField}>
-                <Text
-                  // 得点欄は幅64px固定のため、文字サイズを大きくしている
-                  // 端末では「得点」が折り返してしまう。拡大は1.2倍で頭打ちにする。
-                  maxFontSizeMultiplier={1.2}
-                  style={[styles.scoreCaption, { color: colors.textSecondary }]}
-                >
-                  得点
-                </Text>
                 <TextInput
                   value={homeScore}
                   onChangeText={(t) => setHomeScore(sanitizeScoreInput(t))}
@@ -351,7 +335,7 @@ export function EditEntrySheet({
             )}
           </LabeledField>
 
-          <LabeledField label="自由メモ（任意）">
+          <LabeledField label="自由メモ（任意）" stacked>
             <TextInput
               value={memo}
               onChangeText={setMemo}
@@ -420,13 +404,8 @@ const styles = StyleSheet.create({
   // alignItems は flex-end。得点欄の上に「得点」ラベルが乗るため、
   // 中央揃えだと入力欄だけが下にずれてチーム選択欄と揃わなくなる。
   // 下端で揃えることで、選択欄と入力欄が同じ行に並んで見える。
-  teamRow: { flexDirection: "row", gap: 8, alignItems: "flex-end" },
+  teamRow: { flexDirection: "row", gap: 8, alignItems: "center" },
   scoreField: { width: 64 },
-  scoreCaption: {
-    fontSize: 10,
-    textAlign: "center",
-    marginBottom: 3,
-  },
   scoreInput: {
     width: "100%",
     borderWidth: 1,

@@ -203,156 +203,127 @@ export default function CreateScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/*
-          フィルムの先頭に焼かれるリーダー部分に倣ったヘッダー。
-          右の数字は、この記録がその年の何枚目になるかを示す。
-          装飾ではなく、貯まっていく実感そのものを出している。
-        */}
-        <View style={styles.leader}>
-          <Text style={[styles.brand, { color: colors.textSecondary }]}>
-            BALL FILMS
-          </Text>
-          <View style={styles.frame}>
-            <Text style={[styles.frameYear, { color: colors.textSecondary }]}>
-              {thisYear}
-            </Text>
-            <Text style={[styles.frameNo, { color: colors.accent }]}>
-              {String(frameNumber).padStart(2, "0")}
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.leaderRule, { backgroundColor: colors.border }]} />
-
-        <View style={styles.modeRow}>
-          <Text style={[styles.modeLabel, { color: colors.textSecondary }]}>
-            写真なしで記録だけ残す
-          </Text>
-          <Switch
-            value={recordOnly}
-            onValueChange={setRecordOnly}
-            trackColor={{ true: colors.accent, false: colors.border }}
-          />
-        </View>
-
-        {/*
-          写真を先頭に置く。以前は入力欄を全部埋めた先に写真ボタンがあり、
-          手を動かしている間ずっと何も得られない導線だった。
-          先に写真を選んでもらい、入力するそばからプレビューが変わることで
-          「フォームを埋める作業」ではなく「仕上げていく作業」にする。
+          画面の上半分をビューファインダーにする。この画面の仕事は
+          「写真を一枚のカードにすること」なので、写真が数ある節の一つに
+          なっていてはいけない。端まで写真を伸ばし、番号と操作は上に重ねる。
         */}
         {!recordOnly && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              写真
-            </Text>
-
-            {photoUri ? (
-              <>
-                {/*
-                  プレビューは見るだけ。pointerEvents="none" で
-                  OverlayCard 内のドラッグ/ピンチ操作を無効にしておく。
-                  有効なままだと画面のスクロールを奪ってしまう。
-                  写真の位置や拡大は「写真を調整する」で行う。
-                */}
-                <View
-                  pointerEvents="none"
-                  style={styles.previewStage}
-                  onLayout={(e) =>
-                    setPreviewWidth(e.nativeEvent.layout.width)
-                  }
-                >
-                  {previewWidth > 0 && (
-                    <OverlayCard
-                      photoUri={photoUri}
-                      photoAspectRatio={photoAspectRatio}
-                      ratio={ratio}
-                      position={position}
-                      styleKey={styleKey}
-                      visitorCode={visitorTeamName}
-                      homeCode={homeTeamName}
-                      visitorScore={visitorScore || "0"}
-                      homeScore={homeScore || "0"}
-                      dateLabel={formatDateOverlay(date)}
-                      dateIso={date}
-                      stadium={stadiumName}
-                      memo={memo}
-                      winHighlight={winHighlight}
-                      photoOffset={photoOffset}
-                      photoScale={photoScale}
-                      telopScale={telopScale}
-                      style={{
-                        width: previewWidth,
-                        height: previewWidth / previewAspect,
-                        aspectRatio: undefined,
-                      }}
-                    />
-                  )}
+          <>
+            <Pressable
+              onPress={photoUri ? () => router.push("/adjust") : pickPhoto}
+              style={styles.viewfinder}
+              onLayout={(e) => setPreviewWidth(e.nativeEvent.layout.width)}
+            >
+              {photoUri && previewWidth > 0 ? (
+                <View pointerEvents="none">
+                  <OverlayCard
+                    photoUri={photoUri}
+                    photoAspectRatio={photoAspectRatio}
+                    ratio={ratio}
+                    position={position}
+                    styleKey={styleKey}
+                    visitorCode={visitorTeamName}
+                    homeCode={homeTeamName}
+                    visitorScore={visitorScore || "0"}
+                    homeScore={homeScore || "0"}
+                    dateLabel={formatDateOverlay(date)}
+                    dateIso={date}
+                    stadium={stadiumName}
+                    memo={memo}
+                    winHighlight={winHighlight}
+                    photoOffset={photoOffset}
+                    photoScale={photoScale}
+                    telopScale={telopScale}
+                    style={{
+                      width: previewWidth,
+                      height: previewWidth / previewAspect,
+                      aspectRatio: undefined,
+                    }}
+                  />
                 </View>
+              ) : (
+                <View style={styles.empty}>
+                  <Ionicons
+                    name="add"
+                    size={26}
+                    color={colors.textSecondary}
+                  />
+                  <Text style={[styles.emptyText, { color: colors.text }]}>
+                    観戦写真を選ぶ
+                  </Text>
+                  <Text
+                    style={[styles.emptyNote, { color: colors.textSecondary }]}
+                  >
+                    選ぶとここに仕上がりが出ます
+                  </Text>
+                </View>
+              )}
 
+              {/* フレーム番号は写真の上に焼き込む。ヘッダーではなく刻印として */}
+              <View style={styles.hud} pointerEvents="none">
+                <Text style={styles.hudYear}>{thisYear}</Text>
+                <Text style={[styles.hudNo, { color: colors.accent }]}>
+                  {String(frameNumber).padStart(2, "0")}
+                </Text>
+              </View>
+            </Pressable>
+
+            {photoUri && (
+              <View
+                style={[styles.filmActions, { borderBottomColor: colors.border }]}
+              >
                 <Pressable
                   onPress={() => router.push("/adjust")}
-                  style={[
-                    styles.adjustBtn,
-                    { borderColor: colors.accent, marginTop: 12 },
-                  ]}
+                  style={styles.filmAction}
                 >
-                  <Ionicons name="crop" size={17} color={colors.accent} />
-                  <Text
-                    style={{
-                      color: colors.accent,
-                      fontSize: 14,
-                      fontWeight: "600",
-                    }}
-                  >
-                    写真を調整して保存する
+                  <Ionicons name="crop" size={15} color={colors.accent} />
+                  <Text style={[styles.filmActionText, { color: colors.accent }]}>
+                    仕上げる
                   </Text>
                 </Pressable>
-
-                <View style={styles.photoActions}>
-                  <Pressable onPress={pickPhoto} hitSlop={8}>
-                    <ThemedText type="small" themeColor="textSecondary">
-                      写真を変更
-                    </ThemedText>
-                  </Pressable>
-                  <Pressable onPress={clearPhoto} hitSlop={8}>
-                    <ThemedText type="small" themeColor="danger">
-                      写真をクリア
-                    </ThemedText>
-                  </Pressable>
-                </View>
-              </>
-            ) : (
-              <Pressable
-                onPress={pickPhoto}
-                style={[
-                  styles.photoPlaceholder,
-                  {
-                    borderColor: colors.border,
-                    backgroundColor: colors.backgroundElement,
-                  },
-                ]}
-              >
-                <Ionicons name="image-outline" size={30} color={colors.accent} />
-                <Text style={{ color: colors.text, fontSize: 14.5, fontWeight: "600" }}>
-                  写真を選ぶ
-                </Text>
-                <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
-                  選ぶとここに仕上がりが表示されます
-                </Text>
-              </Pressable>
+                <View
+                  style={[styles.filmSep, { backgroundColor: colors.border }]}
+                />
+                <Pressable onPress={pickPhoto} style={styles.filmAction}>
+                  <Text
+                    style={[
+                      styles.filmActionText,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
+                    別の写真
+                  </Text>
+                </Pressable>
+                <View
+                  style={[styles.filmSep, { backgroundColor: colors.border }]}
+                />
+                <Pressable onPress={clearPhoto} style={styles.filmAction}>
+                  <Text
+                    style={[
+                      styles.filmActionText,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
+                    外す
+                  </Text>
+                </Pressable>
+              </View>
             )}
-          </View>
+          </>
         )}
 
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            試合情報
-          </Text>
+        {/*
+          下半分はカメラのデータバック。ラベルを左、値を右に置いた表として
+          読ませる。ラベルを値の上に積むと、どの項目も同じ重さの塊になって
+          「縦に並べただけのフォーム」になる。
+        */}
+        <View style={styles.databack}>
 
           <LabeledField label="試合日">
             <DateField value={date} onChange={setDate} />
           </LabeledField>
 
-          <LabeledField label="先攻（ビジター）">
+          <LabeledField label="先攻">
             <View style={styles.teamRow}>
               <View style={{ flex: 1 }}>
                 <SelectModal
@@ -363,14 +334,6 @@ export default function CreateScreen() {
                 />
               </View>
               <View style={styles.scoreField}>
-                <Text
-                  // 得点欄は幅64px固定のため、文字サイズを大きくしている
-                  // 端末では「得点」が折り返してしまう。拡大は1.2倍で頭打ちにする。
-                  maxFontSizeMultiplier={1.2}
-                  style={[styles.scoreCaption, { color: colors.textSecondary }]}
-                >
-                  得点
-                </Text>
                 <TextInput
                   value={visitorScore}
                   onChangeText={(t) => setVisitorScore(sanitizeScoreInput(t))}
@@ -409,7 +372,7 @@ export default function CreateScreen() {
             )}
           </LabeledField>
 
-          <LabeledField label="後攻（ホーム）">
+          <LabeledField label="後攻">
             <View style={styles.teamRow}>
               <View style={{ flex: 1 }}>
                 <SelectModal
@@ -420,14 +383,6 @@ export default function CreateScreen() {
                 />
               </View>
               <View style={styles.scoreField}>
-                <Text
-                  // 得点欄は幅64px固定のため、文字サイズを大きくしている
-                  // 端末では「得点」が折り返してしまう。拡大は1.2倍で頭打ちにする。
-                  maxFontSizeMultiplier={1.2}
-                  style={[styles.scoreCaption, { color: colors.textSecondary }]}
-                >
-                  得点
-                </Text>
                 <TextInput
                   value={homeScore}
                   onChangeText={(t) => setHomeScore(sanitizeScoreInput(t))}
@@ -492,7 +447,7 @@ export default function CreateScreen() {
             )}
           </LabeledField>
 
-          <LabeledField label="自由メモ（任意）" last>
+          <LabeledField label="自由メモ（任意）" stacked>
             <TextInput
               value={memo}
               onChangeText={setMemo}
@@ -508,6 +463,17 @@ export default function CreateScreen() {
               ]}
             />
           </LabeledField>
+
+          <View style={styles.modeRow}>
+            <Text style={[styles.modeLabel, { color: colors.textSecondary }]}>
+              写真なしで記録だけ残す
+            </Text>
+            <Switch
+              value={recordOnly}
+              onValueChange={setRecordOnly}
+              trackColor={{ true: colors.accent, false: colors.border }}
+            />
+          </View>
         </View>
 
         {recordOnly && (
@@ -528,6 +494,38 @@ export default function CreateScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  // 端まで写真を伸ばす。画面の主役なので余白の内側に収めない。
+  viewfinder: { width: "100%", minHeight: 200, justifyContent: "center" },
+  empty: { alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 62 },
+  emptyText: { fontSize: 15, fontWeight: "600" },
+  emptyNote: { fontSize: 12 },
+  // 写真に焼き込む刻印。ヘッダーではなく、フィルムの縁の番号として置く
+  hud: {
+    position: "absolute",
+    left: Space.edge,
+    bottom: 12,
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 6,
+  },
+  hudYear: { ...Type.display(13), color: "rgba(255,255,255,0.7)" },
+  hudNo: { ...Type.display(22) },
+  filmActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: Rule.hairline,
+  },
+  filmAction: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 13,
+  },
+  filmSep: { width: Rule.hairline, height: 14 },
+  filmActionText: { fontSize: 13, fontWeight: "600" },
+  databack: { paddingHorizontal: Space.edge, paddingTop: Space.tight },
   scroll: {
     flex: 1,
     maxWidth: MaxContentWidth,
@@ -539,22 +537,6 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
     paddingBottom: BottomTabInset + Spacing.four,
   },
-  leader: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    justifyContent: "space-between",
-    paddingHorizontal: Space.edge,
-    paddingTop: Space.row,
-  },
-  brand: { ...Type.eyebrow },
-  frame: { flexDirection: "row", alignItems: "baseline", gap: 7 },
-  frameYear: { ...Type.display(15) },
-  frameNo: { ...Type.display(26) },
-  leaderRule: {
-    height: Rule.hairline,
-    marginTop: 10,
-    marginHorizontal: Space.edge,
-  },
   modeRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -563,58 +545,11 @@ const styles = StyleSheet.create({
     paddingTop: Space.row,
   },
   modeLabel: { fontSize: 13, letterSpacing: 0.3 },
-  section: {
-    paddingHorizontal: Space.edge,
-    marginTop: Space.section,
-  },
-  sectionTitle: {
-    fontSize: 15.5,
-    fontWeight: "700",
-    letterSpacing: 0.4,
-    marginBottom: Space.tight,
-  },
-  // プレビューは節の余白から外に出して、画面幅いっぱいに置く。
-  // 写真がこの画面の主役なので、他の要素と同じ枠に収めない。
-  previewStage: {
-    width: "auto",
-    marginHorizontal: -Space.edge,
-    overflow: "hidden",
-  },
-  photoPlaceholder: {
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderRadius: Radius.surface,
-    paddingVertical: 34,
-  },
-  photoActions: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 12,
-    paddingHorizontal: 4,
-  },
-  adjustBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    borderWidth: 1.5,
-    borderRadius: Radius.surface,
-    paddingVertical: 12,
-    marginBottom: 8,
-  },
   // alignItems は flex-end。得点欄の上に「得点」ラベルが乗るため、
   // 中央揃えだと入力欄だけが下にずれてチーム選択欄と揃わなくなる。
   // 下端で揃えることで、選択欄と入力欄が同じ行に並んで見える。
-  teamRow: { flexDirection: "row", gap: 8, alignItems: "flex-end" },
+  teamRow: { flexDirection: "row", gap: 8, alignItems: "center" },
   scoreField: { width: 64 },
-  scoreCaption: {
-    fontSize: 10,
-    textAlign: "center",
-    marginBottom: 3,
-  },
   scoreInput: {
     width: "100%",
     borderWidth: 1,
