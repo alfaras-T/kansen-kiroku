@@ -51,14 +51,12 @@ function ActionRow({
   colors,
   icon = "chevron-forward",
   disabled = false,
-  last = false,
 }: {
   label: string;
   onPress: () => void;
   colors: Palette;
   icon?: keyof typeof Ionicons.glyphMap;
   disabled?: boolean;
-  last?: boolean;
 }) {
   return (
     <Pressable
@@ -67,8 +65,7 @@ function ActionRow({
       accessibilityRole="button"
       style={[
         styles.row,
-        !last && { borderBottomWidth: 1, borderBottomColor: colors.border },
-        { opacity: disabled ? 0.5 : 1 },
+        { borderBottomColor: colors.border, opacity: disabled ? 0.5 : 1 },
       ]}
     >
       <Text style={[styles.rowLabel, { color: colors.text }]}>{label}</Text>
@@ -297,7 +294,6 @@ export default function SettingsScreen() {
             label="ご要望・不具合を送る"
             onPress={() => setContactOpen(true)}
             colors={colors}
-            last
           />
           <Text
             style={[styles.note, { color: colors.textSecondary }]}
@@ -324,7 +320,6 @@ export default function SettingsScreen() {
             label="サポート"
             onPress={() => openLegalPage("/support")}
             colors={colors}
-            last
           />
         </View>
       </ScrollView>
@@ -428,5 +423,14 @@ const styles = StyleSheet.create({
   version: { fontSize: 14 },
   // 節の説明。行の下に一段落として置き、行そのものは短く保つ
   // 説明は直前の行に属する。罫線は行が持つので、ここには引かない。
-  note: { fontSize: 12, lineHeight: 18, paddingBottom: Space.row },
+  //
+  // 上下の間隔は行の余白(Space.row)と同じにする。行の下罫線から説明までと、
+  // 説明から次の行の罫線までが同じ幅になり、間隔が揃って見える。
+  // 以前は上が0で、説明が罫線に貼り付いていた。
+  note: {
+    fontSize: 12,
+    lineHeight: 18,
+    paddingTop: Space.row,
+    paddingBottom: Space.row,
+  },
 });
