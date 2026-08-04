@@ -122,8 +122,11 @@ export function OnboardingScreen() {
 
         {/*
           選択肢は箱に入れず、文字のまま並べる。選ばれたものだけ
-          チームカラーの縦線と明るい文字で示す。選択の表現に枠線ではなく
-          「印」を使うことで、12個が均一な塊に見えるのを避ける。
+          チームカラーの縦線と明るい文字で示す。
+
+          ただし文字数がばらばらだと、折り返しのたびに列の位置が変わって
+          目が拾いにくい。2列の格子に固定して左端を揃える。
+          球団コードは右端に寄せ、コードの列も縦に揃うようにしている。
         */}
         <View style={styles.chips}>
           {OPTIONS.map((opt) => {
@@ -150,19 +153,18 @@ export function OnboardingScreen() {
                       fontWeight: on ? "700" : "400",
                     },
                   ]}
+                  numberOfLines={1}
                 >
                   {opt.code ? opt.nickname : "指定なし"}
                 </Text>
-                {!!opt.code && (
-                  <Text
-                    style={[
-                      styles.chipCode,
-                      { color: on ? colors.accent : colors.textSecondary },
-                    ]}
-                  >
-                    {opt.code}
-                  </Text>
-                )}
+                <Text
+                  style={[
+                    styles.chipCode,
+                    { color: on ? colors.accent : colors.textSecondary },
+                  ]}
+                >
+                  {opt.code}
+                </Text>
               </Pressable>
             );
           })}
@@ -213,14 +215,19 @@ const styles = StyleSheet.create({
   chips: {
     flexDirection: "row",
     flexWrap: "wrap",
-    columnGap: 18,
-    rowGap: 2,
     marginTop: Space.row,
   },
-  chip: { flexDirection: "row", alignItems: "center", paddingVertical: 7 },
+  // 2列の格子。左端とコードの列が縦に揃い、目が拾いやすくなる
+  chip: {
+    width: "50%",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 9,
+    paddingRight: 14,
+  },
   // 選択の印。枠線ではなく短い縦線で示す
   chipMark: { width: 2, height: 15, marginRight: 8, borderRadius: Radius.mark },
-  chipText: { fontSize: 14.5 },
+  chipText: { fontSize: 14.5, flex: 1 },
   chipCode: { ...Type.display(15), marginLeft: 6 },
   footer: {
     borderTopWidth: Rule.hairline,

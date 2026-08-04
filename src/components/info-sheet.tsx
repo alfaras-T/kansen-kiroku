@@ -112,9 +112,13 @@ const styles = StyleSheet.create({
   sheetTitle: { fontSize: 15, fontWeight: "600", flexShrink: 1, marginRight: 8 },
   body: { paddingHorizontal: 18 },
   bodyContent: { paddingVertical: 18, paddingBottom: 28 },
-  step: { flexDirection: "row", alignItems: "flex-start", marginBottom: 18 },
+  // 手順どうしの間隔は、1行の行間(21)より広く取る。同じくらいだと
+  // 手順の切れ目が段落の改行に見えて、どこまでが1手順か分からなくなる。
+  step: { flexDirection: "row", alignItems: "flex-start", marginBottom: 22 },
   stepNo: { ...Type.display(17), width: 30, marginTop: 2 },
-  stepText: { flex: 1, fontSize: 14, lineHeight: 21 },
-  noteWrap: { borderTopWidth: 1, paddingTop: 14, marginTop: 4 },
+  stepText: { flex: 1, fontSize: 14, lineHeight: 22 },
+  // 罫線の前後は同じ幅にする。上が4・下が14では、線が下の文章に
+  // 寄って見えて、どちらに属する区切りなのか分からない。
+  noteWrap: { borderTopWidth: 1, paddingTop: 18, marginTop: 18 },
   note: { fontSize: 12.5, lineHeight: 19 },
 });
