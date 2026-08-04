@@ -147,12 +147,7 @@ export default function HistoryScreen() {
     () =>
       groupHistoryByYear(filteredEntries).map((g) => ({
         title: `${g.year}年`,
-        // コマ番号はその年の古い方から数える。一覧は新しい順なので、
-        // 後ろの要素ほど小さい番号になる。フィルムと同じ並び。
-        data: g.entries.map((entry, i) => ({
-          entry,
-          frameNo: g.entries.length - i,
-        })),
+        data: g.entries.map((entry) => ({ entry })),
       })),
     [filteredEntries],
   );
@@ -371,7 +366,7 @@ export default function HistoryScreen() {
               </Text>
             </View>
           )}
-          renderItem={({ item: { entry, frameNo } }) => {
+          renderItem={({ item: { entry } }) => {
             const result = resolveGameResult(entry, myTeam);
             const mark =
               result === "win"
@@ -388,57 +383,32 @@ export default function HistoryScreen() {
                 onPress={() => setEditingEntry(entry)}
                 accessibilityRole="button"
                 accessibilityLabel="この観戦記録を編集"
+                accessibilityHint={
+                  result === "win"
+                    ? "勝ち"
+                    : result === "lose"
+                      ? "負け"
+                      : result === "draw"
+                        ? "引き分け"
+                        : undefined
+                }
                 style={[styles.frame, { borderBottomColor: colors.border }]}
               >
-                {/*
-                  左端はフィルムの送り穴。一覧を上から下へ貫く連続した列に
-                  見せることで、記録の並びが「積み重なった一本のフィルム」
-                  として読める。コマ番号はその年の何枚目かを示す実数値。
-                */}
-                <View style={styles.rail}>
-                  {[0, 1, 2, 3].map((i) => (
-                    <View
-                      key={i}
-                      style={[
-                        styles.perf,
-                        { backgroundColor: colors.border },
-                      ]}
-                    />
-                  ))}
-                  <View
-                    style={[
-                      styles.railNo,
-                      { backgroundColor: colors.background },
-                    ]}
-                  >
-                    <Text
-                      style={[styles.frameNo, { color: colors.textSecondary }]}
-                    >
-                      {String(frameNo).padStart(2, "0")}
-                    </Text>
-                  </View>
-                </View>
-
                 <View style={styles.frameBody}>
-                  <View style={styles.frameTop}>
-                    <Text style={[styles.date, { color: colors.textSecondary }]}>
-                      {Number(month)}.{day}
-                    </Text>
-                    {!!mark && (
-                      <Text
-                        style={[
-                          styles.mark,
-                          {
-                            color:
-                              result === "win" ? colors.accent : colors.textSecondary,
-                          },
-                        ]}
-                      >
-                        {mark}
-                      </Text>
-                    )}
-                  </View>
+                  <Text
+                    style={[styles.meta, { color: colors.textSecondary }]}
+                    numberOfLines={1}
+                  >
+                    {Number(month)}.{day}　{entry.stadium}
+                    {!!entry.memo && `　${entry.memo}`}
+                  </Text>
 
+                  {/*
+                    スコアと勝敗を同じ行に置く。以前は日付の横に小さな印を
+                    添えていたが、周りの文字に埋もれて読み取れなかった。
+                    勝敗は「その試合をどう記憶しているか」そのものなので、
+                    主役であるスコアと同じ大きさの列に置く。
+                  */}
                   <View style={styles.scoreLine}>
                     <Text style={[styles.code, { color: colors.textSecondary }]}>
                       {entry.visitorCode}
@@ -455,15 +425,22 @@ export default function HistoryScreen() {
                     <Text style={[styles.code, { color: colors.textSecondary }]}>
                       {entry.homeCode}
                     </Text>
+                    {!!mark && (
+                      <Text
+                        style={[
+                          styles.mark,
+                          {
+                            color:
+                              result === "win"
+                                ? colors.accent
+                                : colors.textSecondary,
+                          },
+                        ]}
+                      >
+                        {mark}
+                      </Text>
+                    )}
                   </View>
-
-                  <Text
-                    style={[styles.stadium, { color: colors.textSecondary }]}
-                    numberOfLines={1}
-                  >
-                    {entry.stadium}
-                    {!!entry.memo && `　${entry.memo}`}
-                  </Text>
                 </View>
 
                 <Pressable
@@ -608,41 +585,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.six,
   },
   empty: { textAlign: "center", lineHeight: 20 },
-  // 1件 = フィルムの1コマ。枠で囲わず、下罫線だけで隣のコマと分ける。
+  // 1件を枠で囲わず、下罫線一本だけで隣と分ける
   frame: {
     flexDirection: "row",
-    alignItems: "stretch",
+    alignItems: "flex-start",
     borderBottomWidth: Rule.hairline,
+    paddingLeft: Spacing.four,
   },
-  // 送り穴の列。一覧を貫いて連続して見えるよう、コマの高さいっぱいに伸ばす
-  rail: {
-    width: 34,
-    alignItems: "center",
-    justifyContent: "space-around",
-    paddingVertical: 8,
-  },
-  perf: { width: 7, height: 5, borderRadius: Radius.mark },
-  // コマ番号は送り穴の列に重ねる。地色を敷いて穴を隠し、刻印に見せる
-  railNo: {
-    position: "absolute",
-    top: "50%",
-    marginTop: -11,
-    paddingVertical: 3,
-  },
-  frameNo: { ...Type.display(17) },
-  frameBody: { flex: 1, paddingVertical: 14, paddingRight: 4 },
-  frameTop: { flexDirection: "row", alignItems: "baseline", gap: 8 },
-  date: { ...Type.display(16) },
-  mark: { fontSize: 11, fontWeight: "700" },
+  frameBody: { flex: 1, paddingVertical: 13 },
+  meta: { fontSize: 12, letterSpacing: 0.2 },
   scoreLine: {
     flexDirection: "row",
     alignItems: "baseline",
     gap: 6,
-    marginTop: 2,
+    marginTop: 3,
   },
   code: { ...Type.display(16) },
   score: { ...Type.display(27) },
   dash: { ...Type.display(16) },
-  stadium: { fontSize: 12, marginTop: 3 },
-  delBtn: { paddingHorizontal: 10, justifyContent: "center" },
+  // 勝敗はスコアと同じ行、同じ列に置く。小さく添えると埋もれる。
+  mark: { fontSize: 17, fontWeight: "700", marginLeft: 6 },
+  delBtn: { paddingHorizontal: 16, paddingTop: 15, paddingBottom: 10 },
 });
