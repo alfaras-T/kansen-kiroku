@@ -240,15 +240,12 @@ export default function HistoryScreen() {
               },
             ]}
           >
-            <Ionicons
-              name="sparkles-outline"
-              size={20}
-              color={colors.accent}
-              style={styles.makeIcon}
-            />
-            <Text style={[styles.makeTitle, { color: colors.text }]}>
-              観戦まとめ
-            </Text>
+            <View style={styles.makeHead}>
+              <Ionicons name="sparkles-outline" size={17} color={colors.accent} />
+              <Text style={[styles.makeTitle, { color: colors.text }]}>
+                観戦まとめ
+              </Text>
+            </View>
             <Text style={[styles.makeNote, { color: colors.textSecondary }]}>
               一年の成績を一枚に
             </Text>
@@ -264,15 +261,12 @@ export default function HistoryScreen() {
               },
             ]}
           >
-            <Ionicons
-              name="grid-outline"
-              size={20}
-              color={colors.accent}
-              style={styles.makeIcon}
-            />
-            <Text style={[styles.makeTitle, { color: colors.text }]}>
-              フィルムシート
-            </Text>
+            <View style={styles.makeHead}>
+              <Ionicons name="grid-outline" size={17} color={colors.accent} />
+              <Text style={[styles.makeTitle, { color: colors.text }]}>
+                フィルムシート
+              </Text>
+            </View>
             <Text style={[styles.makeNote, { color: colors.textSecondary }]}>
               観戦した写真を格子に
             </Text>
@@ -568,9 +562,9 @@ const styles = StyleSheet.create({
     borderRadius: Radius.surface,
     padding: 13,
   },
-  makeIcon: { marginBottom: 10 },
+  makeHead: { flexDirection: "row", alignItems: "center", gap: 7 },
   makeTitle: { fontSize: 14, fontWeight: "700", letterSpacing: 0.2 },
-  makeNote: { fontSize: 11, marginTop: 3 },
+  makeNote: { fontSize: 11, marginTop: 5 },
   head: {
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.two,
