@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DateField } from "@/components/form/date-field";
+import { SettingsButton } from "@/components/settings-button";
 import { ToggleSwitch } from "@/components/form/toggle-switch";
 import { formatDateOverlay } from "@/components/form/date-field";
 import { LabeledField } from "@/components/form/labeled-field";
@@ -206,6 +207,7 @@ export default function CreateScreen() {
           <ThemedText type="title" style={styles.title}>
             Ball Films
           </ThemedText>
+          <SettingsButton />
         </View>
 
         <View style={styles.card}>
@@ -496,7 +498,13 @@ export default function CreateScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: { padding: Spacing.four, paddingBottom: Spacing.three },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: Spacing.four,
+    paddingBottom: Spacing.three,
+  },
   title: { fontSize: 26, lineHeight: 32 },
   card: { paddingHorizontal: Spacing.four, marginBottom: Spacing.three },
   sectionTitle: { marginBottom: 10, letterSpacing: 0.5 },

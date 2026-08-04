@@ -90,13 +90,11 @@ export default function AppTabs() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: "設定",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="options-outline" color={color} size={21} />
-          ),
-          tabBarLabel: ({ color, focused }) => (
-            <TabLabel label="設定" focused={focused} color={color} />
-          ),
+          // 設定はタブに置かない。記録・履歴は「日々使うもの」だが、設定は
+          // 一度決めたら滅多に触らない。同じ列に並べると、使用頻度の違う
+          // ものが同じ重さで並ぶことになる。各画面の右上の歯車から開く。
+          href: null,
+          tabBarStyle: { display: "none" },
         }}
       />
       <Tabs.Screen

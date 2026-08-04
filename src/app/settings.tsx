@@ -1,4 +1,5 @@
 import Constants from "expo-constants";
+import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -27,7 +28,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { WEB_BASE_URL } from "@/constants/contact";
 import { TEAMS } from "@/constants/teams";
-import { BottomTabInset, MaxContentWidth, Radius, Spacing, Palette } from "@/constants/theme";
+import { MaxContentWidth, Radius, Spacing, Palette } from "@/constants/theme";
 import { Rule, Space } from "@/constants/typography";
 import { useFavoriteTeam } from "@/contexts/favorite-team";
 import { exportBackup, importBackup } from "@/storage/backup";
@@ -78,6 +79,7 @@ function ActionRow({
 
 export default function SettingsScreen() {
   const colors = useTheme();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const { favoriteTeam, setFavoriteTeam, reload } = useFavoriteTeam();
   const [exporting, setExporting] = useState(false);
@@ -176,7 +178,21 @@ export default function SettingsScreen() {
 
   return (
     <ThemedView style={[styles.screen, { paddingTop: insets.top }]}>
+      {/*
+        設定はタブから外して各画面の歯車から開くようにしたため、
+        自力で戻る導線が要る。調整画面と同じ「＜ 戻る」に揃える。
+      */}
       <View style={styles.header}>
+        <Pressable
+          onPress={() => router.back()}
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel="戻る"
+          style={styles.backBtn}
+        >
+          <Ionicons name="chevron-back" size={22} color={colors.text} />
+          <Text style={[styles.backLabel, { color: colors.text }]}>戻る</Text>
+        </Pressable>
         <ThemedText type="title" style={styles.title}>
           設定
         </ThemedText>
@@ -347,7 +363,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.two,
     paddingBottom: Space.row,
+    gap: 10,
   },
+  backBtn: { flexDirection: "row", alignItems: "center", gap: 1 },
+  backLabel: { fontSize: 15.5 },
   title: { fontSize: 22, fontWeight: "700", letterSpacing: 0.3 },
   // 節は上罫線で仕切る。5つの節を余白だけで並べると、どこで話題が
   // 変わったのか分からず、設定項目が一続きの塊に見える。
@@ -360,7 +379,8 @@ const styles = StyleSheet.create({
     paddingBottom: Space.row,
     borderTopWidth: Rule.hairline,
   },
-  scrollContent: { paddingBottom: BottomTabInset + Spacing.six },
+  // タブバーを隠して開くので、その分の余白は要らない
+  scrollContent: { paddingBottom: Spacing.six },
   row: {
     flexDirection: "row",
     alignItems: "center",

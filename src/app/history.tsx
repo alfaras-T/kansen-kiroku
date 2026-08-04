@@ -13,6 +13,7 @@ import { Pressable, SectionList, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { formatDateJP } from "@/components/form/date-field";
+import { SettingsButton } from "@/components/settings-button";
 import { SelectModal } from "@/components/form/select-modal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -166,7 +167,12 @@ export default function HistoryScreen() {
         絞り込みは補助操作なので、箱に入れず文字のまま右に寄せる。
       */}
       <View style={styles.head}>
-        <Text style={[styles.headTitle, { color: colors.text }]}>観戦履歴</Text>
+        <View style={styles.headTop}>
+          <Text style={[styles.headTitle, { color: colors.text }]}>
+            観戦履歴
+          </Text>
+          <SettingsButton />
+        </View>
         <View style={styles.filters}>
           <SelectModal
             title="マイチームを選択"
@@ -568,6 +574,11 @@ const styles = StyleSheet.create({
   head: {
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.two,
+  },
+  headTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   headTitle: { fontSize: 22, fontWeight: "700", letterSpacing: 0.3 },
   filters: { flexDirection: "row", gap: 20, marginTop: 10 },
