@@ -407,7 +407,10 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
     ? {
         textShadowColor: dateColor,
         textShadowOffset: { width: 0, height: 0 },
-        textShadowRadius: sc(5),
+        // 7セグは字形が角張っているため、にじみを強くすると輪郭のまわりに
+        // 光が四角く溜まり、消灯セグメントのような箱に見えてしまう。
+        // 焼き込みの滲みが分かる最小限に留める。
+        textShadowRadius: sc(1.6),
       }
     : textShadow;
 
