@@ -196,7 +196,7 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
     // 7セグメント書体は同じ指定でも字面が大きく、太く広く見える。
     // 他の文字と並んだときに揃って見えるよう、日付だけ一回り落とす。
     inlineDate: {
-      fontSize: scOf('date', 7.6),
+      fontSize: scOf('date', 6.4),
       lineHeight: scOf('date', 12),
       letterSpacing: scOf('date', 0.6),
     },
@@ -521,22 +521,46 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
               {dateText}
             </CardText>
             {/*
-              実際のフィルムカメラは表示器がひとつなので、日付もスコアも
-              同じ7セグメントで焼き込まれる。書体を分ける理由がない。
-              球場名だけは日本語なので標準書体のまま(7セグは日本語を持たない)。
+              数字だけ7セグメントにし、球団コードは標準書体のまま並べる。
+              7セグは7本の線で字を作る仕組み上、アルファベットの大文字を
+              正しく描けない(BやDは数字と見分けが付かなくなる)。
+              実機の焼き込みも数字を表示するものなので、数字は7セグ、
+              文字は通常書体という組み合わせの方が無理がない。
             */}
-            <CardText
-              style={[
-                styles.inlineText,
-                telopStyles.inlineText,
-                dateFont && telopStyles.inlineDate,
-                dateFont,
-                dateShadow,
-                { color: dateColor },
-              ]}
-              numberOfLines={1}>
-              {visitorCode} {visitorScore}-{homeScore} {homeCode}
-            </CardText>
+            <View style={styles.inlineScore}>
+              <CardText
+                style={[
+                  styles.inlineText,
+                  telopStyles.inlineText,
+                  dateShadow,
+                  { color: dateColor },
+                ]}
+                numberOfLines={1}>
+                {visitorCode}
+              </CardText>
+              <CardText
+                style={[
+                  styles.inlineText,
+                  telopStyles.inlineText,
+                  dateFont && telopStyles.inlineDate,
+                  dateFont,
+                  dateShadow,
+                  { color: dateColor },
+                ]}
+                numberOfLines={1}>
+                {visitorScore}-{homeScore}
+              </CardText>
+              <CardText
+                style={[
+                  styles.inlineText,
+                  telopStyles.inlineText,
+                  dateShadow,
+                  { color: dateColor },
+                ]}
+                numberOfLines={1}>
+                {homeCode}
+              </CardText>
+            </View>
             {!!stadium && (
               <CardText
                 style={[
@@ -629,6 +653,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   inlineRow: { flexDirection: "row", alignItems: "baseline" },
+  inlineScore: { flexDirection: "row", alignItems: "baseline", gap: 4 },
   inlineText: { fontWeight: "600" },
   overlayBlock: {
     position: 'absolute',
