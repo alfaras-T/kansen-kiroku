@@ -408,19 +408,39 @@ export default function HistoryScreen() {
                   </View>
                 </View>
 
-                <Pressable
-                  onPress={() => handleDelete(entry)}
-                  hitSlop={12}
-                  accessibilityRole="button"
-                  accessibilityLabel="この観戦記録を削除"
-                  style={styles.delBtn}
-                >
-                  <Ionicons
-                    name="close"
-                    size={15}
-                    color={colors.textSecondary}
-                  />
-                </Pressable>
+                {/*
+                  行全体を押しても編集に入れるが、鉛筆も残す。
+                  「押せる」ことが見て分かる手掛かりが行内に無いと、
+                  編集できること自体に気づかれない。
+                */}
+                <View style={styles.rowActions}>
+                  <Pressable
+                    onPress={() => setEditingEntry(entry)}
+                    hitSlop={10}
+                    accessibilityRole="button"
+                    accessibilityLabel="この観戦記録を編集"
+                    style={styles.iconBtn}
+                  >
+                    <Ionicons
+                      name="pencil-outline"
+                      size={15}
+                      color={colors.textSecondary}
+                    />
+                  </Pressable>
+                  <Pressable
+                    onPress={() => handleDelete(entry)}
+                    hitSlop={10}
+                    accessibilityRole="button"
+                    accessibilityLabel="この観戦記録を削除"
+                    style={styles.iconBtn}
+                  >
+                    <Ionicons
+                      name="close"
+                      size={16}
+                      color={colors.textSecondary}
+                    />
+                  </Pressable>
+                </View>
               </Pressable>
             );
           }}
@@ -557,5 +577,12 @@ const styles = StyleSheet.create({
   dash: { ...Type.display(16) },
   // 勝敗はスコアと同じ行、同じ列に置く。小さく添えると埋もれる。
   mark: { fontSize: 17, fontWeight: "700", marginLeft: 6 },
-  delBtn: { paddingHorizontal: 16, paddingTop: 15, paddingBottom: 10 },
+  // 編集と削除。行の右端に控えめに並べる
+  rowActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingRight: 8,
+    paddingTop: 16,
+  },
+  iconBtn: { paddingHorizontal: 8, paddingVertical: 4 },
 });
