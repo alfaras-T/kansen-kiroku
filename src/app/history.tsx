@@ -19,7 +19,7 @@ import { SelectModal } from "@/components/form/select-modal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { TEAMS } from "@/constants/teams";
-import { BottomTabInset, MaxContentWidth, Radius, Spacing } from "@/constants/theme";
+import { MaxContentWidth, Radius, Spacing } from "@/constants/theme";
 import { Rule, Type } from "@/constants/typography";
 import {
   computeRecord,
@@ -382,10 +382,11 @@ export default function HistoryScreen() {
           // (iOSのラバーバンド / Androidの端の光)
           bounces={false}
           overScrollMode="never"
-          contentContainerStyle={[
-            styles.list,
-            { paddingBottom: BottomTabInset + Spacing.six },
-          ]}
+          // タブバーは通常の並びなので、画面はもともとその上で終わっている。
+          // タブバー分の余白を足すと、最後の一件より下に空白が生まれ、
+          // そこまでスクロールできてしまう(bounces={false}は行き過ぎを
+          // 止めるだけで、中身として存在する空白には効かない)。
+          contentContainerStyle={[styles.list, { paddingBottom: Spacing.four }]}
           stickySectionHeadersEnabled
           renderSectionHeader={({ section }) => (
             <View

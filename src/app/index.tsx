@@ -24,7 +24,7 @@ import { ThemedView } from "@/components/themed-view";
 import { resolveOverlayAspect } from "@/constants/overlayStyles";
 import { OTHER_STADIUM, STADIUMS } from "@/constants/stadiums";
 import { OTHER_TEAM, TEAMS } from "@/constants/teams";
-import { BottomTabInset, MaxContentWidth, Spacing , Radius } from "@/constants/theme";
+import { MaxContentWidth, Spacing, Radius } from "@/constants/theme";
 import { useCreateForm } from "@/contexts/create-form";
 import { useTheme } from "@/hooks/use-theme";
 import {
@@ -489,13 +489,28 @@ export default function CreateScreen() {
           </LabeledField>
         </View>
 
+        {/*
+          写真なしの場合、この画面でやることはこの一押しだけになる。
+          細い枠に沈んだ文字では「押せるもの」に見えず、入力欄の続きに
+          見えていた。面で塗って、この画面の終着点だと分かる強さにする。
+        */}
         {recordOnly && (
           <Pressable
             onPress={handleSaveRecordWithChecks}
-            style={[styles.recordBtn, { borderColor: colors.border }]}
+            accessibilityRole="button"
+            accessibilityLabel="この観戦記録を保存する"
+            style={({ pressed }) => [
+              styles.recordBtn,
+              { backgroundColor: colors.accent, opacity: pressed ? 0.75 : 1 },
+            ]}
           >
-            <Text style={{ color: colors.textSecondary, fontSize: 13.5 }}>
-              {savedFlash ? "保存しました ✓" : "この記録を保存する"}
+            <Ionicons
+              name={savedFlash ? "checkmark-circle" : "albums-outline"}
+              size={19}
+              color={colors.onAccent}
+            />
+            <Text style={[styles.recordBtnText, { color: colors.onAccent }]}>
+              {savedFlash ? "保存しました" : "この記録を保存する"}
             </Text>
           </Pressable>
         )}
@@ -561,9 +576,11 @@ const styles = StyleSheet.create({
   },
   // 左右の余白は各節(header / card / databack)が自分で持つ。
   // ここでも padding を掛けると二重になり、内容が中央に寄って見える。
+  // タブバーは絶対配置ではないので、その分の余白を足す必要はない。
+  // 足すと画面の終わりに使われない空白が残り、そこまでスクロールできる。
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: BottomTabInset + Spacing.four,
+    paddingBottom: Spacing.four,
   },
   // alignItems は flex-end。得点欄の上に「得点」ラベルが乗るため、
   // 中央揃えだと入力欄だけが下にずれてチーム選択欄と揃わなくなる。
@@ -589,12 +606,15 @@ const styles = StyleSheet.create({
   // 入力欄の直後に隙間なく続いていて、最後の入力欄の一部に見えていた。
   // 左右の余白も持っていなかったため、画面の端から端まで伸びていた。
   recordBtn: {
-    borderWidth: 1,
-    borderRadius: Radius.surface,
-    paddingVertical: 14,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    borderRadius: Radius.surface,
+    paddingVertical: 15,
     marginTop: Spacing.four,
     marginHorizontal: Spacing.four,
     marginBottom: Spacing.three,
   },
+  recordBtnText: { fontSize: 15.5, fontWeight: "700", letterSpacing: 0.3 },
 });

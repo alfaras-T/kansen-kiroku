@@ -6,8 +6,6 @@
 
 import "@/global.css";
 
-import { Platform } from "react-native";
-
 // Ball Films: 夜間球場をイメージした固定ダークテーマ(ライト/ダーク自動切替はしない)
 // お気に入りチームが選ばれている場合は、これをベースに constants/teamThemes.ts の
 // 配色で上書きしたパレットが使われる。
@@ -61,5 +59,4 @@ export const Spacing = {
   six: 64,
 } as const;
 
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;
