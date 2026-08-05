@@ -14,7 +14,7 @@ import { Swipeable } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { formatDateJP } from "@/components/form/date-field";
-import { SettingsButton } from "@/components/settings-button";
+import { AppMenu } from "@/components/app-menu";
 import { SelectModal } from "@/components/form/select-modal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -172,7 +172,7 @@ export default function HistoryScreen() {
           <Text style={[styles.headTitle, { color: colors.text }]}>
             観戦履歴
           </Text>
-          <SettingsButton />
+          <AppMenu />
         </View>
         {/* 年は絞り込みなので、見出しの並びに置く */}
         <View style={styles.filters}>

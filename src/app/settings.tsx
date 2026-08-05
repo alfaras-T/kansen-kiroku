@@ -1,10 +1,9 @@
 import Constants from "expo-constants";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,19 +15,15 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SelectModal } from "@/components/form/select-modal";
 import { ToggleSwitch } from "@/components/form/toggle-switch";
 import { InfoNote, InfoSheet, InfoStep } from "@/components/info-sheet";
-import { ContactSheet } from "@/components/contact-sheet";
 import {
   deleteAllThumbnails,
   loadThumbnailEnabled,
   saveThumbnailEnabled,
 } from "@/storage/thumbnails";
-import PrivacyScreen from "./privacy";
-import SupportScreen from "./support";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { WEB_BASE_URL } from "@/constants/contact";
 import { TEAMS } from "@/constants/teams";
-import { MaxContentWidth, Radius, Spacing, Palette } from "@/constants/theme";
+import { MaxContentWidth, Spacing, Palette } from "@/constants/theme";
 import { Rule, Space } from "@/constants/typography";
 import { useFavoriteTeam } from "@/contexts/favorite-team";
 import { exportBackup, importBackup } from "@/storage/backup";
@@ -82,30 +77,7 @@ export default function SettingsScreen() {
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
 
-  const [legalPage, setLegalPage] = useState<"privacy" | "support" | null>(null);
-  // 閉じるアニメーションの最中も中身を描画し続けるために直前の値を覚えておく。
-  // legalPage を null にした瞬間に children も消すと、スライドアウトしている
-  // 間だけ空のモーダル（既定では白）が見えてしまうため。
-  const lastLegalPage = useRef<"privacy" | "support">("privacy");
-  if (legalPage) lastLegalPage.current = legalPage;
 
-  // Web: Linking.openURLは既定でwindow.open(url, '_blank')を呼ぶため、
-  // 中身が届くまで真っ白な新規タブが必ず一瞬表示されてしまう。
-  // 同一タブでの通常遷移(window.location.href)にすることでこれを避ける。
-  //
-  // ネイティブ: 以前は同じURLを外部ブラウザで開いていたが、アプリから
-  // Safariに飛ばされる体験になってしまうため、アプリ内のモーダルで表示する。
-  // ここで router.push("/privacy") を使わないのは、この app が _layout.tsx の
-  // RootGate による pathname 分岐で画面を出しており、Stack/Slot を持たないため。
-  // クライアント側の遷移は当てにできないので、ルーティングを介さず
-  // コンポーネントを直接モーダルに描画する。
-  function openLegalPage(path: "/privacy" | "/support") {
-    if (Platform.OS === "web") {
-      window.location.href = `${WEB_BASE_URL}${path}`;
-      return;
-    }
-    setLegalPage(path === "/privacy" ? "privacy" : "support");
-  }
   const [backupHelpOpen, setBackupHelpOpen] = useState(false);
 
   // ベタ焼き用のサムネイル保存。既定は有効。
@@ -126,7 +98,6 @@ export default function SettingsScreen() {
     setThumbnailEnabled(next);
     await saveThumbnailEnabled(next);
   }
-  const [contactOpen, setContactOpen] = useState(false);
 
   const appVersion = Constants.expoConfig?.version ?? "1.0.0";
 
@@ -290,19 +261,6 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
-          <ActionRow
-            label="ご要望・不具合を送る"
-            onPress={() => setContactOpen(true)}
-            colors={colors}
-          />
-          <Text
-            style={[styles.note, { color: colors.textSecondary }]}
-          >
-            端末のメールアプリが開きます。いただいた内容は改善の参考にさせていただきます。
-          </Text>
-        </View>
-
-        <View style={styles.section}>
           <View style={[styles.row, { borderBottomColor: colors.border }]}>
             <Text style={[styles.rowLabel, { color: colors.text }]}>
               バージョン
@@ -311,16 +269,6 @@ export default function SettingsScreen() {
               {appVersion}
             </Text>
           </View>
-          <ActionRow
-            label="プライバシーポリシー"
-            onPress={() => openLegalPage("/privacy")}
-            colors={colors}
-          />
-          <ActionRow
-            label="サポート"
-            onPress={() => openLegalPage("/support")}
-            colors={colors}
-          />
         </View>
       </ScrollView>
 
@@ -350,23 +298,7 @@ export default function SettingsScreen() {
         </InfoNote>
       </InfoSheet>
 
-      <ContactSheet visible={contactOpen} onClose={() => setContactOpen(false)} />
 
-      {/* プライバシーポリシー / サポートをアプリ内で表示する（ネイティブのみ） */}
-      <Modal
-        visible={legalPage !== null}
-        animationType="slide"
-        onRequestClose={() => setLegalPage(null)}
-      >
-        {/* 背景色を明示しないと、閉じる途中でモーダル既定の白が透けて見える */}
-        <View style={{ flex: 1, backgroundColor: colors.background }}>
-          {lastLegalPage.current === "privacy" ? (
-            <PrivacyScreen onClose={() => setLegalPage(null)} />
-          ) : (
-            <SupportScreen onClose={() => setLegalPage(null)} />
-          )}
-        </View>
-      </Modal>
     </ThemedView>
   );
 }

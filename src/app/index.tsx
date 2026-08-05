@@ -12,7 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DateField } from "@/components/form/date-field";
-import { SettingsButton } from "@/components/settings-button";
+import { AppMenu } from "@/components/app-menu";
 import { ToggleSwitch } from "@/components/form/toggle-switch";
 import { formatDateOverlay } from "@/components/form/date-field";
 import { LabeledField } from "@/components/form/labeled-field";
@@ -208,7 +208,7 @@ export default function CreateScreen() {
           <ThemedText type="title" style={styles.title}>
             Ball Films
           </ThemedText>
-          <SettingsButton />
+          <AppMenu />
         </View>
 
         <View style={styles.card}>
