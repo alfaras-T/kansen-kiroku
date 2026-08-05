@@ -5,6 +5,7 @@ import { DarkTheme, ThemeProvider, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import AppTabs from '@/components/app-tabs';
@@ -48,14 +49,18 @@ export default function TabLayout() {
   if (!fontsLoaded && !fontError && !fontWaitElapsed && Platform.OS !== 'web') return null;
 
   return (
-    <ThemeProvider value={DarkTheme}>
-      <AnimatedSplashOverlay skipAnimation={isLegalPage} />
-      <FavoriteTeamProvider>
-        <CreateFormProvider>
-          <RootGate />
-        </CreateFormProvider>
-      </FavoriteTeamProvider>
-    </ThemeProvider>
+    // 履歴のスワイプ操作(Swipeable)には GestureHandlerRootView が要る。
+    // これが無いとジェスチャが一切拾われず、無反応になる。
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider value={DarkTheme}>
+        <AnimatedSplashOverlay skipAnimation={isLegalPage} />
+        <FavoriteTeamProvider>
+          <CreateFormProvider>
+            <RootGate />
+          </CreateFormProvider>
+        </FavoriteTeamProvider>
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }
 

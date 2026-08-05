@@ -10,6 +10,7 @@ import {
   saveBackupNudgeAt,
 } from "@/storage/preferences";
 import { Pressable, SectionList, StyleSheet, Text, View } from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { formatDateJP } from "@/components/form/date-field";
@@ -385,6 +386,47 @@ export default function HistoryScreen() {
             const [, month, day] = entry.date.split("-");
 
             return (
+              /*
+                iOSの標準的な一覧に合わせ、左スワイプで編集・削除を出す。
+                行の中にアイコンを常設すると、スコアの右隣に押せるものが
+                並んでスコアの読みを邪魔する。操作は隠して、必要なときだけ
+                引き出す方がこの一覧には合う。
+              */
+              <Swipeable
+                friction={1.6}
+                rightThreshold={36}
+                overshootRight={false}
+                renderRightActions={() => (
+                  <View style={styles.actions}>
+                    <Pressable
+                      onPress={() => setEditingEntry(entry)}
+                      style={[
+                        styles.action,
+                        { backgroundColor: colors.backgroundSelected },
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel="この観戦記録を編集"
+                    >
+                      <Text style={[styles.actionText, { color: colors.text }]}>
+                        編集
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => handleDelete(entry)}
+                      style={[
+                        styles.action,
+                        { backgroundColor: colors.danger },
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel="この観戦記録を削除"
+                    >
+                      <Text style={[styles.actionText, { color: "#fff" }]}>
+                        削除
+                      </Text>
+                    </Pressable>
+                  </View>
+                )}
+              >
               <Pressable
                 onPress={() => setEditingEntry(entry)}
                 accessibilityRole="button"
@@ -398,7 +440,13 @@ export default function HistoryScreen() {
                         ? "引き分け"
                         : undefined
                 }
-                style={[styles.frame, { borderBottomColor: colors.border }]}
+                style={[
+                  styles.frame,
+                  {
+                    borderBottomColor: colors.border,
+                    backgroundColor: colors.background,
+                  },
+                ]}
               >
                 <View style={styles.frameBody}>
                   <Text
@@ -448,41 +496,8 @@ export default function HistoryScreen() {
                     )}
                   </View>
                 </View>
-
-                {/*
-                  行全体を押しても編集に入れるが、鉛筆も残す。
-                  「押せる」ことが見て分かる手掛かりが行内に無いと、
-                  編集できること自体に気づかれない。
-                */}
-                <View style={styles.rowActions}>
-                  <Pressable
-                    onPress={() => setEditingEntry(entry)}
-                    hitSlop={10}
-                    accessibilityRole="button"
-                    accessibilityLabel="この観戦記録を編集"
-                    style={styles.iconBtn}
-                  >
-                    <Ionicons
-                      name="pencil-outline"
-                      size={15}
-                      color={colors.textSecondary}
-                    />
-                  </Pressable>
-                  <Pressable
-                    onPress={() => handleDelete(entry)}
-                    hitSlop={10}
-                    accessibilityRole="button"
-                    accessibilityLabel="この観戦記録を削除"
-                    style={styles.iconBtn}
-                  >
-                    <Ionicons
-                      name="close"
-                      size={16}
-                      color={colors.textSecondary}
-                    />
-                  </Pressable>
-                </View>
               </Pressable>
+              </Swipeable>
             );
           }}
         />
@@ -503,6 +518,7 @@ export default function HistoryScreen() {
       />
       <EditEntrySheet
         entry={editingEntry}
+        onDelete={handleDelete}
         onClose={() => setEditingEntry(null)}
         onSave={async (updated) => {
           const next = await updateHistoryEntry(updated);
@@ -607,7 +623,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: Rule.hairline,
     paddingLeft: Spacing.four,
   },
-  frameBody: { flex: 1, paddingVertical: 13 },
+  frameBody: { flex: 1, paddingVertical: 13, paddingRight: Spacing.four },
+  // スワイプで現れる操作。高さは行に追随させる
+  actions: { flexDirection: "row" },
+  action: { width: 76, alignItems: "center", justifyContent: "center" },
+  actionText: { fontSize: 14, fontWeight: "700" },
   meta: { fontSize: 12, letterSpacing: 0.2 },
   scoreLine: {
     flexDirection: "row",

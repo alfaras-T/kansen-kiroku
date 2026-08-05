@@ -41,11 +41,14 @@ export function EditEntrySheet({
   entry,
   onClose,
   onSave,
+  onDelete,
 }: {
   /** 編集対象。nullなら非表示(Modal自体のvisibleもfalseにする) */
   entry: HistoryEntry | null;
   onClose: () => void;
   onSave: (entry: HistoryEntry) => Promise<void> | void;
+  /** 削除。確認ダイアログは呼び出し側が持つ */
+  onDelete: (entry: HistoryEntry) => Promise<void> | void;
 }) {
   const colors = useTheme();
   const router = useRouter();
@@ -67,6 +70,12 @@ export function EditEntrySheet({
       alive = false;
     };
   }, [entry]);
+
+  async function handleDelete() {
+    if (!entry) return;
+    onClose();
+    await onDelete(entry);
+  }
 
   async function handleRebuild() {
     if (!entry) return;
@@ -376,6 +385,20 @@ export function EditEntrySheet({
               </Text>
             </Pressable>
           )}
+
+          {/*
+            削除は一番下に置く。取り消せない操作なので、保存や作り直しと
+            同じ強さで並べず、離して最後に置く。枠も塗りも持たせない。
+          */}
+          <Pressable
+            onPress={handleDelete}
+            style={styles.deleteBtn}
+            accessibilityRole="button"
+          >
+            <Text style={[styles.deleteBtnText, { color: colors.danger }]}>
+              この記録を削除する
+            </Text>
+          </Pressable>
         </ScrollView>
       </SafeAreaView>
     </Modal>
@@ -440,4 +463,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   rebuildBtnText: { fontSize: 14.5, fontWeight: "600" },
+  deleteBtn: { alignItems: "center", paddingVertical: 16, marginTop: 6 },
+  deleteBtnText: { fontSize: 14.5, fontWeight: "600" },
 });
