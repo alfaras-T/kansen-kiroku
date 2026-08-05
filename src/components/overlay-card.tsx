@@ -232,8 +232,12 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
   // (アマチュアの試合などを記録した場合)。
   const myTeamIsPlaying =
     !!myTeam && (visitorCode === myTeam || homeCode === myTeam);
+  // useTeamColor(球団カラーの入切)はフィルム専用の切り替え。
+  // 調整画面ではフィルムを選んだときだけ操作できるため、他のプリセットに
+  // 適用すると「フィルムでオフにした状態」がクラシックにも残ってしまう。
+  const teamColorAllowed = styleKey === 'film' ? useTeamColor : true;
   const telopTeamColor =
-    !useTeamColor || styleKey === 'minimal' || !myTeamIsPlaying
+    !teamColorAllowed || styleKey === 'minimal' || !myTeamIsPlaying
       ? null
       : resolveTelopTeamColor(myTeam);
   // 「元の写真のまま」の場合は写真自体の縦横比を使う。
