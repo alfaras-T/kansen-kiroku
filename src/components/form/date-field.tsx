@@ -130,6 +130,10 @@ export function DateField({
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
   while (cells.length % 7 !== 0) cells.push(null);
+  // 7個ずつの「週」に切ってから行として描く。折り返しに任せると、
+  // 端数%の丸め次第で7個目(土曜)が次の行へこぼれる。
+  const weeks: (number | null)[][] = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
 
   return (
     <>
@@ -290,7 +294,9 @@ export function DateField({
             </View>
 
             <View style={styles.grid}>
-              {cells.map((day, idx) => {
+              {weeks.map((week, wIdx) => (
+                <View key={wIdx} style={styles.weekRow}>
+              {week.map((day, idx) => {
                 if (day === null)
                   return <View key={idx} style={styles.dayCell} />;
                 const cellDate = new Date(viewYear, viewMonth, day);
@@ -342,6 +348,8 @@ export function DateField({
                   </Pressable>
                 );
               })}
+                </View>
+              ))}
             </View>
 
             <Pressable
@@ -428,9 +436,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     paddingVertical: 6,
   },
-  grid: { flexDirection: "row", flexWrap: "wrap" },
+  grid: { flexDirection: "column" },
+  weekRow: { flexDirection: "row" },
+  // 曜日見出し(weekdayCell)と同じ flex:1。%指定と混ぜると列がずれる。
   dayCell: {
-    width: `${100 / 7}%`,
+    flex: 1,
     aspectRatio: 1,
     alignItems: "center",
     justifyContent: "center",

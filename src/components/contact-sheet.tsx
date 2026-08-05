@@ -10,7 +10,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { CONTACT_EMAIL } from "@/constants/contact";
 import { useTheme } from "@/hooks/use-theme";
@@ -32,6 +32,9 @@ const CATEGORIES = [
  */
 export function ContactSheet({ onClose }: { onClose: () => void }) {
   const colors = useTheme();
+  // Modal内では SafeAreaView(ネイティブ計測)が効かず0になる。
+  // context経由の useSafeAreaInsets は正しい値が届くのでこちらを使う。
+  const insets = useSafeAreaInsets();
   const [category, setCategory] = useState(CATEGORIES[0].value);
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
@@ -71,9 +74,15 @@ export function ContactSheet({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <SafeAreaView
-      edges={["top", "bottom"]}
-      style={[styles.screen, { backgroundColor: colors.background }]}
+    <View
+      style={[
+        styles.screen,
+        {
+          backgroundColor: colors.background,
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
+        },
+      ]}
     >
       <View style={styles.pageHeader}>
         <Pressable
@@ -179,7 +188,7 @@ export function ContactSheet({ onClose }: { onClose: () => void }) {
             </Text>
           </Pressable>
         </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

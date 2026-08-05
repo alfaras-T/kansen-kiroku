@@ -378,6 +378,10 @@ export default function HistoryScreen() {
             ) : null
           }
           style={styles.flatList}
+          // 中身の先より上へは引けないようにする
+          // (iOSのラバーバンド / Androidの端の光)
+          bounces={false}
+          overScrollMode="never"
           contentContainerStyle={[
             styles.list,
             { paddingBottom: BottomTabInset + Spacing.six },
@@ -494,21 +498,30 @@ export default function HistoryScreen() {
                     主役であるスコアと同じ大きさの列に置く。
                   */}
                   <View style={styles.scoreLine}>
-                    <Text style={[styles.code, { color: colors.textSecondary }]}>
-                      {entry.visitorCode}
-                    </Text>
-                    <Text style={[styles.score, { color: colors.text }]}>
-                      {entry.visitorScore}
-                    </Text>
+                    {/*
+                      左側を決まった幅の右詰めにして、行が変わっても「-」が
+                      同じ位置に来るようにする。チーム名の字数(DB、自由入力)で
+                      軸がずれると、縦に並べたときに数字の列が波打って見える。
+                    */}
+                    <View style={styles.scoreSideLeft}>
+                      <Text style={[styles.code, { color: colors.textSecondary }]}>
+                        {entry.visitorCode}
+                      </Text>
+                      <Text style={[styles.score, { color: colors.text }]}>
+                        {entry.visitorScore}
+                      </Text>
+                    </View>
                     <Text style={[styles.dash, { color: colors.textSecondary }]}>
                       –
                     </Text>
-                    <Text style={[styles.score, { color: colors.text }]}>
-                      {entry.homeScore}
-                    </Text>
-                    <Text style={[styles.code, { color: colors.textSecondary }]}>
-                      {entry.homeCode}
-                    </Text>
+                    <View style={styles.scoreSideRight}>
+                      <Text style={[styles.score, { color: colors.text }]}>
+                        {entry.homeScore}
+                      </Text>
+                      <Text style={[styles.code, { color: colors.textSecondary }]}>
+                        {entry.homeCode}
+                      </Text>
+                    </View>
                     {!!mark && (
                       <Text
                         style={[
@@ -596,7 +609,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   nudgeBtnText: { fontSize: 13, fontWeight: "700" },
-  list: { paddingHorizontal: Spacing.four, gap: 8 },
+  // gap は置かない。行と行の間に器が隙間を差し込むと、スワイプで操作を
+  // 出したときにその隙間だけ地の色が残り、ボタンの上に黒い帯が乗って見える。
+  // 隣との区切りは各行の下罫線(frameOuter)だけが持つ。
+  list: { paddingHorizontal: Spacing.four, paddingTop: 12 },
   flatList: { flex: 1 },
   sectionHeader: {
     flexDirection: "row",
@@ -657,9 +673,17 @@ const styles = StyleSheet.create({
     paddingLeft: Spacing.four,
   },
   frameBody: { flex: 1, paddingVertical: 12, paddingRight: Spacing.four },
-  // スワイプで現れる操作。高さは行に追随させる
-  actions: { flexDirection: "row" },
-  action: { width: 76, alignItems: "center", justifyContent: "center" },
+  // スワイプで現れる操作。
+  // gesture-handler 側の受け皿は絶対配置で行全体を覆っているので、
+  // height:'100%' と alignSelf:'stretch' を明示して、行の上端から下端まで
+  // 確実に埋める。親任せにすると上に地の色が残り、ボタンの上だけ帯が空く。
+  actions: { flexDirection: "row", height: "100%" },
+  action: {
+    width: 76,
+    alignSelf: "stretch",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   actionText: { fontSize: 14, fontWeight: "700" },
   showAll: { alignItems: "center", paddingVertical: 16 },
   showAllText: { fontSize: 14, fontWeight: "700" },
@@ -669,6 +693,19 @@ const styles = StyleSheet.create({
     alignItems: "baseline",
     gap: 6,
     marginTop: 3,
+  },
+  scoreSideLeft: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "flex-end",
+    gap: 6,
+    minWidth: 62,
+  },
+  scoreSideRight: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 6,
+    flexShrink: 1,
   },
   code: { ...Type.display(16) },
   score: { ...Type.display(27) },

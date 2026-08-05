@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ContactSheet } from "@/components/contact-sheet";
 import { Radius } from "@/constants/theme";
@@ -28,6 +29,9 @@ import SupportScreen from "@/app/support";
 export function AppMenu() {
   const router = useRouter();
   const colors = useTheme();
+  // Modalは画面全体(ノッチ・ステータスバーを含む)を覆う。安全領域を足さないと
+  // メニューがステータスバーの下に潜る。insetsはModalの外側で解決している。
+  const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [legalPage, setLegalPage] = useState<"privacy" | "support" | null>(
@@ -108,6 +112,7 @@ export function AppMenu() {
           style={[
             styles.sheet,
             {
+              top: insets.top + 8,
               backgroundColor: colors.backgroundElement,
               borderColor: colors.border,
             },
@@ -191,7 +196,6 @@ const styles = StyleSheet.create({
   // 押した右上から下りてくる位置に置く
   sheet: {
     position: "absolute",
-    top: 8,
     right: 12,
     left: 60,
     borderWidth: 1,

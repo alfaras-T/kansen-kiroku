@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { ReactNode } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useTheme } from "@/hooks/use-theme";
 import { Radius } from "@/constants/theme";
@@ -23,6 +23,8 @@ export function InfoSheet({
   children: ReactNode;
 }) {
   const colors = useTheme();
+  // Modal内では SafeAreaView が0になるため context 経由で取る
+  const insets = useSafeAreaInsets();
 
   return (
     <Modal
@@ -32,9 +34,14 @@ export function InfoSheet({
       onRequestClose={onClose}
     >
       <Pressable style={styles.backdrop} onPress={onClose} />
-      <SafeAreaView
-        edges={["bottom"]}
-        style={[styles.sheet, { backgroundColor: colors.backgroundElement }]}
+      <View
+        style={[
+          styles.sheet,
+          {
+            backgroundColor: colors.backgroundElement,
+            paddingBottom: insets.bottom,
+          },
+        ]}
       >
         <View style={[styles.sheetHeader, { borderBottomColor: colors.border }]}>
           <Text style={[styles.sheetTitle, { color: colors.text }]}>{title}</Text>
@@ -53,7 +60,7 @@ export function InfoSheet({
         >
           {children}
         </ScrollView>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }

@@ -191,6 +191,20 @@ export default function CreateScreen() {
   return (
     <ThemedView style={[styles.screen, { paddingTop: insets.top }]}>
       {/*
+        ヘッダーはスクロールの外に出して固定する。中に入れていると、
+        入力欄を追って画面を送ったときにアプリ名もメニューも流れて消え、
+        メニューに戻るのにいちいち一番上まで戻る必要があった。
+      */}
+      <View style={styles.headerBar}>
+        <View style={styles.header}>
+          <ThemedText type="title" style={styles.title}>
+            Ball Films
+          </ThemedText>
+          <AppMenu />
+        </View>
+      </View>
+
+      {/*
         内容が画面に収まっている間はスクロールしているように見せない。
         alwaysBounceVertical={false} でiOSのラバーバンドを止め、
         overScrollMode="never" でAndroidの端の光を止める。
@@ -204,13 +218,6 @@ export default function CreateScreen() {
         overScrollMode="never"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <ThemedText type="title" style={styles.title}>
-            Ball Films
-          </ThemedText>
-          <AppMenu />
-        </View>
-
         <View style={styles.card}>
           <View style={styles.switchRow}>
             <ThemedText type="default">観戦記録のみ保存（写真なし）</ThemedText>
@@ -500,7 +507,12 @@ export default function CreateScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  // 固定ヘッダーの帯。中身の最大幅はスクロール部と揃える。
+  headerBar: { width: "100%" },
   header: {
+    maxWidth: MaxContentWidth,
+    width: "100%",
+    alignSelf: "center",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -574,11 +586,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     fontSize: 14,
   },
+  // 入力欄の直後に隙間なく続いていて、最後の入力欄の一部に見えていた。
+  // 左右の余白も持っていなかったため、画面の端から端まで伸びていた。
   recordBtn: {
     borderWidth: 1,
     borderRadius: Radius.surface,
-    paddingVertical: 12,
+    paddingVertical: 14,
     alignItems: "center",
+    marginTop: Spacing.four,
+    marginHorizontal: Spacing.four,
     marginBottom: Spacing.three,
   },
 });

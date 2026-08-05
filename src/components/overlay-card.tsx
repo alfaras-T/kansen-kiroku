@@ -3,6 +3,7 @@ import { forwardRef, useRef, useState } from 'react';
 import {
   GestureResponderEvent,
   Image,
+  LayoutChangeEvent,
   PanResponder,
   PanResponderGestureState,
   StyleSheet,
@@ -200,6 +201,10 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
       lineHeight: scOf('date', 12),
       letterSpacing: scOf('date', 0.6),
     },
+    // 年・月・日の間。7セグの空白セルだけでは詰まって見えるので、
+    // 字間を広げて三つの数の切れ目を作る(字間は空白の前後にも入るため、
+    // 数字同士より年月日の切れ目の方が大きく開く)。
+    inlineDateStamp: { letterSpacing: scOf('date', 1.4) },
     memo: {
       fontSize: scOf('memo', 10.5),
       lineHeight: scOf('memo', 14),
@@ -246,6 +251,23 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
   const aspectStyle = { aspectRatio: frameAspect };
 
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+
+  // スコア行は「中央寄せ」では釣り合わない。チームコードの字数が左右で
+  // 違うと(例: DB 対 G、自由入力のチーム名)、行全体の中心は揃っても
+  // 「-」は中心から外れる。見ている側は数字の間の「-」を軸として見るので、
+  // そこが振れると傾いて見える。
+  //
+  // 左右の実測幅の差の半分だけ行をずらして、「-」自体を中心に置き直す。
+  // paddingではなくtransformで動かすのは、幅を変えると計測値が変わって
+  // 計測→再レイアウトの往復に入るため。transformはレイアウトに影響しない。
+  const [scoreSides, setScoreSides] = useState({ left: 0, right: 0 });
+  const measureScoreSide = (side: 'left' | 'right') => (e: LayoutChangeEvent) => {
+    const w = e.nativeEvent.layout.width;
+    setScoreSides((prev) =>
+      Math.abs(prev[side] - w) < 0.5 ? prev : { ...prev, [side]: w },
+    );
+  };
+  const scoreShift = (scoreSides.right - scoreSides.left) / 2;
 
   // 写真自体の縦横比とフレームの縦横比が異なる場合、フレームいっぱいに
   // 覆うには写真をどれだけ拡大する必要があるかを計算する（CSSのbackground-size: coverと同じ考え方）。
@@ -517,6 +539,7 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
                 styles.inlineText,
                 telopStyles.inlineText,
                 dateFont && telopStyles.inlineDate,
+                dateFont && telopStyles.inlineDateStamp,
                 dateFont,
                 dateShadow,
                 { color: dateColor },
@@ -592,26 +615,35 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
               {dateText}
             </CardText>
 
-            <View style={[styles.scoreRow, telopStyles.scoreRow]}>
-              <CardText
-                style={[styles.code, telopStyles.code, textShadow, { color: palette.body }]}
-                numberOfLines={1}>
-                {visitorCode}
-              </CardText>
-              <CardText style={[styles.score, telopStyles.score, textShadow, { color: vColor }]}>
-                {visitorScore}
-              </CardText>
+            <View
+              style={[
+                styles.scoreRow,
+                telopStyles.scoreRow,
+                { transform: [{ translateX: scoreShift }] },
+              ]}>
+              <View style={styles.scoreSide} onLayout={measureScoreSide('left')}>
+                <CardText
+                  style={[styles.code, telopStyles.code, textShadow, { color: palette.body }]}
+                  numberOfLines={1}>
+                  {visitorCode}
+                </CardText>
+                <CardText style={[styles.score, telopStyles.score, textShadow, { color: vColor }]}>
+                  {visitorScore}
+                </CardText>
+              </View>
               <CardText style={[styles.scoreDash, telopStyles.scoreDash, textShadow, { color: palette.dim }]}>
                 –
               </CardText>
-              <CardText style={[styles.score, telopStyles.score, textShadow, { color: hColor }]}>
-                {homeScore}
-              </CardText>
-              <CardText
-                style={[styles.code, telopStyles.code, textShadow, { color: palette.body }]}
-                numberOfLines={1}>
-                {homeCode}
-              </CardText>
+              <View style={styles.scoreSide} onLayout={measureScoreSide('right')}>
+                <CardText style={[styles.score, telopStyles.score, textShadow, { color: hColor }]}>
+                  {homeScore}
+                </CardText>
+                <CardText
+                  style={[styles.code, telopStyles.code, textShadow, { color: palette.body }]}
+                  numberOfLines={1}>
+                  {homeCode}
+                </CardText>
+              </View>
             </View>
 
             <View
@@ -630,7 +662,13 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
           </>
         )}
 
-        {!!memo && (
+        {/*
+          フィルムは焼き込みの再現なので、日付・スコア・球場しか並ばない。
+          自由メモはこのアプリ側の情報で、実機の表示器には存在しない。
+          一列の並びに日本語の文が混ざると、そこだけ字面が変わって
+          「焼き込み」ではなく「後から乗せた字幕」に見える。
+        */}
+        {!palette.inline && !!memo && (
           <CardText
             style={[styles.memo, telopStyles.memo, textShadow, { color: palette.caption }]}
             numberOfLines={1}>
@@ -669,6 +707,9 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     marginTop: 3,
   },
+  // 「-」の左右をひとまとまりにして幅を測る。中の文字は今まで通り
+  // ベースラインで揃える。
+  scoreSide: { flexDirection: 'row', alignItems: 'baseline', flexShrink: 1 },
   code: {
     fontFamily: 'BebasNeue_400Regular',
     fontSize: 21,
