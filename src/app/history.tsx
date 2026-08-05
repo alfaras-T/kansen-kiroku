@@ -640,12 +640,4 @@ const styles = StyleSheet.create({
   dash: { ...Type.display(16) },
   // 勝敗はスコアと同じ行、同じ列に置く。小さく添えると埋もれる。
   mark: { fontSize: 17, fontWeight: "700", marginLeft: 6 },
-  // 編集と削除。行の右端に控えめに並べる
-  rowActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingRight: 8,
-    paddingTop: 16,
-  },
-  iconBtn: { paddingHorizontal: 8, paddingVertical: 4 },
 });
