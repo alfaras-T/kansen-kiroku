@@ -136,13 +136,14 @@ export default function HistoryScreen() {
     ? selectedYear
     : "";
 
-  const filteredEntries = useMemo(
-    () =>
-      effectiveYear
-        ? entries.filter((e) => e.date?.slice(0, 4) === effectiveYear)
-        : entries,
-    [entries, effectiveYear],
-  );
+  // 保存順のまま返ってくるため、ここで日付の新しい順に並べ直す。
+  // 並べずに先頭から件数を絞ると、新しいものが隠れてしまう。
+  const filteredEntries = useMemo(() => {
+    const list = effectiveYear
+      ? entries.filter((e) => e.date?.slice(0, 4) === effectiveYear)
+      : entries;
+    return [...list].sort((a, b) => b.date.localeCompare(a.date));
+  }, [entries, effectiveYear]);
 
   const record = computeRecord(filteredEntries, myTeam);
   // マイチームが出場した試合数。成績の母数として添える。
@@ -421,6 +422,12 @@ export default function HistoryScreen() {
                 並んでスコアの読みを邪魔する。操作は隠して、必要なときだけ
                 引き出す方がこの一覧には合う。
               */
+              <View
+                style={[
+                  styles.frameOuter,
+                  { borderBottomColor: colors.border },
+                ]}
+              >
               <Swipeable
                 friction={1.6}
                 rightThreshold={36}
@@ -469,13 +476,7 @@ export default function HistoryScreen() {
                         ? "引き分け"
                         : undefined
                 }
-                style={[
-                  styles.frame,
-                  {
-                    borderBottomColor: colors.border,
-                    backgroundColor: colors.background,
-                  },
-                ]}
+                style={[styles.frame, { backgroundColor: colors.background }]}
               >
                 <View style={styles.frameBody}>
                   <Text
@@ -527,6 +528,7 @@ export default function HistoryScreen() {
                 </View>
               </Pressable>
               </Swipeable>
+              </View>
             );
           }}
         />
@@ -646,15 +648,15 @@ const styles = StyleSheet.create({
   tallyLabel: { fontSize: 13, fontWeight: "600" },
   tallyNote: { fontSize: 12, marginTop: 8, letterSpacing: 0.2 },
   // 1件を枠で囲わず、下罫線一本だけで隣と分ける
+  // 罫線はスワイプで動く行ではなく、外側の枠が持つ。行に付けると
+  // スワイプで罫線も一緒に横へ流れ、操作ボタンの上下が空いて見える。
+  frameOuter: { borderBottomWidth: Rule.hairline },
   frame: {
     flexDirection: "row",
     alignItems: "flex-start",
-    borderBottomWidth: Rule.hairline,
     paddingLeft: Spacing.four,
   },
-  // 行の縦余白。スワイプで出る操作ボタンは行の高さに収まるため、ここが
-  // 広いとボタンと上の罫線の間に隙間ができる。詰めることで両者が近づく。
-  frameBody: { flex: 1, paddingVertical: 8, paddingRight: Spacing.four },
+  frameBody: { flex: 1, paddingVertical: 12, paddingRight: Spacing.four },
   // スワイプで現れる操作。高さは行に追随させる
   actions: { flexDirection: "row" },
   action: { width: 76, alignItems: "center", justifyContent: "center" },
