@@ -429,6 +429,8 @@ export default function HistoryScreen() {
                 ]}
               >
               <Swipeable
+                containerStyle={styles.swipeContainer}
+                childrenContainerStyle={styles.swipeChild}
                 friction={1.6}
                 rightThreshold={36}
                 overshootRight={false}
@@ -651,6 +653,10 @@ const styles = StyleSheet.create({
   // 罫線はスワイプで動く行ではなく、外側の枠が持つ。行に付けると
   // スワイプで罫線も一緒に横へ流れ、操作ボタンの上下が空いて見える。
   frameOuter: { borderBottomWidth: Rule.hairline },
+  // 操作ボタンを行の高さに合わせるには、Swipeable の各層にも高さを
+  // 伝える必要がある。height:100% だけでは親が高さを持たず効かない。
+  swipeContainer: { alignItems: "stretch" },
+  swipeChild: { flex: 1 },
   frame: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -660,13 +666,8 @@ const styles = StyleSheet.create({
   // スワイプで現れる操作。高さは行に追随させる
   // 操作ボタンは行の高さいっぱいに伸ばす。既定では中身の高さしか持たず、
   // 罫線との間に隙間が残る。
-  actions: { flexDirection: "row", alignItems: "stretch", height: "100%" },
-  action: {
-    width: 76,
-    height: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  actions: { flexDirection: "row", alignItems: "stretch", flex: 1 },
+  action: { width: 76, alignItems: "center", justifyContent: "center" },
   actionText: { fontSize: 14, fontWeight: "700" },
   showAll: { alignItems: "center", paddingVertical: 16 },
   showAllText: { fontSize: 14, fontWeight: "700" },
