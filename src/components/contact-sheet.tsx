@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import Constants from "expo-constants";
 import { useState } from "react";
 import {
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -24,13 +23,14 @@ const CATEGORIES = [
   { label: "その他", value: "その他" },
 ];
 
-export function ContactSheet({
-  visible,
-  onClose,
-}: {
-  visible: boolean;
-  onClose: () => void;
-}) {
+/**
+ * お問い合わせ。プライバシーポリシー・サポートと同じく独立した画面として
+ * 扱う。メニューに並ぶ4つが、どれも同じ深さ・同じ開き方になる。
+ *
+ * onClose は閉じる操作。ネイティブではモーダルを閉じ、Webでは前の画面に
+ * 戻る。呼び出し側が渡す。
+ */
+export function ContactSheet({ onClose }: { onClose: () => void }) {
   const colors = useTheme();
   const [category, setCategory] = useState(CATEGORIES[0].value);
   const [message, setMessage] = useState("");
@@ -71,30 +71,25 @@ export function ContactSheet({
   }
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
+    <SafeAreaView
+      edges={["top", "bottom"]}
+      style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <Pressable style={styles.backdrop} onPress={onClose} />
-      <SafeAreaView
-        edges={["bottom"]}
-        style={[styles.sheet, { backgroundColor: colors.backgroundElement }]}
-      >
-        <View style={[styles.sheetHeader, { borderBottomColor: colors.border }]}>
-          <Text style={[styles.sheetTitle, { color: colors.text }]}>
-            ご要望・お問い合わせ
-          </Text>
-          <Pressable
-            onPress={onClose}
-            hitSlop={12}
-            accessibilityRole="button"
-            accessibilityLabel="閉じる"
-          >
-            <Ionicons name="close" size={22} color={colors.textSecondary} />
-          </Pressable>
-        </View>
+      <View style={styles.pageHeader}>
+        <Pressable
+          onPress={onClose}
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel="戻る"
+          style={styles.backBtn}
+        >
+          <Ionicons name="chevron-back" size={22} color={colors.text} />
+          <Text style={[styles.backLabel, { color: colors.text }]}>戻る</Text>
+        </Pressable>
+        <Text style={[styles.pageTitle, { color: colors.text }]}>
+          ご要望・お問い合わせ
+        </Text>
+      </View>
 
         <ScrollView
           style={styles.body}
@@ -184,27 +179,16 @@ export function ContactSheet({
             </Text>
           </Pressable>
         </ScrollView>
-      </SafeAreaView>
-    </Modal>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)" },
-  sheet: {
-    maxHeight: "85%",
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-  sheetHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-  },
-  sheetTitle: { fontSize: 15, fontWeight: "600", flexShrink: 1, marginRight: 8 },
+  screen: { flex: 1 },
+  pageHeader: { paddingHorizontal: 18, paddingTop: 8, gap: 10 },
+  backBtn: { flexDirection: "row", alignItems: "center", gap: 1 },
+  backLabel: { fontSize: 15.5 },
+  pageTitle: { fontSize: 22, fontWeight: "700", letterSpacing: 0.3 },
   body: { paddingHorizontal: 18 },
   bodyContent: { paddingVertical: 18, paddingBottom: 28 },
   // 節のラベル。設定画面の見出しと同じ扱いにする

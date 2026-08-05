@@ -41,6 +41,9 @@ const MY_TEAM_OPTIONS = [
   ...TEAMS.map((t) => ({ label: `${t.nickname}（${t.code}）`, value: t.code, compactLabel: `${t.shortNickname ?? t.nickname}（${t.code}）` })),
 ];
 
+/** 既定で表示する件数。これを超える分は「すべて表示」を押すまで出さない。 */
+const INITIAL_VISIBLE = 20;
+
 /** これ以下の件数では案内しない。数件のうちは失っても痛手が小さい。 */
 const BACKUP_NUDGE_MIN = 20;
 /** 前回の案内からこれだけ増えたら、もう一度だけ案内する。 */
@@ -97,6 +100,11 @@ export default function HistoryScreen() {
     }, [refresh]),
   );
 
+  // 年やチームを切り替えたら、また先頭から見せる
+  useEffect(() => {
+    setShowAll(false);
+  }, [selectedYear, myTeam]);
+
   async function handleMyTeamChange(v: string) {
     await setMyTeam(v);
   }
@@ -151,13 +159,21 @@ export default function HistoryScreen() {
     () => (wrapYear ? summarizeYear(entries, myTeam, wrapYear) : null),
     [entries, myTeam, wrapYear],
   );
+  // 既定では新しい方から一定数だけ出す。何年も続けると数百件になり、
+  // 開くたびに全件を描くのは重いうえ、直近を見たいだけの人には冗長。
+  const [showAll, setShowAll] = useState(false);
+  const visibleEntries = showAll
+    ? filteredEntries
+    : filteredEntries.slice(0, INITIAL_VISIBLE);
+  const hiddenCount = filteredEntries.length - visibleEntries.length;
+
   const sections = useMemo(
     () =>
-      groupHistoryByYear(filteredEntries).map((g) => ({
+      groupHistoryByYear(visibleEntries).map((g) => ({
         title: `${g.year}年`,
         data: g.entries.map((entry) => ({ entry })),
       })),
-    [filteredEntries],
+    [visibleEntries],
   );
 
   return (
@@ -347,6 +363,19 @@ export default function HistoryScreen() {
         <SectionList
           sections={sections}
           keyExtractor={({ entry }) => entry.id}
+          ListFooterComponent={
+            hiddenCount > 0 ? (
+              <Pressable
+                onPress={() => setShowAll(true)}
+                accessibilityRole="button"
+                style={[styles.showAll, { borderBottomColor: colors.border }]}
+              >
+                <Text style={[styles.showAllText, { color: colors.accent }]}>
+                  すべて表示する（残り{hiddenCount}件）
+                </Text>
+              </Pressable>
+            ) : null
+          }
           style={styles.flatList}
           contentContainerStyle={[
             styles.list,
@@ -623,11 +652,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: Rule.hairline,
     paddingLeft: Spacing.four,
   },
-  frameBody: { flex: 1, paddingVertical: 13, paddingRight: Spacing.four },
+  // 行の縦余白。スワイプで出る操作ボタンは行の高さに収まるため、ここが
+  // 広いとボタンと上の罫線の間に隙間ができる。詰めることで両者が近づく。
+  frameBody: { flex: 1, paddingVertical: 8, paddingRight: Spacing.four },
   // スワイプで現れる操作。高さは行に追随させる
   actions: { flexDirection: "row" },
   action: { width: 76, alignItems: "center", justifyContent: "center" },
   actionText: { fontSize: 14, fontWeight: "700" },
+  showAll: { alignItems: "center", paddingVertical: 16 },
+  showAllText: { fontSize: 14, fontWeight: "700" },
   meta: { fontSize: 12, letterSpacing: 0.2 },
   scoreLine: {
     flexDirection: "row",

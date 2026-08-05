@@ -58,7 +58,7 @@ export function AppMenu() {
   }[] = [
     {
       label: "設定",
-      icon: "options-outline",
+      icon: "settings-outline",
       onPress: () => {
         setOpen(false);
         router.push("/settings");
@@ -158,10 +158,15 @@ export function AppMenu() {
         </View>
       </Modal>
 
-      <ContactSheet
+      <Modal
         visible={contactOpen}
-        onClose={() => setContactOpen(false)}
-      />
+        animationType="slide"
+        onRequestClose={() => setContactOpen(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
+          <ContactSheet onClose={() => setContactOpen(false)} />
+        </View>
+      </Modal>
 
       <Modal
         visible={legalPage !== null}
