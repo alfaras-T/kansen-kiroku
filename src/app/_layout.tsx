@@ -2,20 +2,25 @@ import { BebasNeue_400Regular } from '@expo-google-fonts/bebas-neue';
 import { Montserrat_500Medium, Montserrat_600SemiBold } from '@expo-google-fonts/montserrat';
 import { useFonts } from 'expo-font';
 import { DarkTheme, ThemeProvider, usePathname } from 'expo-router';
+import type { ErrorBoundaryProps } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
-import { Platform } from 'react-native';
+import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import AppTabs from '@/components/app-tabs';
 import { OnboardingScreen } from '@/components/onboarding-screen';
 import { CreateFormProvider } from '@/contexts/create-form';
+import { installCrashReporter } from '@/utils/crash-report';
 import { FavoriteTeamProvider, useFavoriteTeam } from '@/contexts/favorite-team';
 import PrivacyScreen from './privacy';
 import SupportScreen from './support';
 
 SplashScreen.preventAutoHideAsync();
+
+// 実機でしか出ないJSエラーを画面に出す。読み込み時に一度だけ差し込む。
+installCrashReporter();
 
 // フォント読み込みを待つ上限。これを超えたらシステムフォントで描画を続行する。
 const FONT_WAIT_TIMEOUT_MS = 2000;
@@ -78,4 +83,44 @@ function RootGate() {
   if (loading) return null;
   if (!onboarded) return <OnboardingScreen />;
   return <AppTabs />;
+}
+
+/**
+ * 描画中に投げられた例外の受け皿(expo-routerの規約でこの名前をexportする)。
+ * 何も置かないとツリーごと外れて真っ白になり、原因も残らない。
+ */
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  return (
+    <View style={{ flex: 1, backgroundColor: '#0B1220', paddingTop: 80 }}>
+      <ScrollView contentContainerStyle={{ padding: 24, gap: 14 }}>
+        <Text style={{ color: '#ECE9E1', fontSize: 20, fontWeight: '700' }}>
+          問題が発生しました
+        </Text>
+        <Text style={{ color: '#8f97a8', fontSize: 13, lineHeight: 19 }}>
+          この画面の内容をそのままお知らせいただけると、修正の手掛かりになります。
+        </Text>
+        <Text
+          selectable
+          style={{ color: '#FFB627', fontSize: 12.5, lineHeight: 18 }}>
+          {error?.name}: {error?.message}
+        </Text>
+        <Text selectable style={{ color: '#8f97a8', fontSize: 11, lineHeight: 16 }}>
+          {error?.stack}
+        </Text>
+        <Pressable
+          onPress={retry}
+          style={{
+            alignSelf: 'flex-start',
+            marginTop: 8,
+            borderWidth: 1,
+            borderColor: '#223052',
+            borderRadius: 6,
+            paddingVertical: 10,
+            paddingHorizontal: 18,
+          }}>
+          <Text style={{ color: '#ECE9E1', fontSize: 14 }}>やり直す</Text>
+        </Pressable>
+      </ScrollView>
+    </View>
+  );
 }

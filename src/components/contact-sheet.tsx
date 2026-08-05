@@ -56,12 +56,21 @@ export function ContactSheet({ onClose }: { onClose: () => void }) {
     setSending(true);
     // メール本文の末尾に環境情報を添える（不具合調査の手がかり用。個人データは含めない）。
     const footer = `\n\n----------------\n種別: ${category}\nアプリ: Ball Films v${appVersion}\n端末: ${Platform.OS}`;
-    const ok = await openMailComposer({
-      to: CONTACT_EMAIL,
-      subject: `【Ball Films】${category}`,
-      body: `${trimmed}${footer}`,
-    });
-    setSending(false);
+    // ここで投げると誰も受け取らず、アプリごと落ちる。
+    // 送信は「失敗しても案内に落ちる」だけで済ませる。
+    let ok = false;
+    try {
+      ok = await openMailComposer({
+        to: CONTACT_EMAIL,
+        subject: `【Ball Films】${category}`,
+        body: `${trimmed}${footer}`,
+      });
+    } catch (e) {
+      console.warn("お問い合わせの送信に失敗しました", e);
+      ok = false;
+    } finally {
+      setSending(false);
+    }
     if (ok) {
       reset();
       onClose();

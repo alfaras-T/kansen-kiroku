@@ -1,4 +1,4 @@
-import { Alert, Platform } from "react-native";
+import { Alert, Linking, Platform } from "react-native";
 
 // react-native-web の Alert.alert は現状 no-op (何も起きない) なので、
 // Web でも確実にユーザーへ確認・通知できるよう window.confirm / window.alert にフォールバックする。
@@ -47,10 +47,14 @@ export async function openMailComposer(params: {
       window.location.href = url;
       return true;
     }
-    const { Linking } = await import("react-native");
+    // Linking は上で静的に読み込む。ここで await import("react-native") を
+    // 使っていたが、名前空間を作る過程で react-native の index が持つ
+    // getter を全て評価してしまう。読み込む必要のないものまで巻き込むうえ、
+    // 同じファイルの先頭で既に静的importしている以上、そもそも不要だった。
     await Linking.openURL(url);
     return true;
-  } catch {
+  } catch (e) {
+    console.warn("メールアプリを開けませんでした", e);
     return false;
   }
 }
