@@ -656,7 +656,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     paddingLeft: Spacing.four,
   },
-  frameBody: { flex: 1, paddingVertical: 12, paddingRight: Spacing.four },
+  frameBody: { flex: 1, paddingRight: Spacing.four },
   // スワイプで現れる操作。高さは行に追随させる
   // 操作ボタンは行の高さいっぱいに伸ばす。既定では中身の高さしか持たず、
   // 罫線との間に隙間が残る。
