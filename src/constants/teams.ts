@@ -33,14 +33,3 @@ export const TEAMS: TeamOption[] = [
 
 /** チーム一覧にない場合に選ぶ、自由入力用のセンチネル値 */
 export const OTHER_TEAM = '__other__';
-
-export function teamLabel(code: string): string {
-  const t = TEAMS.find((x) => x.code === code);
-  return t ? `${t.nickname}（${t.code}）` : code;
-}
-
-/** 選択欄の閉じた状態など、コンパクトな表示向けのラベル（短縮表記があればそちらを使う） */
-export function teamCompactLabel(code: string): string {
-  const t = TEAMS.find((x) => x.code === code);
-  return t ? `${t.shortNickname ?? t.nickname}（${t.code}）` : code;
-}
