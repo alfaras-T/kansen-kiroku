@@ -53,6 +53,14 @@ export interface OverlayPalette {
   gradientTo: string;
   /** テロップの大きさの階層。省略時はスコアを主役にした既定の階層 */
   sizes?: OverlayTelopSizes;
+  /**
+   * このプリセット全体の基準倍率。省略時は 1。
+   *
+   * 「文字サイズ 100%」のときの大きさそのものを決める。要素ごとの比率
+   * (sizes)は保ったまま、テロップ一式を同じ割合で拡縮する。
+   * 利用者が触る文字サイズのつまみは、この値に対する倍率として働く。
+   */
+  scale?: number;
   /** 日付を「26 6 14」というフィルムカメラ風の表記にする */
   dateStamp?: boolean;
   /** 日付を自身の色で発光させる(焼き込みの滲みを再現する) */
@@ -70,6 +78,7 @@ export const OVERLAY_STYLES: Record<OverlayStyleKey, OverlayPalette> = {
   // 王道。純白 + シャンパンゴールドの差し色。スタジアムの照明に映える
   classic: {
     label: 'クラシック',
+    scale: 0.8,
     body: '#FFFFFF',
     accent: '#E8C177',
     dim: 'rgba(255,255,255,0.38)',
@@ -82,6 +91,7 @@ export const OVERLAY_STYLES: Record<OverlayStyleKey, OverlayPalette> = {
   // 徹底的に引き算したオールホワイト。どんな写真も邪魔しない
   minimal: {
     label: 'ミニマル',
+    scale: 0.8,
     body: '#FFFFFF',
     accent: '#FFFFFF',
     dim: 'rgba(255,255,255,0.35)',

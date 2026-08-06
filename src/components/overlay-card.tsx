@@ -147,7 +147,11 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
   // 輪郭がぼやける。写真は元から高解像度なので鮮明なままで、結果として
   // 「テロップだけ解像度が低い」状態になっていた。
   // 実寸を変えればその大きさで文字が描き直されるため、輪郭が保たれる。
-  const telopFactor = telopScale * scaleFactor;
+  // プリセットの基準倍率を掛ける。文字サイズのつまみ(telopScale)は
+  // この基準に対する倍率として働くので、100%のときの大きさは
+  // プリセット側で決まる。フィルムは指定していないので 1 のまま。
+  const telopFactor =
+    telopScale * scaleFactor * (OVERLAY_STYLES[styleKey].scale ?? 1);
   const sc = (v: number) => v * telopFactor;
   // プリセットごとのテロップの階層。既定はスコアが最大だが、'スタンプ'のように
   // 日付を主役に据える構成も選べるようにしている。
