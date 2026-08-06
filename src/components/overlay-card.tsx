@@ -13,7 +13,10 @@ import {
 
 import { CardText } from '@/components/card-text';
 
-import { resolveTelopTeamColor } from '@/constants/teamThemes';
+import {
+  resolveTelopDividerColor,
+  resolveTelopTeamColor,
+} from '@/constants/teamThemes';
 import { useFavoriteTeamOptional } from '@/contexts/favorite-team';
 import {
   DEFAULT_PHOTO_OFFSET,
@@ -261,6 +264,10 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
     !teamColorAllowed || styleKey === 'minimal' || !myTeamIsPlaying
       ? null
       : resolveTelopTeamColor(myTeam);
+  // 区切り線だけは、球団によって日付と別の色を当てる。
+  // 球団カラーが効かない条件(自チームが出ていない等)では日付と同じく無効。
+  const telopDividerColor =
+    telopTeamColor === null ? null : resolveTelopDividerColor(myTeam);
   // 「元の写真のまま」の場合は写真自体の縦横比を使う。
   // 写真が無い/縦横比が未取得の場合のみ1:1にフォールバックする。
   const frameAspect = resolveOverlayAspect(ratio, photoAspectRatio);
@@ -666,7 +673,10 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
               style={[
                 styles.divider,
                 telopStyles.divider,
-                { backgroundColor: telopTeamColor ?? palette.divider },
+                {
+                  backgroundColor:
+                    telopDividerColor ?? telopTeamColor ?? palette.divider,
+                },
               ]}
             />
 

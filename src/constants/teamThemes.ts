@@ -364,3 +364,30 @@ export function resolveTelopTeamColor(favoriteTeam: string): string | null {
   }
   return fromHsl(h, sat, l);
 }
+
+/**
+ * テロップの区切り線(スコアと球場名の間)に使う色。
+ * 指定のない球団は null を返し、日付と同じ球団カラーを使う。
+ *
+ * 日付も区切り線も同じ色だと、メインカラーの近い球団どうしが見分けられない。
+ * タイガース(#FFE200)とホークス(#FFF100)はほぼ同じ黄で、書き出した画像を
+ * 並べても区別がつかない。区切り線だけをセカンドカラーに振り替えると、
+ * 日付の色はそのままに、二色の組み合わせで球団を判別できるようになる。
+ *
+ * ライオンズだけは公式カラーから外す。セカンドは白で、白をセカンドに持つ
+ * ドラゴンズ・カープ・マリーンズと重なる。かといってメインの濃紺は、
+ * 青系の球団が他に五つあって紛れる。どの球団とも重ならない赤を当てる。
+ * (#FF3B30 は、テロップが載る暗いスクリムに対して、このファイルが基準と
+ *  している輝度 0.2225 を満たす)
+ */
+const TELOP_DIVIDER_COLORS: Partial<Record<TeamCode, string>> = {
+  T: TEAM_BRAND_COLORS.T.second, // ブラック
+  G: TEAM_BRAND_COLORS.G.second, // ブラック
+  H: TEAM_BRAND_COLORS.H.second, // ホワイト
+  M: TEAM_BRAND_COLORS.M.second, // マリーンズホワイト
+  L: '#FF3B30',
+};
+
+export function resolveTelopDividerColor(favoriteTeam: string): string | null {
+  return TELOP_DIVIDER_COLORS[favoriteTeam as TeamCode] ?? null;
+}
