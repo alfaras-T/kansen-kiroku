@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useMemo, useRef, useState } from "react";
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/hooks/use-theme";
 import { Radius } from "@/constants/theme";
 
@@ -54,6 +54,9 @@ export function DateField({
   onChange: (iso: string) => void;
 }) {
   const colors = useTheme();
+  // Modal 内では SafeAreaView が自分の位置を測れず inset が 0 になる。
+  // context 経由の useSafeAreaInsets なら Modal 内でも値が届く。
+  const insets = useSafeAreaInsets();
   const today = startOfDay(new Date());
   const selectedDate = parseISODate(value);
 
@@ -167,9 +170,8 @@ export function DateField({
         onRequestClose={() => setOpen(false)}
       >
         <Pressable style={styles.backdrop} onPress={() => setOpen(false)} />
-        <SafeAreaView
-          edges={["bottom"]}
-          style={styles.centerWrap}
+        <View
+          style={[styles.centerWrap, { paddingBottom: insets.bottom }]}
           pointerEvents="box-none"
         >
           <View
@@ -364,7 +366,7 @@ export function DateField({
               </>
             )}
           </View>
-        </SafeAreaView>
+        </View>
       </Modal>
     </>
   );

@@ -126,5 +126,7 @@ const styles = StyleSheet.create({
   labelWrap: { alignItems: "center", gap: 4, paddingBottom: 2 },
   // 送り穴に見立てた短い印。現在地を色ではなく形でも示す
   marker: { width: 14, height: 2, borderRadius: 1 },
-  label: { ...Type.label, fontSize: 10.5, letterSpacing: 0.6 },
+  // 見出しは日本語なので labelJa。Type.label(Montserrat)を当てると
+  // Androidで豆腐になる。
+  label: { ...Type.labelJa, fontSize: 10.5, letterSpacing: 0.6 },
 });

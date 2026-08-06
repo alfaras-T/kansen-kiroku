@@ -10,7 +10,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DateField } from "@/components/form/date-field";
 import { LabeledField } from "@/components/form/labeled-field";
@@ -51,6 +51,10 @@ export function EditEntrySheet({
   onDelete: (entry: HistoryEntry) => Promise<void> | void;
 }) {
   const colors = useTheme();
+  // Modal は別のネイティブ root に描かれるため、その中の SafeAreaView は
+  // 自分の位置を測れず inset が 0 になる(お問い合わせ画面が上に寄っていたのと
+  // 同じ原因)。context 経由の useSafeAreaInsets なら Modal 内でも値が届く。
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { loadFromEntry } = useCreateForm();
 
@@ -195,9 +199,14 @@ export function EditEntrySheet({
   return (
     <Modal visible={!!entry} animationType="slide" transparent onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose} />
-      <SafeAreaView
-        edges={["bottom"]}
-        style={[styles.sheet, { backgroundColor: colors.backgroundElement }]}
+      <View
+        style={[
+          styles.sheet,
+          {
+            backgroundColor: colors.backgroundElement,
+            paddingBottom: insets.bottom,
+          },
+        ]}
       >
         <View style={[styles.sheetHeader, { borderBottomColor: colors.border }]}>
           <Text style={[styles.sheetTitle, { color: colors.text }]}>記録を編集</Text>
@@ -400,7 +409,7 @@ export function EditEntrySheet({
             </Text>
           </Pressable>
         </ScrollView>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }

@@ -221,7 +221,8 @@ const styles = StyleSheet.create({
     alignItems: "baseline",
     justifyContent: "space-between",
   },
-  pickLabel: Type.label,
+  // 「応援するチーム」は日本語。書体は端末標準に任せる
+  pickLabel: Type.labelJa,
   pickValue: { ...Type.actionJa, fontSize: 16 },
   pickNote: { ...Type.captionJa, marginTop: Space.tight },
   chips: {

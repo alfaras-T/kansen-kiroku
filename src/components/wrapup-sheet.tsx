@@ -4,7 +4,6 @@ import * as Sharing from "expo-sharing";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Modal,
   Platform,
@@ -14,7 +13,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { captureRef } from "react-native-view-shot";
 
 import {
@@ -45,6 +44,10 @@ export function WrapUpSheet({
   myTeam: string;
 }) {
   const colors = useTheme();
+  // Modal は別のネイティブ root に描かれるため、その中の SafeAreaView は
+  // 自分の位置を測れず inset が 0 になる(お問い合わせ画面が上に寄っていたのと
+  // 同じ原因)。context 経由の useSafeAreaInsets なら Modal 内でも値が届く。
+  const insets = useSafeAreaInsets();
   const [ratio, setRatio] = useState<WrapRatio>("story");
   const [busy, setBusy] = useState(false);
   const [busyMode, setBusyMode] = useState<"save" | "share" | null>(null);
@@ -126,7 +129,7 @@ export function WrapUpSheet({
     try {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) {
-        Alert.alert("権限が必要です", "写真ライブラリへのアクセスを許可してください");
+        notify("権限が必要です", "写真ライブラリへのアクセスを許可してください。");
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -159,7 +162,7 @@ export function WrapUpSheet({
       // launchImageLibraryAsync自体が例外を投げるケースを含め、ここで必ず拾う。
       // 拾わないと「タップしても何も起きない」ように見えてしまうため。
       console.warn("背景画像の選択に失敗しました", e);
-      Alert.alert("背景画像を選べませんでした", "もう一度お試しください。");
+      notify("背景画像を選べませんでした", "もう一度お試しください。");
     }
   }
 
@@ -387,9 +390,14 @@ export function WrapUpSheet({
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={handleClose}>
       <Pressable style={styles.backdrop} onPress={handleClose} />
-      <SafeAreaView
-        edges={["bottom"]}
-        style={[styles.sheet, { backgroundColor: colors.backgroundElement }]}
+      <View
+        style={[
+          styles.sheet,
+          {
+            backgroundColor: colors.backgroundElement,
+            paddingBottom: insets.bottom,
+          },
+        ]}
       >
         <View style={[styles.sheetHeader, { borderBottomColor: colors.border }]}>
           <Text style={[styles.sheetTitle, { color: colors.text }]}>
@@ -598,7 +606,7 @@ export function WrapUpSheet({
             <Text style={styles.processingText}>画像を作成しています…</Text>
           </View>
         )}
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }

@@ -48,6 +48,20 @@ export const Type = {
     letterSpacing: 0.8,
   } as TextStyle,
 
+  /**
+   * 日本語のラベル。label と同じ大きさだが、書体は端末標準に任せる。
+   *
+   * Bebas も Montserrat も日本語のグリフを持たない。iOSはCoreTextが
+   * 自動で代替書体に落としてくれるので気づかないが、Androidは代替に
+   * 落ちず豆腐(□)になる。「日本語には英字専用書体を当てない」を
+   * 規則として持たせ、当たっている箇所を作らないようにする。
+   */
+  labelJa: {
+    fontSize: 11,
+    fontWeight: '500',
+    letterSpacing: 0.8,
+  } as TextStyle,
+
   /** 日本語の見出し。太さで立てる */
   headingJa: {
     fontSize: 19,

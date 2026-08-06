@@ -11,7 +11,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { captureRef } from "react-native-view-shot";
 
 import {
@@ -55,6 +55,10 @@ export function ProofSheet({
   myTeam: string;
 }) {
   const colors = useTheme();
+  // Modal は別のネイティブ root に描かれるため、その中の SafeAreaView は
+  // 自分の位置を測れず inset が 0 になる(お問い合わせ画面が上に寄っていたのと
+  // 同じ原因)。context 経由の useSafeAreaInsets なら Modal 内でも値が届く。
+  const insets = useSafeAreaInsets();
   const [busy, setBusy] = useState(false);
   const [busyMode, setBusyMode] = useState<"save" | "share" | null>(null);
   const [items, setItems] = useState<ProofSheetItem[] | null>(null);
@@ -214,9 +218,14 @@ export function ProofSheet({
       onRequestClose={onClose}
     >
       <Pressable style={styles.backdrop} onPress={onClose} />
-      <SafeAreaView
-        edges={["bottom"]}
-        style={[styles.sheet, { backgroundColor: colors.backgroundElement }]}
+      <View
+        style={[
+          styles.sheet,
+          {
+            backgroundColor: colors.backgroundElement,
+            paddingBottom: insets.bottom,
+          },
+        ]}
       >
         <View style={[styles.sheetHeader, { borderBottomColor: colors.border }]}>
           <Text style={[styles.sheetTitle, { color: colors.text }]}>
@@ -392,7 +401,7 @@ export function ProofSheet({
             />
           </View>
         )}
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }

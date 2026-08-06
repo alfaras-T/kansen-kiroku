@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/hooks/use-theme";
 import { Radius } from "@/constants/theme";
 
@@ -46,6 +46,10 @@ export function SelectModal({
 }) {
   const [open, setOpen] = useState(false);
   const colors = useTheme();
+  // Modal は別のネイティブ root に描かれるため、その中の SafeAreaView は
+  // 自分の位置を測れず inset が 0 になる(お問い合わせ画面が上に寄っていたのと
+  // 同じ原因)。context 経由の useSafeAreaInsets なら Modal 内でも値が届く。
+  const insets = useSafeAreaInsets();
   const selectedOption = options.find((o) => o.value === value);
   const hasSelection = !!selectedOption;
   const selectedLabel =
@@ -93,9 +97,14 @@ export function SelectModal({
         onRequestClose={() => setOpen(false)}
       >
         <Pressable style={styles.backdrop} onPress={() => setOpen(false)} />
-        <SafeAreaView
-          edges={["bottom"]}
-          style={[styles.sheet, { backgroundColor: colors.backgroundElement }]}
+        <View
+          style={[
+            styles.sheet,
+            {
+              backgroundColor: colors.backgroundElement,
+              paddingBottom: insets.bottom,
+            },
+          ]}
         >
           <View
             style={[styles.sheetHeader, { borderBottomColor: colors.border }]}
@@ -162,7 +171,7 @@ export function SelectModal({
               );
             }}
           />
-        </SafeAreaView>
+        </View>
       </Modal>
     </>
   );
