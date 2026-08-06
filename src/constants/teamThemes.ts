@@ -349,13 +349,9 @@ const ACHROMATIC_TARGET = 0.62;
  * マリーンズの黒だけは色相を持たず、明度を上げても灰にしかならない。
  * 無彩色は例外として白寄りまで引き上げる。
  */
-export function resolveTelopTeamColor(favoriteTeam: string): string | null {
-  const brand = TEAM_BRAND_COLORS[favoriteTeam as TeamCode];
-  if (!brand) return null;
-  const main = brand.main;
-  if (relativeLuminance(main) >= MIN_TELOP_LUMINANCE) return main;
-
-  const [h, sat, startL] = toHsl(main);
+function ensureTelopLegible(hex: string): string {
+  if (relativeLuminance(hex) >= MIN_TELOP_LUMINANCE) return hex;
+  const [h, sat, startL] = toHsl(hex);
   const goal = sat < 0.08 ? ACHROMATIC_TARGET : MIN_TELOP_LUMINANCE;
   let l = startL;
   for (let i = 0; i < 200 && l < 0.99; i += 1) {
@@ -365,40 +361,51 @@ export function resolveTelopTeamColor(favoriteTeam: string): string | null {
   return fromHsl(h, sat, l);
 }
 
+export function resolveTelopTeamColor(favoriteTeam: string): string | null {
+  const brand = TEAM_BRAND_COLORS[favoriteTeam as TeamCode];
+  if (!brand) return null;
+  return ensureTelopLegible(brand.main);
+}
+
 /**
  * テロップの区切り線(スコアと球場名の間)に使う色。
  * 指定のない球団は null を返し、日付と同じ球団カラーを使う。
  *
  * 日付も区切り線も同じ色だと、メインカラーの近い球団どうしが見分けられない。
  * 特に濃紺は多く、ベイスターズ・ドラゴンズ・スワローズ・ファイターズ・
- * バファローズ・ライオンズの六球団が該当する。いずれも resolveTelopTeamColor
- * で明度を上げた時点でよく似た青になり、日付の色だけでは判別できない。
- * カープとゴールデンイーグルスの赤も同様。
+ * バファローズ・ライオンズの六球団が該当する。いずれも明度を上げた時点で
+ * よく似た青になり、日付の色だけでは判別できない。
  *
- * そこで区切り線をセカンドカラーに振り替える。日付の色はそのままに、
- * 二色の組み合わせで球団を判別できるようになる。上の六球団なら
- * 淡い青・白・黄緑・淡金・濃金・赤と、すべて別の色に分かれる。
+ * 使うのは、その球団のUIで差し色になっている色(TEAM_THEMES.accent)。
+ * 公式のセカンドカラーではない。この二つは十球団で食い違っている
+ * (公式カラーをそのまま画面に敷くと視認性が落ちるため、UI側は独自に
+ *  調整した配色を持っている。詳しくは TEAM_THEMES のコメント)。
+ * 画面で見慣れている色と、書き出した画像に乗る色を揃える。
  *
- * タイガース・ジャイアンツ・ホークス・マリーンズは対象外。セカンドが
- * 黒か白しかなく、振り替えても手掛かりが増えないうえ、黒はテロップが載る
- * 暗いスクリムの上でほとんど見えない。
- *
- * ライオンズだけは公式カラーから外す。セカンドは白で、同じく白を持つ
- * ドラゴンズ・カープと重なってしまうため。
- * (#FF3B30 は、暗いスクリムに対して、このファイルが基準としている
- *  輝度 0.2225 を満たす)
+ * 差し色はもともと暗い土台の上に置くために選ばれているので、そのままでも
+ * テロップのスクリム上で読める。それでも暗い色が入ってきた場合に備え、
+ * 日付と同じ ensureTelopLegible を通し、色相と彩度を保ったまま
+ * 読める明るさまで持ち上げる(＝同系色のまま明るくする)。
  */
-const TELOP_DIVIDER_COLORS: Partial<Record<TeamCode, string>> = {
-  DB: TEAM_BRAND_COLORS.DB.second, // 横浜ブルー(淡)
-  D: TEAM_BRAND_COLORS.D.second, // ホワイト
-  C: TEAM_BRAND_COLORS.C.second, // ホワイト
-  S: TEAM_BRAND_COLORS.S.second, // スワローズ黄緑
-  F: TEAM_BRAND_COLORS.F.second, // ゴールド
-  B: TEAM_BRAND_COLORS.B.second, // ゴールド
-  E: TEAM_BRAND_COLORS.E.second, // ゴールド
+
+/** 区切り線を分けない球団。セカンドが黒か白しかなく、振り替えても手掛かりが増えない */
+const DIVIDER_SAME_AS_DATE: TeamCode[] = ['T', 'G', 'H', 'M'];
+
+/**
+ * UIの差し色をそのまま使えない球団。
+ * ライオンズの差し色は白で、同じく白に寄るドラゴンズ・カープ・ファイターズと
+ * 重なる。公式カラーからは外れるが、どの球団とも重ならない赤を当てる。
+ */
+const TELOP_DIVIDER_OVERRIDES: Partial<Record<TeamCode, string>> = {
   L: '#FF3B30',
 };
 
 export function resolveTelopDividerColor(favoriteTeam: string): string | null {
-  return TELOP_DIVIDER_COLORS[favoriteTeam as TeamCode] ?? null;
+  const code = favoriteTeam as TeamCode;
+  if (DIVIDER_SAME_AS_DATE.includes(code)) return null;
+  const override = TELOP_DIVIDER_OVERRIDES[code];
+  if (override) return override;
+  const theme = TEAM_THEMES[code];
+  if (!theme) return null;
+  return ensureTelopLegible(theme.accent);
 }
