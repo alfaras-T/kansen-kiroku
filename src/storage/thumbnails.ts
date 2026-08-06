@@ -47,6 +47,33 @@ export async function saveThumbnailEnabled(enabled: boolean): Promise<void> {
 }
 
 /** ネイティブの保存先ディレクトリを用意して返す */
+const B64_CHARS =
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+/**
+ * base64の文字列をバイト列に戻す。
+ *
+ * atob は環境によって用意されていないことがあり、Buffer も既定では無い。
+ * 変換のためだけに依存を増やしたくないので、ここで持つ。
+ */
+function base64ToBytes(base64: string): Uint8Array {
+  const clean = base64.replace(/[^A-Za-z0-9+/]/g, '');
+  const bytes = new Uint8Array((clean.length * 3) >> 2);
+  let acc = 0;
+  let bits = 0;
+  let out = 0;
+  for (let i = 0; i < clean.length; i += 1) {
+    acc = (acc << 6) | B64_CHARS.indexOf(clean[i]);
+    bits += 6;
+    if (bits >= 8) {
+      bits -= 8;
+      bytes[out] = (acc >> bits) & 0xff;
+      out += 1;
+    }
+  }
+  return out === bytes.length ? bytes : bytes.subarray(0, out);
+}
+
 async function ensureDir() {
   const { Directory, Paths } = await import('expo-file-system');
   const dir = new Directory(Paths.document, DIR_NAME);
@@ -78,7 +105,11 @@ export async function saveThumbnail(
     const file = new File(dir, `${entryId}.jpg`);
     if (file.exists) file.delete();
     file.create();
-    file.write(base64, { encoding: 'base64' });
+    // write が受け取るのは文字列かバイト列で、符号化の指定は無い。
+    // base64の文字列をそのまま渡すと、画像ではなく「base64という文字列」が
+    // .jpg として書き込まれ、読み込み側で画像として開けなくなる。
+    // 自前でバイト列に戻してから渡す。
+    file.write(base64ToBytes(base64));
   } catch (e) {
     // サムネイルは付加価値なので、失敗しても記録の保存自体は妨げない
     console.warn('サムネイルの保存に失敗しました', e);
