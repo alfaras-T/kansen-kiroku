@@ -33,14 +33,21 @@ import { MaxContentWidth, Radius } from "@/constants/theme";
 import { useCreateForm } from "@/contexts/create-form";
 import { useTheme } from "@/hooks/use-theme";
 
-const STYLE_ORDER: OverlayStyleKey[] = ["classic", "film", "minimal"];
+const STYLE_ORDER: OverlayStyleKey[] = ["classic", "minimal", "film"];
 const STYLE_OPTIONS = STYLE_ORDER.map((key) => ({
   key,
   label: OVERLAY_STYLES[key].label,
 }));
 
-/** 開いている選択肢。同時に開くのは一つだけ */
-type OpenMenu = "ratio" | "position" | "style" | "textSize" | null;
+/**
+ * 開ける選択肢。それぞれ独立に開閉する。
+ *
+ * 選択肢の並びは丸ボタン(34pt)より低く、開いても行の高さは変わらない。
+ * 折り返す場合も列が下へ伸びるだけで、隣の行に重なることはない。
+ * 文字サイズは写真の下のバーで、そもそも別の場所に出る。
+ * 干渉しない以上、一つずつしか開けない理由がない。
+ */
+type MenuKey = "ratio" | "position" | "style" | "textSize";
 
 /**
  * 縦に並ぶ丸ボタンの一つ。押すと選択肢をボタンの左に開く。
@@ -171,11 +178,16 @@ export default function AdjustScreen() {
   } = form;
 
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
-  // 開くのは常に一つだけ。二つ開くと選択肢の列が重なって読めなくなる。
-  const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
-  const toggleMenu = (menu: Exclude<OpenMenu, null>) =>
-    setOpenMenu((cur) => (cur === menu ? null : menu));
-  const textSizeOpen = openMenu === "textSize";
+  // それぞれ独立に開閉する。開いたものは、同じボタンをもう一度押すまで
+  // 開いたままにする。選ぶたびに閉じると、隣の候補と見比べるのに
+  // 毎回開き直すことになる。仕上がりを見ながら決める画面なので、
+  // 開いたまま次々に試せる方が理にかなっている。
+  const [openMenus, setOpenMenus] = useState<Partial<Record<MenuKey, boolean>>>(
+    {},
+  );
+  const toggleMenu = (menu: MenuKey) =>
+    setOpenMenus((cur) => ({ ...cur, [menu]: !cur[menu] }));
+  const textSizeOpen = !!openMenus.textSize;
 
   function goBack() {
     if (router.canGoBack()) router.back();
@@ -333,11 +345,8 @@ export default function AdjustScreen() {
                   accessibilityLabel="出力サイズを選ぶ"
                   options={OUTPUT_RATIOS}
                   value={ratio}
-                  onSelect={(key) => {
-                    setRatio(key);
-                    setOpenMenu(null);
-                  }}
-                  open={openMenu === "ratio"}
+                  onSelect={setRatio}
+                  open={!!openMenus.ratio}
                   onToggle={() => toggleMenu("ratio")}
                   accent={colors.accent}
                   onAccent={colors.onAccent}
@@ -348,11 +357,8 @@ export default function AdjustScreen() {
                   accessibilityLabel="テロップの場所を選ぶ"
                   options={POSITIONS}
                   value={position}
-                  onSelect={(key) => {
-                    setPosition(key);
-                    setOpenMenu(null);
-                  }}
-                  open={openMenu === "position"}
+                  onSelect={setPosition}
+                  open={!!openMenus.position}
                   onToggle={() => toggleMenu("position")}
                   accent={colors.accent}
                   onAccent={colors.onAccent}
@@ -363,11 +369,8 @@ export default function AdjustScreen() {
                   accessibilityLabel="テロップの種類を選ぶ"
                   options={STYLE_OPTIONS}
                   value={styleKey}
-                  onSelect={(key) => {
-                    setStyleKey(key);
-                    setOpenMenu(null);
-                  }}
-                  open={openMenu === "style"}
+                  onSelect={setStyleKey}
+                  open={!!openMenus.style}
                   onToggle={() => toggleMenu("style")}
                   accent={colors.accent}
                   onAccent={colors.onAccent}
