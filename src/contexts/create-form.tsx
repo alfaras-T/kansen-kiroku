@@ -40,8 +40,6 @@ interface CreateFormContextValue {
   overlayRef: React.RefObject<View | null>;
   /** 保存/共有時に実際にキャプチャする、画面表示とは別の固定解像度の書き出し専用View */
   exportRef: React.RefObject<View | null>;
-  /** フィルムシート用。正方形に切り出した状態のステージ */
-  thumbnailRef: React.RefObject<View | null>;
 
   photoUri: string | null;
   photoAspectRatio: number | null;
@@ -116,7 +114,6 @@ const CreateFormContext = createContext<CreateFormContextValue | null>(null);
 export function CreateFormProvider({ children }: { children: ReactNode }) {
   const overlayRef = useRef<View>(null);
   const exportRef = useRef<View>(null);
-  const thumbnailRef = useRef<View>(null);
 
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [photoAspectRatio, setPhotoAspectRatio] = useState<number | null>(null);
@@ -605,6 +602,7 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
       visitorScore: visitorScore || '0',
       homeScore: homeScore || '0',
       memo: memo.trim(),
+      telopPosition: position,
     };
     await addHistoryEntry(entry);
     setSavedFlash(true);
@@ -616,42 +614,43 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
    * ベタ焼き（その年の観戦を格子に並べた一枚）のために、書き出した画像の
    * 縮小版を記録と同じIDで保存する。
    *
-   * フィルムシートの升目は正方形なので、正方形に切り出した専用ステージを
-   * 撮る。書き出し本体をそのまま撮ると、9:16などの縦長がそのまま保存され、
-   * 貼るときに中央で切られてテロップが欠ける。切り出しはステージ側で
-   * 済ませてあるので、ここでは正方形として撮るだけでよい。
-   *
-   * 画像を切る手段(expo-image-manipulator)を新たに入れるとネイティブ依存が
-   * 増えてバージョン不整合の危険が生じるため、表示の重ね方で切り出している。
+   * 書き出し本体と同じステージを、小さい寸法で撮り直している。
+   * 比率はそのまま(正方形にはしない)。升目に貼るときの切り出しは
+   * フィルムシート側が記録の telopPosition を見て行う。
+   * 撮る時点で正方形にすると、専用のステージをもう一つ持つことになり、
+   * 撮影経路が増えたぶん黙って失敗する箇所も増える。
    *
    * 失敗しても記録の保存自体は妨げない。あくまで付加価値のため。
    */
   async function captureAndStoreThumbnail(entryId: string) {
     // 写真なしの記録（記録のみ保存）にはサムネイルを作らない
-    if (!photoUri || !thumbnailRef.current) return;
+    if (!photoUri || !exportRef.current) return;
     if (!(await loadThumbnailEnabled())) return;
 
     try {
+      const aspect = resolveOverlayAspect(ratio, photoAspectRatio);
+      const height = Math.round(THUMBNAIL_WIDTH / aspect);
+
       if (Platform.OS === 'web') {
         const { toJpeg } = await import('html-to-image');
         const dataUri = await toJpeg(
-          thumbnailRef.current as unknown as HTMLElement,
+          exportRef.current as unknown as HTMLElement,
           {
             quality: 0.7,
             canvasWidth: THUMBNAIL_WIDTH,
-            canvasHeight: THUMBNAIL_WIDTH,
+            canvasHeight: height,
           },
         );
         await saveThumbnail(entryId, dataUri.replace(/^data:image\/\w+;base64,/, ''));
         return;
       }
 
-      const base64 = await captureRef(thumbnailRef, {
+      const base64 = await captureRef(exportRef, {
         format: 'jpg',
         quality: 0.7,
         result: 'base64',
         width: THUMBNAIL_WIDTH,
-        height: THUMBNAIL_WIDTH,
+        height,
       });
       await saveThumbnail(entryId, base64);
     } catch (e) {

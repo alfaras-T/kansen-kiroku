@@ -5,6 +5,7 @@ import { CardText } from "@/components/card-text";
 
 import { Palette } from "@/constants/theme";
 import { GameResult } from "@/storage/history";
+import { OverlayPosition } from "@/constants/overlayStyles";
 import { HistoryEntry } from "@/types/history";
 
 /** 基準幅。文字サイズや余白はこの幅に対する比率で決める。 */
@@ -31,11 +32,15 @@ export interface ProofSheetItem {
  * 縦長・横長のもの(切り出しを入れる前に保存された分)は、短い辺を升目に
  * 合わせたうえで、はみ出す分をテロップと反対側へ逃がす。
  *
- * テロップの位置は記録に残していないため、既定値である右下として扱う。
- * 既定のまま使われた記録なら、これでテロップが必ず残る。
- * 中央で切ると、どの位置に置いていても隅が落ちる。
+ * どの隅を残すかは記録の telopPosition を見る。この項目を持たない
+ * 古い記録は、既定値である右下として扱う。中央で切ると位置に関わらず
+ * 隅が落ちるので、既定のまま使われた記録が救われるぶん確実に良くなる。
  */
-function cellImageStyle(aspect: number | null, cell: number) {
+function cellImageStyle(
+  aspect: number | null,
+  cell: number,
+  position: OverlayPosition,
+) {
   if (!aspect || Math.abs(aspect - 1) < 0.01) return styles.cellImage;
   const w = aspect >= 1 ? cell * aspect : cell;
   const h = aspect >= 1 ? cell : cell / aspect;
@@ -43,8 +48,8 @@ function cellImageStyle(aspect: number | null, cell: number) {
     position: "absolute" as const,
     width: w,
     height: h,
-    left: -(w - cell),
-    top: -(h - cell),
+    left: position.endsWith("r") ? -(w - cell) : 0,
+    top: position.startsWith("b") ? -(h - cell) : 0,
   };
 }
 
@@ -220,7 +225,11 @@ export const ProofSheetCard = forwardRef<
             {uri ? (
               <Image
                 source={{ uri }}
-                style={cellImageStyle(aspect, cell)}
+                style={cellImageStyle(
+                  aspect,
+                  cell,
+                  entry.telopPosition ?? "br",
+                )}
                 resizeMode="cover"
                 onLoad={onCellLoad}
                 onError={onCellLoad}
