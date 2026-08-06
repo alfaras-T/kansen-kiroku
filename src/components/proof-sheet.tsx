@@ -33,10 +33,27 @@ import { loadThumbnailUriMap } from "@/storage/thumbnails";
  */
 function measureAspect(uri: string): Promise<number | null> {
   return new Promise((resolve) => {
+    // getSize は読めないURIで失敗を返さず、応答しないまま止まることがある。
+    // ここで待ち続けると items が永久に埋まらず、フィルムシートが
+    // 「読み込み中」から進まなくなる。測れなくても中央で貼れば済むので、
+    // 時間を切って先へ進める。
+    let done = false;
+    const finish = (v: number | null) => {
+      if (done) return;
+      done = true;
+      resolve(v);
+    };
+    const timer = setTimeout(() => finish(null), 3000);
     Image.getSize(
       uri,
-      (w, h) => resolve(h > 0 ? w / h : null),
-      () => resolve(null),
+      (w, h) => {
+        clearTimeout(timer);
+        finish(h > 0 ? w / h : null);
+      },
+      () => {
+        clearTimeout(timer);
+        finish(null);
+      },
     );
   });
 }
