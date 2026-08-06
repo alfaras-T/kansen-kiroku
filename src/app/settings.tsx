@@ -1,7 +1,7 @@
 import Constants from "expo-constants";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Modal,
   Platform,
@@ -100,10 +100,22 @@ export default function SettingsScreen() {
   // 作り直し用に残している元写真の量。写真そのものを端末に抱えている以上、
   // どれだけ持っているかを見せ、消す手段を用意しないと利用者は確かめようがない。
   const [sourceBytes, setSourceBytes] = useState<number | null>(null);
-  useEffect(() => {
-    if (Platform.OS === "web") return;
-    sourcePhotosTotalSize().then(setSourceBytes);
-  }, []);
+  // 画面に戻るたびに測り直す。
+  // 設定はタブの一員なので、一度開くと画面から離れても外れずに残る。
+  // 読み込みを最初の一回だけにすると、記録を作って戻ってきても
+  // 数字が古いままになる。
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS === "web") return;
+      let alive = true;
+      sourcePhotosTotalSize().then((n) => {
+        if (alive) setSourceBytes(n);
+      });
+      return () => {
+        alive = false;
+      };
+    }, []),
+  );
 
   async function handleClearSourcePhotos() {
     const ok = await confirmAsync(

@@ -127,9 +127,17 @@ async function pruneSourcePhotos(): Promise<void> {
 export async function sourcePhotosTotalSize(): Promise<number> {
   if (unsupported()) return 0;
   try {
-    const { Directory, Paths } = await import('expo-file-system');
+    const { Directory, File, Paths } = await import('expo-file-system');
     const dir = new Directory(Paths.document, DIR_NAME);
-    return dir.exists ? (dir.size ?? 0) : 0;
+    if (!dir.exists) return 0;
+    // Directory.size は中身を合計してくれるとは限らず、値を返さないことがある。
+    // その場合 ?? 0 で常に0になり、保存されていても「無し」に見えてしまう。
+    // 中のファイルを一つずつ足す方が確実。
+    let total = 0;
+    for (const item of dir.list()) {
+      if (item instanceof File) total += item.size ?? 0;
+    }
+    return total;
   } catch {
     return 0;
   }
