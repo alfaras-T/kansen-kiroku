@@ -115,11 +115,19 @@ export const OVERLAY_STYLES: Record<OverlayStyleKey, OverlayPalette> = {
   },
 };
 
+/**
+ * 出力の縦横比。
+ *
+ * 「スクエア」「ストーリー」といった呼び名は、特定のSNSの投稿枠を指す
+ * 言葉で、そのSNSを使っていない人には何の形か伝わらない。比率そのもので
+ * 書けば、どんな形になるかが名前だけで分かる。
+ * 写真のままの場合だけは比率が決まらないので、言葉のままにする。
+ */
 export const OUTPUT_RATIOS: { key: OutputRatio; label: string; aspect: number | null }[] = [
   { key: 'original', label: '元のサイズ', aspect: null },
-  { key: 'square', label: 'スクエア（1:1）', aspect: 1 },
-  { key: 'portrait', label: 'ポートレート（4:5）', aspect: 4 / 5 },
-  { key: 'story', label: 'ストーリー（9:16）', aspect: 9 / 16 },
+  { key: 'square', label: '1:1', aspect: 1 },
+  { key: 'portrait', label: '4:5', aspect: 4 / 5 },
+  { key: 'story', label: '9:16', aspect: 9 / 16 },
 ];
 
 /**

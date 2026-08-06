@@ -24,8 +24,6 @@ import {
   MIN_TELOP_SCALE,
   OUTPUT_RATIOS,
   OVERLAY_STYLES,
-  OutputRatio,
-  OverlayPosition,
   OverlayStyleKey,
   POSITIONS,
   resolveExportSize,
@@ -35,13 +33,92 @@ import { MaxContentWidth, Radius } from "@/constants/theme";
 import { useCreateForm } from "@/contexts/create-form";
 import { useTheme } from "@/hooks/use-theme";
 
-const POSITION_ORDER: OverlayPosition[] = ["br", "bl", "tr", "tl"];
 const STYLE_ORDER: OverlayStyleKey[] = ["classic", "film", "minimal"];
-const RATIO_ORDER: OutputRatio[] = OUTPUT_RATIOS.map((r) => r.key);
+const STYLE_OPTIONS = STYLE_ORDER.map((key) => ({
+  key,
+  label: OVERLAY_STYLES[key].label,
+}));
 
-function nextInList<T>(list: T[], current: T): T {
-  const idx = list.indexOf(current);
-  return list[(idx + 1) % list.length];
+/** 開いている選択肢。同時に開くのは一つだけ */
+type OpenMenu = "ratio" | "position" | "style" | "textSize" | null;
+
+/**
+ * 縦に並ぶ丸ボタンの一つ。押すと選択肢をボタンの左に開く。
+ *
+ * 以前は押すたびに次の候補へ送る方式だった。候補が三つ四つあると目当ての
+ * ものに行き着くまで何度も押すことになり、しかも「今どれが選ばれていて、
+ * 他に何があるのか」はボタンを押し続けて一周させないと分からなかった。
+ * 開いて一覧から選ぶ形なら、選択肢の全体と現在地が一目で並ぶ。
+ *
+ * 左へ開くのは、この列が画面の右端に張り付いているため。右には場所がない。
+ */
+function OptionGroup<T extends string>({
+  icon,
+  options,
+  value,
+  onSelect,
+  open,
+  onToggle,
+  accent,
+  onAccent,
+  accessibilityLabel,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  options: { key: T; label: string }[];
+  value: T;
+  onSelect: (key: T) => void;
+  open: boolean;
+  onToggle: () => void;
+  accent: string;
+  onAccent: string;
+  accessibilityLabel: string;
+}) {
+  const current = options.find((o) => o.key === value);
+  return (
+    <View style={styles.iconGroup}>
+      {open ? (
+        <View style={styles.optionRow}>
+          {options.map((o) => {
+            const selected = o.key === value;
+            return (
+              <Pressable
+                key={o.key}
+                onPress={() => onSelect(o.key)}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                style={[
+                  styles.optionChip,
+                  selected && { backgroundColor: accent },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.optionChipText,
+                    selected && { color: onAccent, fontWeight: "700" },
+                  ]}
+                >
+                  {o.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : (
+        <Text style={styles.iconLabel} numberOfLines={1} ellipsizeMode="tail">
+          {current?.label}
+        </Text>
+      )}
+      <Pressable
+        onPress={onToggle}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        accessibilityState={{ expanded: open }}
+        style={[styles.iconBtn, open && styles.iconBtnOpen]}
+      >
+        <Ionicons name={icon} size={16} color="#fff" />
+      </Pressable>
+    </View>
+  );
 }
 
 // テロップの拡大率(MIN_TELOP_SCALE〜MAX_TELOP_SCALE)とスライダーの0〜1の正規化値を相互変換する
@@ -94,7 +171,11 @@ export default function AdjustScreen() {
   } = form;
 
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
-  const [textSizeOpen, setTextSizeOpen] = useState(false);
+  // 開くのは常に一つだけ。二つ開くと選択肢の列が重なって読めなくなる。
+  const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
+  const toggleMenu = (menu: Exclude<OpenMenu, null>) =>
+    setOpenMenu((cur) => (cur === menu ? null : menu));
+  const textSizeOpen = openMenu === "textSize";
 
   function goBack() {
     if (router.canGoBack()) router.back();
@@ -247,71 +328,58 @@ export default function AdjustScreen() {
               </View>
 
               <View style={styles.iconColumn}>
-                <View style={styles.iconGroup}>
-                  <Text
-                    style={styles.iconLabel}
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                  >
-                    {
-                      OUTPUT_RATIOS.find((r) => r.key === ratio)?.label.split(
-                        "（",
-                      )[0]
-                    }
-                  </Text>
-                  <Pressable
-                    onPress={() => setRatio(nextInList(RATIO_ORDER, ratio))}
-                    style={styles.iconBtn}
-                  >
-                    <Ionicons name="crop-outline" size={16} color="#fff" />
-                  </Pressable>
-                </View>
+                <OptionGroup
+                  icon="crop-outline"
+                  accessibilityLabel="出力サイズを選ぶ"
+                  options={OUTPUT_RATIOS}
+                  value={ratio}
+                  onSelect={(key) => {
+                    setRatio(key);
+                    setOpenMenu(null);
+                  }}
+                  open={openMenu === "ratio"}
+                  onToggle={() => toggleMenu("ratio")}
+                  accent={colors.accent}
+                  onAccent={colors.onAccent}
+                />
 
-                <View style={styles.iconGroup}>
-                  <Text style={styles.iconLabel}>
-                    {POSITIONS.find((p) => p.key === position)?.label}
-                  </Text>
-                  <Pressable
-                    onPress={() =>
-                      setPosition(nextInList(POSITION_ORDER, position))
-                    }
-                    style={styles.iconBtn}
-                  >
-                    <Ionicons name="move-outline" size={16} color="#fff" />
-                  </Pressable>
-                </View>
+                <OptionGroup
+                  icon="move-outline"
+                  accessibilityLabel="テロップの場所を選ぶ"
+                  options={POSITIONS}
+                  value={position}
+                  onSelect={(key) => {
+                    setPosition(key);
+                    setOpenMenu(null);
+                  }}
+                  open={openMenu === "position"}
+                  onToggle={() => toggleMenu("position")}
+                  accent={colors.accent}
+                  onAccent={colors.onAccent}
+                />
 
-                <View style={styles.iconGroup}>
-                  <Text
-                    style={styles.iconLabel}
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                  >
-                    {OVERLAY_STYLES[styleKey].label.split("（")[0]}
-                  </Text>
-                  <Pressable
-                    onPress={() =>
-                      setStyleKey(nextInList(STYLE_ORDER, styleKey))
-                    }
-                    style={styles.iconBtn}
-                  >
-                    <Ionicons
-                      name="color-palette-outline"
-                      size={16}
-                      color="#fff"
-                    />
-                  </Pressable>
-                </View>
+                <OptionGroup
+                  icon="color-palette-outline"
+                  accessibilityLabel="テロップの種類を選ぶ"
+                  options={STYLE_OPTIONS}
+                  value={styleKey}
+                  onSelect={(key) => {
+                    setStyleKey(key);
+                    setOpenMenu(null);
+                  }}
+                  open={openMenu === "style"}
+                  onToggle={() => toggleMenu("style")}
+                  accent={colors.accent}
+                  onAccent={colors.onAccent}
+                />
 
                 <View style={styles.iconGroup}>
                   <Text style={styles.iconLabel}>文字サイズ</Text>
                   <Pressable
-                    onPress={() => setTextSizeOpen((v) => !v)}
+                    onPress={() => toggleMenu("textSize")}
                     style={[
                       styles.iconBtn,
-                      textSizeOpen && {
-                        backgroundColor: "rgba(255,255,255,0.28)",
-                      },
+                      textSizeOpen && styles.iconBtnOpen,
                     ]}
                   >
                     <Ionicons name="text-outline" size={16} color="#fff" />
@@ -558,6 +626,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  iconBtnOpen: { backgroundColor: "rgba(255,255,255,0.28)" },
+  // 選択肢はボタンの左へ開く。入り切らないときは折り返して上に伸ばす
+  // (右端が起点なので、折り返しても右揃えのまま列が保たれる)。
+  optionRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    gap: 5,
+    maxWidth: 244,
+  },
+  optionChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: Radius.surface,
+    backgroundColor: "rgba(0,0,0,0.55)",
+  },
+  optionChipText: { color: "#fff", fontSize: 11.5 },
   iconLabel: {
     color: "#fff",
     fontSize: 10.5,
