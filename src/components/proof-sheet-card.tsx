@@ -14,6 +14,8 @@ export interface ProofSheetItem {
   entry: HistoryEntry;
   /** サムネイルの表示URI。無い記録もあるので null を許す。 */
   uri: string | null;
+  /** サムネイルの縦横比(幅÷高さ)。測れなかった場合は null。 */
+  aspect: number | null;
   /** マイチームから見た勝敗。出場していない試合は null。 */
   result: GameResult;
 }
@@ -22,6 +24,30 @@ export interface ProofSheetItem {
  * 勝敗の印。日本の野球でよく使われる表記に倣う。
  * ○=勝ち ●=負け △=引き分け
  */
+/**
+ * 升目に貼るときの寸法と位置。
+ *
+ * 正方形のサムネイル(新しい保存分は正方形に切り出してある)はそのまま埋まる。
+ * 縦長・横長のもの(切り出しを入れる前に保存された分)は、短い辺を升目に
+ * 合わせたうえで、はみ出す分をテロップと反対側へ逃がす。
+ *
+ * テロップの位置は記録に残していないため、既定値である右下として扱う。
+ * 既定のまま使われた記録なら、これでテロップが必ず残る。
+ * 中央で切ると、どの位置に置いていても隅が落ちる。
+ */
+function cellImageStyle(aspect: number | null, cell: number) {
+  if (!aspect || Math.abs(aspect - 1) < 0.01) return styles.cellImage;
+  const w = aspect >= 1 ? cell * aspect : cell;
+  const h = aspect >= 1 ? cell : cell / aspect;
+  return {
+    position: "absolute" as const,
+    width: w,
+    height: h,
+    left: -(w - cell),
+    top: -(h - cell),
+  };
+}
+
 const RESULT_MARK: Record<"win" | "lose" | "draw", string> = {
   win: "○",
   lose: "●",
@@ -178,7 +204,7 @@ export const ProofSheetCard = forwardRef<
           ratio !== "auto" && { flex: 1, alignContent: "center" },
         ]}
       >
-        {items.map(({ entry, uri, result }) => (
+        {items.map(({ entry, uri, aspect, result }) => (
           <View
             key={entry.id}
             style={[
@@ -194,7 +220,7 @@ export const ProofSheetCard = forwardRef<
             {uri ? (
               <Image
                 source={{ uri }}
-                style={styles.cellImage}
+                style={cellImageStyle(aspect, cell)}
                 resizeMode="cover"
                 onLoad={onCellLoad}
                 onError={onCellLoad}

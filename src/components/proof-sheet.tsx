@@ -3,6 +3,7 @@ import * as Sharing from "expo-sharing";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   Modal,
   Platform,
   Pressable,
@@ -24,6 +25,21 @@ import { useTheme } from "@/hooks/use-theme";
 import { Radius } from "@/constants/theme";
 import { resolveGameResult } from "@/storage/history";
 import { loadThumbnailUriMap } from "@/storage/thumbnails";
+
+/**
+ * サムネイルの縦横比を測る。
+ * 切り出しを入れる前に保存されたものは正方形ではないため、
+ * 升目に貼る位置を決めるのに実寸が要る。測れなければ null。
+ */
+function measureAspect(uri: string): Promise<number | null> {
+  return new Promise((resolve) => {
+    Image.getSize(
+      uri,
+      (w, h) => resolve(h > 0 ? w / h : null),
+      () => resolve(null),
+    );
+  });
+}
 import { HistoryEntry } from "@/types/history";
 import { ToggleSwitch } from "@/components/form/toggle-switch";
 import { notify } from "@/utils/dialogs";
@@ -92,10 +108,18 @@ export function ProofSheet({
       if (!alive) return;
       // 古い順に並べる。ベタ焼きは時系列で読むものなので。
       const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date));
+      const aspects = await Promise.all(
+        sorted.map((entry) => {
+          const uri = map[entry.id];
+          return uri ? measureAspect(uri) : Promise.resolve(null);
+        }),
+      );
+      if (!alive) return;
       setItems(
-        sorted.map((entry) => ({
+        sorted.map((entry, i) => ({
           entry,
           uri: map[entry.id] ?? null,
+          aspect: aspects[i],
           result: resolveGameResult(entry, myTeam),
         })),
       );
