@@ -204,7 +204,9 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
     // 年・月・日の間。7セグの空白セルだけでは詰まって見えるので、
     // 字間を広げて三つの数の切れ目を作る(字間は空白の前後にも入るため、
     // 数字同士より年月日の切れ目の方が大きく開く)。
-    inlineDateStamp: { letterSpacing: scOf('date', 1.4) },
+    // 6.4pt に対して 2.6 ＝ 字面の約4割。実際のカメラの焼き込みも
+    // このくらい離れている。
+    inlineDateStamp: { letterSpacing: scOf('date', 2.6) },
     memo: {
       fontSize: scOf('memo', 10.5),
       lineHeight: scOf('memo', 14),
