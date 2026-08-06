@@ -102,21 +102,48 @@ export function proofCardHeight(
 }
 
 /**
- * 高さが決まっている場合に、格子が収まる列数を求める。
+ * 高さが決まっている場合の、列数とコマの大きさ。
  *
- * 比率を固定すると、枚数によっては既定の列数では縦にはみ出す。列を増やせば
- * 1コマは小さくなるが、全部が収まる。逆に余った場合は列を増やさない
- * (無理に引き伸ばすと、少ない枚数のときコマが不自然に大きくなる)。
+ * 以前は既定の列数から「増やす方向」にしか動かさず、収まった時点で止めて
+ * いた。そのため余った高さがそのまま余白として残っていた。
+ * (1080角に10枚で縦の84%、9:16に10枚では44%しか使えていなかった)
+ *
+ * 代わりに、1列から順に全ての組み方を試して、器を最もよく埋めるものを選ぶ。
+ *
+ * 評価は「コマの大きさ」ではなく「縦と横のうち、埋まっていない方の割合」。
+ * 大きさだけで選ぶと、9:16に3枚のようなときに1列縦並びが選ばれ、
+ * 縦は埋まるのに左右が45%も空いて、かえって傾いて見える。
+ * 両方向の埋まり具合の小さい方を上げるようにすれば、
+ * 縦長の器では列を減らし、横長の器では列を増やす判断が自然に出る。
  */
-function fitColumns(count: number, width: number, gridHeight: number, pad: number, gap: number): number {
-  let cols = proofColumns(count);
-  for (let i = 0; i < 8; i += 1) {
-    const rows = Math.max(1, Math.ceil(count / cols));
-    const cell = (width - pad * 2 - gap * (cols - 1)) / cols;
-    if (rows * (cell + gap) <= gridHeight || cols >= 10) break;
-    cols += 1;
+function fitGrid(
+  count: number,
+  width: number,
+  gridHeight: number,
+  pad: number,
+  gap: number,
+): { cols: number; cell: number } {
+  const inner = width - pad * 2;
+  const maxCols = Math.min(Math.max(1, count), 8);
+  let best = { cols: 1, cell: 0, score: -1 };
+  for (let cols = 1; cols <= maxCols; cols += 1) {
+    const rows = Math.ceil(count / cols);
+    const cell = Math.min(
+      (inner - gap * (cols - 1)) / cols,
+      (gridHeight - gap * (rows - 1)) / rows,
+    );
+    if (cell <= 0) continue;
+    const fillX = (cols * cell + gap * (cols - 1)) / inner;
+    const fillY = (rows * cell + gap * (rows - 1)) / gridHeight;
+    const score = Math.min(fillX, fillY);
+    // 埋まり具合が同じなら、コマの大きい方を採る
+    if (score > best.score + 0.001 || (Math.abs(score - best.score) <= 0.001 && cell > best.cell)) {
+      best = { cols, cell, score };
+    }
   }
-  return cols;
+  // 端数を切り捨てる。列の合計が器の内幅をわずかでも超えると、
+  // 最後の一つが次の行へ折り返してしまう(カレンダーで踏んだのと同じ罠)。
+  return { cols: best.cols, cell: Math.floor(best.cell) };
 }
 
 /**
@@ -159,11 +186,18 @@ export const ProofSheetCard = forwardRef<
   const height = proofCardHeight(items.length, width, ratio);
   // 格子に使える高さ(ヘッダーとフッターを除いた残り)
   const gridHeight = height - pad * 2 - 62 * s - 52 * s;
-  const cols =
+  const { cols, cell } =
     ratio === "auto"
-      ? proofColumns(items.length)
-      : fitColumns(items.length, width, gridHeight, pad, gap);
-  const cell = (width - pad * 2 - gap * (cols - 1)) / cols;
+      ? (() => {
+          const c = proofColumns(items.length);
+          return {
+            cols: c,
+            cell: Math.floor((width - pad * 2 - gap * (c - 1)) / c),
+          };
+        })()
+      : fitGrid(items.length, width, gridHeight, pad, gap);
+  const rows: ProofSheetItem[][] = [];
+  for (let i = 0; i < items.length; i += cols) rows.push(items.slice(i, i + cols));
 
   return (
     <View
@@ -202,14 +236,26 @@ export const ProofSheetCard = forwardRef<
         </CardText>
       </View>
 
+      {/*
+        折り返しに任せず、行を自分で組む。
+        コマの合計幅は器の内幅とちょうど同じになるよう計算されるため、
+        端数がわずかでも上回ると最後の一つが次の行へこぼれる。
+        実際、5列で組んだつもりが1行4個になり、右端が丸ごと空いていた。
+        (カレンダーの土曜が落ちていたのと同じ原因)
+
+        行ごとに中央へ寄せているのは、最終行が埋まらないときに
+        左詰めだと右側だけが空いて傾いて見えるため。
+      */}
       <View
         style={[
           styles.grid,
           { gap, marginTop: 14 * s },
-          ratio !== "auto" && { flex: 1, alignContent: "center" },
+          ratio !== "auto" && { flex: 1, justifyContent: "center" },
         ]}
       >
-        {items.map(({ entry, uri, aspect, result }) => (
+        {rows.map((row, rowIndex) => (
+          <View key={rowIndex} style={[styles.gridRow, { gap }]}>
+        {row.map(({ entry, uri, aspect, result }) => (
           <View
             key={entry.id}
             style={[
@@ -291,6 +337,8 @@ export const ProofSheetCard = forwardRef<
             )}
           </View>
         ))}
+          </View>
+        ))}
       </View>
 
       <View style={[styles.footer, { marginTop: 16 * s }]}>
@@ -331,7 +379,8 @@ const styles = StyleSheet.create({
   },
   year: { fontWeight: "700" },
   brand: { fontWeight: "700" },
-  grid: { flexDirection: "row", flexWrap: "wrap" },
+  grid: { flexDirection: "column" },
+  gridRow: { flexDirection: "row", justifyContent: "center" },
   cell: { overflow: "hidden" },
   cellImage: { width: "100%", height: "100%" },
   mark: {
