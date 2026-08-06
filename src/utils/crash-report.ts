@@ -23,6 +23,12 @@ type ErrorUtilsShape = {
 };
 
 let installed = false;
+/**
+ * 表示した回数。繰り返し投げる状態に陥ったとき、同じ知らせを何十回も
+ * 出すと操作そのものができなくなる。数回で打ち切り、以降は記録だけ残す。
+ */
+let shown = 0;
+const MAX_ALERTS = 3;
 
 function describe(error: unknown): { title: string; body: string } {
   if (error instanceof Error || (typeof error === "object" && error !== null)) {
@@ -57,6 +63,8 @@ export function installCrashReporter(): void {
     }
     const { title, body } = describe(error);
     console.error("[BallFilms] 未捕捉のエラー", error);
+    if (shown >= MAX_ALERTS) return;
+    shown += 1;
     try {
       Alert.alert(title, body);
     } catch {
