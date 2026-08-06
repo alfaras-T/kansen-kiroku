@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -27,6 +28,11 @@ import { MaxContentWidth, Spacing, Palette } from "@/constants/theme";
 import { Rule, Space } from "@/constants/typography";
 import { useFavoriteTeam } from "@/contexts/favorite-team";
 import { exportBackup, importBackup } from "@/storage/backup";
+import {
+  SOURCE_KEEP_COUNT,
+  deleteAllSourcePhotos,
+  sourcePhotosTotalSize,
+} from "@/storage/source-photos";
 import { confirmAsync, notify } from "@/utils/dialogs";
 import { useTheme } from "@/hooks/use-theme";
 
@@ -69,6 +75,11 @@ function ActionRow({
   );
 }
 
+function formatSize(bytes: number): string {
+  const mb = bytes / (1024 * 1024);
+  return mb >= 1 ? `${mb.toFixed(1)}MB` : `${Math.max(1, Math.round(bytes / 1024))}KB`;
+}
+
 export default function SettingsScreen() {
   const colors = useTheme();
   const router = useRouter();
@@ -85,6 +96,25 @@ export default function SettingsScreen() {
   useEffect(() => {
     loadThumbnailEnabled().then(setThumbnailEnabled);
   }, []);
+
+  // 作り直し用に残している元写真の量。写真そのものを端末に抱えている以上、
+  // どれだけ持っているかを見せ、消す手段を用意しないと利用者は確かめようがない。
+  const [sourceBytes, setSourceBytes] = useState<number | null>(null);
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    sourcePhotosTotalSize().then(setSourceBytes);
+  }, []);
+
+  async function handleClearSourcePhotos() {
+    const ok = await confirmAsync(
+      "元写真を削除しますか？",
+      "観戦記録とフィルムシートはそのまま残ります。ただし、この端末に残っていた記録の「作り直す」は使えなくなります。",
+    );
+    if (!ok) return;
+    await deleteAllSourcePhotos();
+    setSourceBytes(0);
+    notify("元写真を削除しました");
+  }
 
   async function handleThumbnailToggle(next: boolean) {
     if (!next) {
@@ -218,6 +248,25 @@ export default function SettingsScreen() {
             その年の観戦を一枚に並べるのに使います。写真はこの端末の中だけに保存され、サーバーには送られません。
           </Text>
         </View>
+
+        {Platform.OS !== "web" && (
+          <View style={styles.section}>
+            <ActionRow
+              label={
+                sourceBytes
+                  ? `作り直し用の元写真を削除（${formatSize(sourceBytes)}）`
+                  : "作り直し用の元写真はありません"
+              }
+              icon="trash-outline"
+              onPress={handleClearSourcePhotos}
+              disabled={!sourceBytes}
+              colors={colors}
+            />
+            <Text style={[styles.note, { color: colors.textSecondary }]}>
+              書き出したあとにスタイルやスコアを直せるよう、直近{SOURCE_KEEP_COUNT}件分の元写真をこの端末の中に残しています。写真アプリ側の写真は減りません。ここで消しても観戦記録とフィルムシートは残ります。
+            </Text>
+          </View>
+        )}
 
         <View style={styles.section}>
           <View style={styles.exportHead}>
