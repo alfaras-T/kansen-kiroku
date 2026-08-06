@@ -32,7 +32,6 @@ export interface OverlayTelopSizes {
   code?: number;
   score?: number;
   stadium?: number;
-  memo?: number;
 }
 
 export interface OverlayPalette {

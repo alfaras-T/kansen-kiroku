@@ -64,7 +64,6 @@ export interface OverlayCardProps {
    */
   dateIso?: string;
   stadium: string;
-  memo: string;
   winHighlight: boolean;
   /** 球団カラーを使うか。false ならプリセットの既定色のまま */
   useTeamColor?: boolean;
@@ -125,7 +124,6 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
     homeScore,
     winHighlight,
     useTeamColor = true,
-    memo,
     stadium,
     dateLabel,
     dateIso,
@@ -224,12 +222,6 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
     // 6.4pt に対して 2.6 ＝ 字面の約4割。実際のカメラの焼き込みも
     // このくらい離れている。
     inlineDateStamp: { letterSpacing: scOf('date', 2.6) },
-    memo: {
-      fontSize: scOf('memo', 10.5),
-      lineHeight: scOf('memo', 14),
-      letterSpacing: scOf('memo', 1),
-      marginTop: scOf('memo', 3),
-    },
   };
 
   const palette = OVERLAY_STYLES[styleKey];
@@ -688,19 +680,6 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
           </>
         )}
 
-        {/*
-          フィルムは焼き込みの再現なので、日付・スコア・球場しか並ばない。
-          自由メモはこのアプリ側の情報で、実機の表示器には存在しない。
-          一列の並びに日本語の文が混ざると、そこだけ字面が変わって
-          「焼き込み」ではなく「後から乗せた字幕」に見える。
-        */}
-        {!palette.inline && !!memo && (
-          <CardText
-            style={[styles.memo, telopStyles.memo, textShadow, { color: palette.caption }]}
-            numberOfLines={1}>
-            {memo}
-          </CardText>
-        )}
       </View>
     </View>
   );
@@ -774,13 +753,5 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     fontWeight: '600',
     letterSpacing: 2.5,
-  },
-  memo: {
-    fontSize: 10.5,
-    lineHeight: 14,
-    fontWeight: '500',
-    letterSpacing: 1,
-    marginTop: 3,
-    opacity: 0.85,
   },
 });

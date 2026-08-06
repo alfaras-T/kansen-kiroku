@@ -266,7 +266,6 @@ export default function CreateScreen() {
                       dateLabel={formatDateOverlay(date)}
                       dateIso={date}
                       stadium={stadiumName}
-                      memo={memo}
                       winHighlight={winHighlight}
                       useTeamColor={useTeamColor}
                       photoOffset={photoOffset}

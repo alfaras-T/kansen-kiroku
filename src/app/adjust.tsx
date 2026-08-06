@@ -30,6 +30,7 @@ import {
   resolveOverlayAspect,
 } from "@/constants/overlayStyles";
 import { MaxContentWidth, Radius } from "@/constants/theme";
+import { THUMBNAIL_WIDTH } from "@/storage/thumbnails";
 import { useCreateForm } from "@/contexts/create-form";
 import { useTheme } from "@/hooks/use-theme";
 
@@ -143,6 +144,7 @@ export default function AdjustScreen() {
   const {
     overlayRef,
     exportRef,
+    thumbnailRef,
     photoUri,
     photoAspectRatio,
     photoOffset,
@@ -188,6 +190,8 @@ export default function AdjustScreen() {
   const toggleMenu = (menu: MenuKey) =>
     setOpenMenus((cur) => ({ ...cur, [menu]: !cur[menu] }));
   const textSizeOpen = !!openMenus.textSize;
+  const anyMenuOpen = Object.values(openMenus).some(Boolean);
+  const closeMenus = () => setOpenMenus({});
 
   function goBack() {
     if (router.canGoBack()) router.back();
@@ -228,6 +232,24 @@ export default function AdjustScreen() {
   // プレビューと同じ見た目の比率になるようにする。
   const exportScaleFactor =
     renderWidth > 0 ? exportSize.width / renderWidth : 1;
+
+  // フィルムシート用の切り出し。升目が正方形なので、正方形の窓に収めた
+  // 状態で撮る。9:16などをそのまま保存すると、貼るときに中央で切られて
+  // 隅のテロップが欠ける。窓からはみ出す分は、テロップと反対側へ逃がす。
+  // (右下のテロップなら左と上を切る)
+  const thumbAspect = resolveOverlayAspect(ratio, photoAspectRatio);
+  const thumbCardWidth =
+    thumbAspect >= 1 ? THUMBNAIL_WIDTH * thumbAspect : THUMBNAIL_WIDTH;
+  const thumbCardHeight =
+    thumbAspect >= 1 ? THUMBNAIL_WIDTH : THUMBNAIL_WIDTH / thumbAspect;
+  const thumbLeft = position.endsWith("r")
+    ? -(thumbCardWidth - THUMBNAIL_WIDTH)
+    : 0;
+  const thumbTop = position.startsWith("b")
+    ? -(thumbCardHeight - THUMBNAIL_WIDTH)
+    : 0;
+  const thumbScaleFactor =
+    renderWidth > 0 ? thumbCardWidth / renderWidth : 1;
 
   return (
     <View style={[styles.screen, { backgroundColor: "#000" }]}>
@@ -286,7 +308,6 @@ export default function AdjustScreen() {
                   dateLabel={formatDateOverlay(date)}
                   dateIso={date}
                   stadium={stadiumName}
-                  memo={memo}
                   winHighlight={winHighlight}
                   useTeamColor={useTeamColor}
                   photoOffset={photoOffset}
@@ -324,7 +345,6 @@ export default function AdjustScreen() {
                   dateLabel={formatDateOverlay(date)}
                   dateIso={date}
                   stadium={stadiumName}
-                  memo={memo}
                   winHighlight={winHighlight}
                   useTeamColor={useTeamColor}
                   photoOffset={photoOffset}
@@ -338,6 +358,63 @@ export default function AdjustScreen() {
                   }}
                 />
               </View>
+
+              {/*
+                フィルムシート用の非表示ステージ。
+                正方形の窓に、テロップのある角を寄せたカードを収めている。
+                撮る側はこれをそのまま正方形として撮ればよい。
+              */}
+              <View pointerEvents="none" style={styles.exportStage}>
+                <View
+                  ref={thumbnailRef}
+                  collapsable={false}
+                  style={styles.thumbnailWindow}
+                >
+                  <OverlayCard
+                    photoUri={photoUri}
+                    photoAspectRatio={photoAspectRatio}
+                    ratio={ratio}
+                    position={position}
+                    styleKey={styleKey}
+                    visitorCode={visitorTeamName}
+                    homeCode={homeTeamName}
+                    visitorScore={visitorScore || "0"}
+                    homeScore={homeScore || "0"}
+                    dateLabel={formatDateOverlay(date)}
+                    dateIso={date}
+                    stadium={stadiumName}
+                    winHighlight={winHighlight}
+                    useTeamColor={useTeamColor}
+                    photoOffset={photoOffset}
+                    photoScale={photoScale}
+                    telopScale={telopScale}
+                    scaleFactor={thumbScaleFactor}
+                    style={{
+                      position: "absolute",
+                      left: thumbLeft,
+                      top: thumbTop,
+                      width: thumbCardWidth,
+                      height: thumbCardHeight,
+                      aspectRatio: undefined,
+                    }}
+                  />
+                </View>
+              </View>
+
+              {/*
+                選択肢が出ている間だけ敷く、透明な受け皿。
+                写真の上のどこを押しても閉じられるようにする。
+                アイコンの列と文字サイズのバーはこれより後ろに書いてあるので
+                上に乗り、ボタン自身の操作は妨げない。
+              */}
+              {anyMenuOpen && (
+                <Pressable
+                  style={StyleSheet.absoluteFill}
+                  onPress={closeMenus}
+                  accessibilityRole="button"
+                  accessibilityLabel="選択肢を閉じる"
+                />
+              )}
 
               <View style={styles.iconColumn}>
                 <OptionGroup
@@ -612,6 +689,12 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     opacity: 0,
+  },
+  // フィルムシートの升目と同じ正方形の窓。はみ出した分は切り落とす。
+  thumbnailWindow: {
+    width: THUMBNAIL_WIDTH,
+    height: THUMBNAIL_WIDTH,
+    overflow: "hidden",
   },
   iconColumn: {
     position: "absolute",

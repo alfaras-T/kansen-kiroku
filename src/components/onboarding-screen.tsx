@@ -92,7 +92,6 @@ export function OnboardingScreen() {
             homeScore="5"
             dateLabel={sampleDateLabel()}
             stadium="スタジアム"
-            memo=""
             winHighlight
             photoOffset={DEFAULT_PHOTO_OFFSET}
             photoScale={DEFAULT_PHOTO_SCALE}
