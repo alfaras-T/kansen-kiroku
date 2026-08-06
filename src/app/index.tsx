@@ -243,7 +243,7 @@ export default function CreateScreen() {
                   プレビューは見るだけ。pointerEvents="none" で
                   OverlayCard 内のドラッグ/ピンチ操作を無効にしておく。
                   有効なままだと画面のスクロールを奪ってしまう。
-                  写真の位置や拡大は「写真を調整する」で行う。
+                  写真の位置や拡大は「編集して保存する」の先で行う。
                 */}
                 <View
                   pointerEvents="none"
@@ -288,7 +288,11 @@ export default function CreateScreen() {
                     { borderColor: colors.accent, marginTop: 12 },
                   ]}
                 >
-                  <Ionicons name="crop" size={17} color={colors.accent} />
+                  <Ionicons
+                    name="create-outline"
+                    size={18}
+                    color={colors.accent}
+                  />
                   <Text
                     style={{
                       color: colors.accent,
@@ -296,7 +300,7 @@ export default function CreateScreen() {
                       fontWeight: "600",
                     }}
                   >
-                    写真を調整して保存する
+                    編集して保存する
                   </Text>
                 </Pressable>
 

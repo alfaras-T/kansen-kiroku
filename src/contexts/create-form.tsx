@@ -1,5 +1,4 @@
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import { Image, Platform, View } from 'react-native';
@@ -113,7 +112,6 @@ interface CreateFormContextValue {
 const CreateFormContext = createContext<CreateFormContextValue | null>(null);
 
 export function CreateFormProvider({ children }: { children: ReactNode }) {
-  const router = useRouter();
   const overlayRef = useRef<View>(null);
   const exportRef = useRef<View>(null);
 
@@ -252,8 +250,12 @@ export function CreateFormProvider({ children }: { children: ReactNode }) {
       setPhotoAspectRatio(asset.width && asset.height ? asset.width / asset.height : null);
       resetPhotoAdjustment();
       recordSavedForDraft.current = false;
-      // 写真が決まったら、調整・プレビュー専用ページへ自動的に遷移する
-      router.push('/adjust');
+      // ここで調整画面へ自動的に送らない。
+      // 写真を選んだ直後はスコアも球場も空で、テロップに何も入っていない。
+      // その状態で調整画面に立たされても、何を調整しているのか分からない。
+      // 記録画面に留まれば、選んだ写真の上に入力した内容がその場で乗るので、
+      // 仕上がりを見ながら埋めていける。調整画面へは、内容が揃ってから
+      // 「編集して保存する」で自分で進む。
     }
   }
 
