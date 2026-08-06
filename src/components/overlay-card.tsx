@@ -156,6 +156,11 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
   const scOf = (key: keyof OverlayTelopSizes, v: number) =>
     sc(v * (telopSizes[key] ?? 1));
 
+  // ここの基準値が効くのは、積み上げ構成のクラシックとミニマル。
+  // フィルムは一列構成(inline)で inlineText / inlineDate を使うため、
+  // ここを触ってもフィルムの見た目は変わらない。
+  // 両者に同じ変更を入れたいときは、プリセットごとの sizes で二重に
+  // 上書きするのではなく、この基準値を動かすのが筋。
   const telopStyles = {
     scoreRow: { marginTop: scOf('score', 3) },
     code: {
@@ -165,12 +170,14 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
       maxWidth: scOf('code', 120),
     },
     score: {
-      fontSize: scOf('score', 34),
-      lineHeight: scOf('score', 36),
+      fontSize: scOf('score', 30),
+      lineHeight: scOf('score', 32),
       letterSpacing: scOf('score', 1),
       marginHorizontal: scOf('score', 7),
     },
-    scoreDash: { fontSize: scOf('score', 22), lineHeight: scOf('score', 36) },
+    // 「-」はスコアの65%。数字と同じ大きさにすると、間の記号の方が
+    // 目立って数字が二つに割れて見える。
+    scoreDash: { fontSize: scOf('score', 19), lineHeight: scOf('score', 32) },
     dateLine: {
       fontSize: scOf('date', 10.5),
       lineHeight: scOf('date', 14),
@@ -182,9 +189,12 @@ export const OverlayCard = forwardRef<View, OverlayCardProps>(function OverlayCa
       marginTop: sc(3),
       marginBottom: sc(4),
     },
+    // 球場名は添え物なので小さく。字間は 2 のまま据え置く。
+    // 小さい字ほど字間を詰めると潰れて読みにくくなるため、
+    // 字面に対する字間の比率はむしろ上がってよい。
     stadiumLine: {
-      fontSize: scOf('stadium', 10),
-      lineHeight: scOf('stadium', 13.5),
+      fontSize: scOf('stadium', 8),
+      lineHeight: scOf('stadium', 11),
       letterSpacing: scOf('stadium', 2),
     },
     // 一列構成の共通サイズ。焼き込みは写真の隅に小さく入るものなので、
