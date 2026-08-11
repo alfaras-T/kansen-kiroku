@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Linking, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
@@ -33,6 +34,7 @@ function QA({ q, children }: { q: string; children: React.ReactNode }) {
 export default function SupportScreen({ onClose }: { onClose?: () => void } = {}) {
   const colors = useTheme();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   function backToApp() {
     // アプリ内モーダルで表示中なら、閉じるだけで元の画面に戻る。
     if (onClose) {
@@ -45,7 +47,11 @@ export default function SupportScreen({ onClose }: { onClose?: () => void } = {}
       // アプリのトップへ同じタブで直接遷移する。
       window.location.href = `${WEB_BASE_URL}/`;
     } else {
-      Linking.openURL(WEB_BASE_URL);
+      // ネイティブでは外のブラウザを開かない。
+      // Web版は開発・検証用で公開していないため、ここから利用者を
+      // そちらへ送ってしまうと、配信の方針と食い違う。
+      if (router.canGoBack()) router.back();
+      else router.replace("/");
     }
   }
 
